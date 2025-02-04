@@ -1,5 +1,6 @@
-import shapely
 from typing import List, Tuple
+
+import shapely
 
 
 class Zone:
@@ -35,9 +36,6 @@ class Zone:
 
     def split_zone(self, point: Tuple[float, float]) -> Tuple['Zone', 'Zone']:
         x0, y0, x1, y1 = self.geometry.bounds
-
-        print(point)
-        print(self.geometry.bounds)
 
         if not self.geometry.covers(shapely.geometry.Point(point)):
             raise ValueError("Point is not inside the zone")
