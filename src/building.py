@@ -7,6 +7,7 @@ class Building:
     def __init__(self, walls: List[Tuple[float, float]],
                  distance_from_walls: float):
         self.walls = shapely.geometry.Polygon(walls)
+        self.distance_from_walls = distance_from_walls
         self.available_space = self.walls.buffer(-distance_from_walls,
                                                  join_style=2)
 
