@@ -1,11 +1,22 @@
-import argparse
-from src.input_generator import InputGenerator
+import sys
+import os
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 
-from src.network import (Receiver, Sender, process_message_print)
+import argparse  # noqa: E402
+from src.input_generator import InputGenerator  # noqa: E402
+import pika  # noqa: E402
+
+from src.network import (Receiver, Sender, process_message_print)  # noqa: E402
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('--host', default='localhost', help='RabbitMQ host')
-arg_parser.add_argument('--port', default=5672, help='RabbitMQ port')
+arg_parser.add_argument('--port', default=None, help='RabbitMQ port')
+arg_parser.add_argument('--vhost', default=None, help='RabbitMQ vhost')
+arg_parser.add_argument('--username', default=None,
+                        help='RabbitMQ username')
+arg_parser.add_argument('--password', default=None,
+                        help='RabbitMQ password')
 arg_parser.add_argument('--input_queue', default='result_queue',
                         help='Input queue name')
 arg_parser.add_argument('--output_queue', default='task_queue',
@@ -20,7 +31,7 @@ buildings, zones, rack_infos = input_generator.generate(
     random_seed=args.random_seed)
 
 msg = {
-    "task_id": 1,
+    "task_id": '1'*32,
     "buildings": [],
     "available_zones": [],
     "rack_types": [],
@@ -60,10 +71,17 @@ for idx, rack_info in enumerate(rack_infos):
     }
     msg["rack_types"].append(rack_info_dict)
 
-sender = Sender(args.host, args.port, args.output_queue,
-                args.output_routing_key)
-receiver = Receiver(args.host, args.port, args.input_queue,
-                    process_message_print)
+credentials = None
+if args.username and args.password:
+    credentials = pika.PlainCredentials(username=args.username,
+                                        password=args.password)
+
+sender = Sender(args.host, args.output_queue,
+                args.output_routing_key,
+                args.port, args.vhost, credentials)
+receiver = Receiver(args.host, args.input_queue,
+                    process_message_print, None,
+                    args.port, args.vhost, credentials)
 
 sender.send(msg)
 receiver.receive()

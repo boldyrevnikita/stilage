@@ -9,13 +9,26 @@ import traceback
 
 
 class Sender:
-    def __init__(self, host, port, queue_name, routing_key=''):
+    def __init__(self, host, queue_name, routing_key,
+                 port=None,
+                 vhost=None,
+                 credentials=None):
         self.queue_name = queue_name
         self.routing_key = routing_key
+
+        if port is None:
+            port = pika.ConnectionParameters._DEFAULT
+        if credentials is None:
+            credentials = pika.ConnectionParameters._DEFAULT
+        if vhost is None:
+            vhost = pika.ConnectionParameters._DEFAULT
+
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host=host, port=port))
+            host=host, port=port, virtual_host=vhost, credentials=credentials,
+            heartbeat=1800))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name)
+        self.channel.queue_declare(queue=self.queue_name,
+                                   auto_delete=True)
 
     def send(self, message):
         self.channel.basic_publish(exchange='', routing_key=self.routing_key,
@@ -26,16 +39,27 @@ class Sender:
 
 
 class Receiver:
-    def __init__(self, host, port, queue_name,
+    def __init__(self, host, queue_name,
                  msg_processor=lambda x: print(x),
-                 sender=None):
+                 sender=None, port=None, vhost=None,
+                 credentials=None):
         self.queue_name = queue_name
         self.msg_processor = msg_processor
         self.sender = sender
+
+        if port is None:
+            port = pika.ConnectionParameters._DEFAULT
+        if credentials is None:
+            credentials = pika.ConnectionParameters._DEFAULT
+        if vhost is None:
+            vhost = pika.ConnectionParameters._DEFAULT
+
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host=host, port=port))
+            host=host, port=port, virtual_host=vhost, credentials=credentials,
+            heartbeat=1800))
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name)
+        self.channel.queue_declare(queue=self.queue_name,
+                                   auto_delete=True)
 
     def receive(self):
         self.channel.basic_consume(
@@ -93,7 +117,7 @@ def process_message_ml(message, sender):
             for rack in rack_group.racks:
                 racks[rack_id].append(
                     list(zip(*rack.exterior.xy)))
-    except Exception as e:
+    except Exception:
         print(traceback.format_exc())
         output_message = {
             'task_id': message['task_id'],
@@ -116,4 +140,5 @@ def process_message_ml(message, sender):
 
 
 def process_message_print(message, sender):
+    print('Got Message')
     print(message)
