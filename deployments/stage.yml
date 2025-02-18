@@ -18,7 +18,7 @@ services:
       RABBIT_PASS: 'stillage-api'
       RABBIT_INPUT_QUEUE: 'model_task'
       RABBIT_OUTPUT_QUEUE: 'model_result'
-      RABBIT_OUTPUT_ROUTING_KEY: 'output_queue'
+      RABBIT_OUTPUT_ROUTING_KEY: 'model_result'
       RABBIT_HEARTBEAT: 1800
       PROCCESS_FUNC: 'ml'
 
