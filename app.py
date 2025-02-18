@@ -1,26 +1,33 @@
 import argparse
 import pika
+from src.settings import Settings
 
 from src.network import (MessageHandler, Sender, process_message_ml,
                          process_message_print)
 
+
+settings = Settings()
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument('--host', default='localhost', help='RabbitMQ host')
-arg_parser.add_argument('--port', default=None, help='RabbitMQ port')
-arg_parser.add_argument('--vhost', default=None, help='RabbitMQ vhost')
-arg_parser.add_argument('--username', default=None,
+arg_parser.add_argument('--host', default=settings.RABBIT_HOST,
+                        help='RabbitMQ host')
+arg_parser.add_argument('--port', default=settings.RABBIT_PORT,
+                        help='RabbitMQ port')
+arg_parser.add_argument('--vhost', default=settings.RABBIT_VHOST,
+                        help='RabbitMQ vhost')
+arg_parser.add_argument('--username', default=settings.RABBIT_USER,
                         help='RabbitMQ username')
-arg_parser.add_argument('--password', default=None,
+arg_parser.add_argument('--password', default=settings.RABBIT_PASS,
                         help='RabbitMQ password')
-arg_parser.add_argument('--input_queue', default='task_queue',
+arg_parser.add_argument('--input_queue', default=settings.RABBIT_INPUT_QUEUE,
                         help='Input queue name')
-arg_parser.add_argument('--output_queue', default='result_queue',
+arg_parser.add_argument('--output_queue', default=settings.RABBIT_OUTPUT_QUEUE,
                         help='Output queue name')
-arg_parser.add_argument('--output_routing_key', default='result_queue',
+arg_parser.add_argument('--output_routing_key',
+                        default=settings.RABBIT_OUTPUT_ROUTING_KEY,
                         help='Input routing key')
-arg_parser.add_argument('--process', default='ml',
+arg_parser.add_argument('--process', default=settings.PROCCESS_FUNC,
                         help='Message processing function')
-arg_parser.add_argument('--heartbeat', default=1800,
+arg_parser.add_argument('--heartbeat', default=settings.RABBIT_HEARTBEAT,
                         help='RabbitMQ heartbeat')
 args = arg_parser.parse_args()
 
