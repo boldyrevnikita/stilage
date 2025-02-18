@@ -3,16 +3,18 @@ from typing import List
 
 from src.rack_group import RackGroup
 from src.rack_info import RackInfo
-from src.zone import Zone
+from src.available_zone import AvailableZone
 
 
 class Packer:
-    def __init__(self, zones: List[Zone], rack_infos: List[RackInfo]):
+    def __init__(self, zones: List[AvailableZone], rack_infos: List[RackInfo]):
         self.zones = zones.copy()
         self.rack_infos = rack_infos.copy()
         self.rack_groups = []
 
     def pack(self) -> None:
+        """Pack racks into available zones.
+        """
         # Sort zones by available_area and height (highest first)
         self.zones.sort(key=lambda zone: zone.available_area_size,
                         reverse=True)

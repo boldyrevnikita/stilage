@@ -13,7 +13,7 @@ from src.input_generator import InputGenerator
 from src.packer import Packer
 from src.rack_info import RackInfo
 from src.visualizer import Visualizer
-from src.zone import Zone
+from src.available_zone import AvailableZone
 
 
 if __name__ == '__main__':
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     # -----------------------ZONE TEST-----------------------
 
-    # zone = Zone([(0, 0), (1, 0), (1, 1), (0, 1)], 2.2)
+    # zone = AvailableZone([(0, 0), (1, 0), (1, 1), (0, 1)], 2.2)
     # x, y = zone.geometry.exterior.xy
     # # wider lines
     # plt.plot(x, y, linewidth=4)
@@ -74,9 +74,9 @@ if __name__ == '__main__':
     # rack_info_3 = RackInfo(3, 0.5, 0.4, 4.1, 250, 20, 30, 1.0, 0.01, 0.01, 0.1,
     #                        0.1, 0.1)
 
-    # zone_1 = Zone([(1, 1), (8, 1), (8, 9.0), (1, 9)], 4.2)
-    # zone_2 = Zone([(11, 11), (19, 11), (19, 18), (11, 18)], 2.3)
-    # zone_3 = Zone([(12, 26.5), (16, 26.5), (16, 30), (12, 30)], 3.4)
+    # zone_1 = AvailableZone([(1, 1), (8, 1), (8, 9.0), (1, 9)], 4.2)
+    # zone_2 = AvailableZone([(11, 11), (19, 11), (19, 18), (11, 18)], 2.3)
+    # zone_3 = AvailableZone([(12, 26.5), (16, 26.5), (16, 30), (12, 30)], 3.4)
 
     # forbidden_zone_1 = ForbiddenZone([(9.8, 10), (10.2, 10), (10.2, 15), (9.8, 15)], 0.5)
     # forbidden_zone_2 = ForbiddenZone([(0, 11), (6, 11), (6, 11.4), (0, 11.4)], 0.5)

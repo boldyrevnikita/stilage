@@ -1,13 +1,16 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import argparse  # noqa: E402
-from src.input_generator import InputGenerator  # noqa: E402
+
 import pika  # noqa: E402
 
-from src.network import (Receiver, Sender, process_message_print)  # noqa: E402
+from src.input_generator import InputGenerator  # noqa: E402
+from src.network import (MessageHandler, Sender,  # noqa: E402
+                         process_message_print)
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('--host', default='localhost', help='RabbitMQ host')
@@ -79,9 +82,9 @@ if args.username and args.password:
 sender = Sender(args.host, args.output_queue,
                 args.output_routing_key,
                 args.port, args.vhost, credentials)
-receiver = Receiver(args.host, args.input_queue,
-                    process_message_print, None,
-                    args.port, args.vhost, credentials)
+receiver = MessageHandler(args.host, args.input_queue,
+                          process_message_print, None,
+                          args.port, args.vhost, credentials)
 
 sender.send(msg)
 receiver.receive()

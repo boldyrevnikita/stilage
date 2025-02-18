@@ -4,7 +4,7 @@ import numpy as np
 
 from src.building import Building
 from src.rack_info import RackInfo
-from src.zone import Zone
+from src.available_zone import AvailableZone
 
 
 class InputGenerator:
@@ -59,6 +59,14 @@ class InputGenerator:
         self.max_rack_info_num = max_rack_info_num
 
     def __generate_building(self, buildings: List[Building]) -> Building:
+        """Generate a new building.
+
+        Args:
+            buildings (List[Building]): existing buildings
+
+        Returns:
+            Building: a new building
+        """
         while True:
             x_0, y_0 = np.random.uniform(
                 0, self.max_building_size * self.max_building_num, 2)
@@ -75,8 +83,17 @@ class InputGenerator:
             if not any(building.intersects(b.walls) for b in buildings):
                 return building
 
-    def __generate_zone(self, zones: List[Zone],
-                        buildings: List[Building]) -> Zone:
+    def __generate_available_zone(self, zones: List[AvailableZone],
+                                  buildings: List[Building]) -> AvailableZone:
+        """Generate a new available (for occupancy) zone.
+
+        Args:
+            zones (List[AvailableZone]): existing available zones
+            buildings (List[Building]): existing buildings
+
+        Returns:
+            AvailableZone: a new available zone
+        """
         while True:
             building_idx = np.random.randint(0, len(buildings))
             building = buildings[building_idx]
@@ -94,8 +111,9 @@ class InputGenerator:
             height = np.random.uniform(self.min_zone_height,
                                        self.max_zone_height)
 
-            zone = Zone([(x_0, y_0), (x_1, y_0), (x_1, y_1), (x_0, y_1)],
-                        height)
+            zone = AvailableZone([(x_0, y_0), (x_1, y_0),
+                                  (x_1, y_1), (x_0, y_1)],
+                                 height)
 
             if (building.contains(zone.geometry)
                 and not any(z.geometry.intersects(zone.geometry)
@@ -103,6 +121,14 @@ class InputGenerator:
                 return zone
 
     def __generate_rack_info(self, rack_infos: List[RackInfo]) -> RackInfo:
+        """Generate a new type of racks.
+
+        Args:
+            rack_infos (List[RackInfo]): existing types of racks
+
+        Returns:
+            RackInfo: a new type of racks
+        """
         id = len(rack_infos)
         length = np.random.uniform(self.min_rack_size, self.max_rack_size)
         width = np.random.uniform(self.min_rack_size, self.max_rack_size)
@@ -126,8 +152,18 @@ class InputGenerator:
                         back_connection_distance, front_distance,
                         back_distance, side_distance)
 
-    def generate(self, random_seed=42) -> Tuple[List[Building], List[Zone],
+    def generate(self, random_seed=42) -> Tuple[List[Building],
+                                                List[AvailableZone],
                                                 List[RackInfo]]:
+        """Generate input data for the problem.
+
+        Args:
+            random_seed (int, optional): generator seed. Defaults to 42.
+
+        Returns:
+            Tuple[List[Building], List[AvailableZone], List[RackInfo]]:
+                buildings, available zones, and rack infos
+        """
         np.random.seed(random_seed)
 
         buildings = []
@@ -141,7 +177,7 @@ class InputGenerator:
 
         for _ in range(np.random.randint(self.min_zone_num,
                                          self.max_zone_num + 1)):
-            zone = self.__generate_zone(zones, buildings)
+            zone = self.__generate_available_zone(zones, buildings)
             zones.append(zone)
 
         for _ in range(np.random.randint(self.min_rack_info_num,

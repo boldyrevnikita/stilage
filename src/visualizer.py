@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from src.building import Building
 from src.forbidden_zone import ForbiddenZone
 from src.rack_group import RackGroup
-from src.zone import Zone
+from src.available_zone import AvailableZone
 
 
 class Visualizer():
@@ -17,11 +17,25 @@ class Visualizer():
         self.rack_colors = {}
 
     def generate_random_color(self) -> str:
+        """Generate random color.
+
+        Returns:
+            str: Random color in the format 'rgb(r, g, b)'
+        """
         return f'rgb{tuple(int(num) for num in np.random.rand(3,) * 255)}'
 
     def plot(self, building: List[Building], rack_groups: List[RackGroup],
-             rack_zones: List[Zone],
+             rack_zones: List[AvailableZone],
              forbiden_zones: List[ForbiddenZone] = []) -> None:
+        """Plot the buildings, rack groups, rack zones and forbidden zones.
+
+        Args:
+            building (List[Building]): buildings
+            rack_groups (List[RackGroup]): rack groups
+            rack_zones (List[AvailableZone]): available zones for racks
+            forbiden_zones (List[ForbiddenZone], optional): forbidden zones.
+                Defaults to [].
+        """
         self.fig = go.Figure()
         for b in building:
             self.fig.add_trace(go.Scatter(x=np.array(b.walls.exterior.xy[0]),
@@ -94,4 +108,6 @@ class Visualizer():
                 else included_names.add(trace.name))
 
     def show(self) -> None:
+        """Show the plot.
+        """
         self.fig.show()

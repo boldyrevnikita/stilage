@@ -18,6 +18,8 @@ class RackGroup:
             self.__init_racks()
 
     def __init_bounds(self) -> None:
+        """Initialize physical and restrictive bounds for rack group.
+        """
         x_0, y_0 = 0.0, 0.0
         x_1 = (x_0 + self.rack_info.length * self.group_length
                + self.rack_info.side_connection_distance
@@ -49,6 +51,8 @@ class RackGroup:
             [(x_0_p, y_0_p), (x_1_p, y_0_p), (x_1_p, y_1_p), (x_0_p, y_1_p)])
 
     def __init_racks(self) -> None:
+        """Initialize racks in the group.
+        """
         self.racks = []
 
         x = self.rack_info.side_distance
@@ -66,6 +70,12 @@ class RackGroup:
             self.__init_rack_row(x, y)
 
     def __init_rack_row(self, x: float, y: float) -> None:
+        """Initialize rack row.
+
+        Args:
+            x (float): starting x-coordinate of the row
+            y (float): starting y-coordinate of the row
+        """
         for _ in range(self.group_length):
             rack = shapely.geometry.Polygon([(x, y),
                                              (x + self.rack_info.length, y),
@@ -77,7 +87,7 @@ class RackGroup:
                 + self.rack_info.side_connection_distance
 
     def translate(self, x_diff: float, y_diff: float) -> None:
-        """Shift geometry by specified offset values.
+        """Shift rack group by specified offset values.
 
         Args:
             x_diff (float): x-axis offset value
@@ -92,9 +102,9 @@ class RackGroup:
             self.restrictive_bounds, x_diff, y_diff)
 
     def rotate90(self) -> None:
-        """Rotate geometry counterclockwise by 90 degrees around
+        """Rotate rack group counterclockwise by 90 degrees around
         (x_min, y_min) bounding box point, then shift it to the right
-        to preserve (x_min, y_min) point position.
+        to preserve (x_min, y_min) bounding box point position.
         """
         bounds = self.restrictive_bounds.bounds
         rot_point = (bounds[0], bounds[1])
