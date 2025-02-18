@@ -1,0 +1,86 @@
+stages:
+  - build
+  - deploy
+  - check-deploy
+
+variables:
+  DOCKER_IMG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  DOCKER_IMG_REF: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+.stage_variables: &stage-vars
+  variables:
+    ENV: stage
+    STACK_NAME: ${CI_PROJECT_NAME}-stage
+    COMPOSE_PATH: deployments/stage.yml
+  tags:
+    - mlx-dev
+  only:
+    - stage
+
+.prod_variables: &prod-vars
+  variables:
+    ENV: prod
+    STACK_NAME: ${CI_PROJECT_NAME}-prod
+    COMPOSE_PATH: deployments/prod.yml
+  tags:
+    - bloggers
+  only:
+    - master
+
+## build stage
+.build: &build
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $DOCKER_IMG_REF || true
+    - docker build -t $DOCKER_IMG_REF .
+    - docker tag $DOCKER_IMG_REF $DOCKER_IMG
+    - docker push $DOCKER_IMG
+    - docker push $DOCKER_IMG_REF
+    - docker rmi $DOCKER_IMG
+    - docker rmi $DOCKER_IMG_REF
+
+.deploy: &deploy
+  stage: deploy
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker stack deploy -c $COMPOSE_PATH --prune --with-registry-auth $STACK_NAME
+    - docker service update stillage-api-stage_inkscape --mount-add type=bind,source=/s3/minio/stillage/svg,target=/config/svg
+
+.check-deploy: &check-deploy
+  stage: check-deploy
+  image: gdiener/dind-bash:v1.1.0
+  script:
+    - docker login -u $GROUP_CI_REGISTRY_USER -p $GROUP_CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker run --rm $CHECK_DEPLOY_IMAGE | bash /dev/stdin $STACK_NAME
+
+build-stage:
+  <<: *build
+  <<: *stage-vars
+
+deploy-stage:
+  needs: [ build-stage ]
+  <<: *deploy
+  <<: *stage-vars
+
+check-deploy-stage:
+  needs: [ deploy-stage ]
+  <<: *check-deploy
+  <<: *stage-vars
+
+build-prod:
+  <<: *build
+  <<: *prod-vars
+
+deploy-prod:
+  needs: [ build-prod ]
+  <<: *deploy
+  <<: *prod-vars
+
+check-deploy-prod:
+  needs: [ deploy-prod ]
+  <<: *check-deploy
+  <<: *prod-vars
