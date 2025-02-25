@@ -8,6 +8,18 @@ class AvailableZone:
         self.geometry = shapely.geometry.Polygon(polygon)
         self.height = height
         self.available_area_size = shapely.area(self.geometry)
+        self.__check_if_geometry_match_bounding_box()
+
+    def __check_if_geometry_match_bounding_box(self):
+        """Checks if the Available Zone boundary (geometry) is a rectangle
+        with sides parallel to axis
+
+        Raises:
+            ValueError: Available Zone boundary is not a rectangle
+        """
+        if self.geometry.area != self.geometry.envelope.area:
+            raise ValueError("Available Zone boundary should be a rectangle "
+                             "with sides parallel to axis")
 
     def __get_split_zones(self, p0: Tuple[float, float],
                           p1: Tuple[float, float],

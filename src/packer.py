@@ -95,6 +95,6 @@ class Packer:
 
             if not is_successful_rack_placement:
                 warnings.warn("No space left for "
-                              f"{self.rack_infos[0].quantity_left}"
+                              f"{int(self.rack_infos[0].quantity_left)} "
                               f"racks with id {self.rack_infos[0].id}")
                 self.rack_infos.pop(0)
