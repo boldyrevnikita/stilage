@@ -12,4 +12,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD python3.10 app.py
+CMD python3.10 -u app.py
