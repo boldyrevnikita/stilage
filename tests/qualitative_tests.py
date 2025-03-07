@@ -11,7 +11,7 @@ from src.building import Building
 from src.forbidden_zone import ForbiddenZone
 from src.input_generator import InputGenerator
 from src.packer import Packer
-from src.rack_info import RackInfo
+from src.rack import RackSection
 from src.visualizer import Visualizer
 from src.available_zone import AvailableZone
 
@@ -19,7 +19,7 @@ from src.available_zone import AvailableZone
 if __name__ == '__main__':
     # -----------------------RACK GROUP TEST-----------------------
 
-    # rack_info = RackInfo(0.6, 0.3, 2.2, 20, 10, 30, 1.0, 0.01, 0.01, 0.4,
+    # rack_info = RackSection(0.6, 0.3, 2.2, 20, 10, 30, 1.0, 0.01, 0.01, 0.4,
     #                      0.2, 0.2)
     # rack_group = RackGroup(rack_info, 10, 6)
 
@@ -67,11 +67,11 @@ if __name__ == '__main__':
     # # Random polygon up to building_1
     # building_2 = Building([(3, 23), (25, 27), (27, 36), (20, 30), (15, 35), (10, 30)], 0.5)
 
-    # rack_info_1 = RackInfo(1, 0.4, 0.3, 2.2, 100, 10, 30, 1.0, 0.01, 0.01, 0.1,
+    # rack_info_1 = RackSection(1, 0.4, 0.3, 2.2, 100, 10, 30, 1.0, 0.01, 0.01, 0.1,
     #                        0.1, 0.1)
-    # rack_info_2 = RackInfo(2, 0.3, 0.2, 3.3, 250, 20, 30, 1.0, 0.01, 0.01, 0.1,
+    # rack_info_2 = RackSection(2, 0.3, 0.2, 3.3, 250, 20, 30, 1.0, 0.01, 0.01, 0.1,
     #                        0.1, 0.1)
-    # rack_info_3 = RackInfo(3, 0.5, 0.4, 4.1, 250, 20, 30, 1.0, 0.01, 0.01, 0.1,
+    # rack_info_3 = RackSection(3, 0.5, 0.4, 4.1, 250, 20, 30, 1.0, 0.01, 0.01, 0.1,
     #                        0.1, 0.1)
 
     # zone_1 = AvailableZone([(1, 1), (8, 1), (8, 9.0), (1, 9)], 4.2)

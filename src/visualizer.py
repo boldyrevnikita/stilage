@@ -69,7 +69,7 @@ class Visualizer():
                     line=dict(color='red', dash='dot')))
 
         for rack_group in rack_groups:
-            rack_group_id = rack_group.rack_info.id
+            rack_group_id = rack_group.rack_section_info.id
             if rack_group_id not in self.rack_colors:
                 self.rack_colors[rack_group_id] = self.generate_random_color()
 
@@ -92,11 +92,28 @@ class Visualizer():
 
             for rack in rack_group.racks:
                 self.fig.add_trace(
-                    go.Scatter(x=np.array(rack.exterior.xy[0]),
-                               y=np.array(rack.exterior.xy[1]),
+                    go.Scatter(x=np.array(rack.get_exterior().xy[0]),
+                               y=np.array(rack.get_exterior().xy[1]),
                                name=f'Стеллажи типа {rack_group_id}',
                                line=dict(color=self.rack_colors[
                                          rack_group_id])))
+                shelfs_exteriors = rack.get_shelfs_exteriors()
+                for shelf_exterior in shelfs_exteriors:
+                    self.fig.add_trace(
+                        go.Scatter(x=np.array(shelf_exterior.xy[0]),
+                                   y=np.array(shelf_exterior.xy[1]),
+                                   name=f'Полки типа {rack_group_id}',
+                                   line=dict(color=self.rack_colors[
+                                             rack_group_id],
+                                             )))
+                pillars_exteriors = rack.get_pillars_exteriors()
+                for pillar_exterior in pillars_exteriors:
+                    self.fig.add_trace(
+                        go.Scatter(x=np.array(pillar_exterior.xy[0]),
+                                   y=np.array(pillar_exterior.xy[1]),
+                                   name=f'Стойки типа {rack_group_id}',
+                                   line=dict(color=self.rack_colors[
+                                             rack_group_id])))
 
         self.fig.update_layout(showlegend=True)
 

@@ -3,7 +3,7 @@ from typing import List, Tuple
 import numpy as np
 
 from src.building import Building
-from src.rack_info import RackInfo
+from src.rack import RackSection
 from src.available_zone import AvailableZone
 
 
@@ -19,8 +19,10 @@ class InputGenerator:
                  min_rack_size: float = 0.3, max_rack_size: float = 1,
                  min_rack_height: float = 2, max_rack_height: float = 4,
                  min_rack_num: int = 200, max_rack_num: int = 400,
-                 min_rack_connection_distance: float = 0.01,
-                 max_rack_connection_distance: float = 0.05,
+                 min_rack_back_connection_distance: float = 0.01,
+                 max_rack_back_connection_distance: float = 0.05,
+                 min_rack_pillar_width: float = 0.05,
+                 max_rack_pillar_width: float = 0.1,
                  min_rack_front_distance: float = 1.0,
                  max_rack_front_distance: float = 2.0,
                  min_rack_back_distance: float = 0.5,
@@ -47,8 +49,12 @@ class InputGenerator:
         self.max_rack_height = max_rack_height
         self.min_rack_num = min_rack_num
         self.max_rack_num = max_rack_num
-        self.min_rack_connection_distance = min_rack_connection_distance
-        self.max_rack_connection_distance = max_rack_connection_distance
+        self.min_rack_back_connection_distance = \
+            min_rack_back_connection_distance
+        self.max_rack_back_connection_distance = \
+            max_rack_back_connection_distance
+        self.min_rack_pillar_width = min_rack_pillar_width
+        self.max_rack_pillar_width = max_rack_pillar_width
         self.min_rack_front_distance = min_rack_front_distance
         self.max_rack_front_distance = max_rack_front_distance
         self.min_rack_back_distance = min_rack_back_distance
@@ -120,26 +126,27 @@ class InputGenerator:
                             for z in zones)):
                 return zone
 
-    def __generate_rack_info(self, rack_infos: List[RackInfo]) -> RackInfo:
+    def __generate_rack_info(self, rack_infos: List[RackSection]
+                             ) -> RackSection:
         """Generate a new type of racks.
 
         Args:
-            rack_infos (List[RackInfo]): existing types of racks
+            rack_infos (List[RackSection]): existing types of racks
 
         Returns:
-            RackInfo: a new type of racks
+            RackSection: a new type of racks
         """
         id = len(rack_infos)
         length = np.random.uniform(self.min_rack_size, self.max_rack_size)
         width = np.random.uniform(self.min_rack_size, self.max_rack_size)
         height = np.random.uniform(self.min_rack_height, self.max_rack_height)
         abs_quantity = np.random.randint(self.min_rack_num, self.max_rack_num)
-        side_connection_distance = np.random.uniform(
-            self.min_rack_connection_distance,
-            self.max_rack_connection_distance)
+        pillar_width = np.random.uniform(
+            self.min_rack_pillar_width,
+            self.max_rack_pillar_width)
         back_connection_distance = np.random.uniform(
-            self.min_rack_connection_distance,
-            self.max_rack_connection_distance)
+            self.min_rack_back_connection_distance,
+            self.max_rack_back_connection_distance)
         front_distance = np.random.uniform(self.min_rack_front_distance,
                                            self.max_rack_front_distance)
         back_distance = np.random.uniform(self.min_rack_back_distance,
@@ -147,21 +154,21 @@ class InputGenerator:
         side_distance = np.random.uniform(self.min_rack_side_distance,
                                           self.max_rack_side_distance)
 
-        return RackInfo(id, length, width, height, abs_quantity, abs_quantity,
-                        abs_quantity, 1, side_connection_distance,
-                        back_connection_distance, front_distance,
-                        back_distance, side_distance)
+        return RackSection(id, length, width, height, abs_quantity,
+                           abs_quantity, abs_quantity, 1, pillar_width,
+                           back_connection_distance, front_distance,
+                           back_distance, side_distance)
 
     def generate(self, random_seed=42) -> Tuple[List[Building],
                                                 List[AvailableZone],
-                                                List[RackInfo]]:
+                                                List[RackSection]]:
         """Generate input data for the problem.
 
         Args:
             random_seed (int, optional): generator seed. Defaults to 42.
 
         Returns:
-            Tuple[List[Building], List[AvailableZone], List[RackInfo]]:
+            Tuple[List[Building], List[AvailableZone], List[RackSection]]:
                 buildings, available zones, and rack infos
         """
         np.random.seed(random_seed)

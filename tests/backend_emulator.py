@@ -66,7 +66,7 @@ for idx, rack_info in enumerate(rack_infos):
         "min": rack_info.min_quantity,
         "relative": rack_info.rel_quantity,
         "max": rack_info.max_quantity,
-        "side_connection_clearance": rack_info.side_connection_distance,
+        "pillar_width": rack_info.pillar_width,
         "back_connection_clearance": rack_info.back_connection_distance,
         "front_clearance": rack_info.front_distance,
         "side_clearance": rack_info.side_distance,

@@ -6,7 +6,7 @@ import pika
 
 from src.available_zone import AvailableZone
 from src.packer import Packer
-from src.rack_info import RackInfo
+from src.rack import RackSection
 
 
 class Sender:
@@ -103,7 +103,7 @@ def process_message_ml(message: Any, sender: Sender):
         sender (Sender): sender to send the results
     """
     available_zones = []
-    rack_infos = []
+    rack_sections = []
 
     print('Message received')
 
@@ -112,37 +112,43 @@ def process_message_ml(message: Any, sender: Sender):
             available_zones.append(AvailableZone(zone['boundary'],
                                                  zone['height']))
 
-        for rack_info in message['rack_types']:
-            rack_infos.append(RackInfo(
-                id=rack_info['id'],
-                length=rack_info['length'],
-                width=rack_info['width'],
-                height=rack_info['height'],
-                abs_quantity=rack_info['absolute'],
-                min_quantity=rack_info['min'],
-                rel_quantity=rack_info['relative'],
-                max_quantity=rack_info['max'],
-                side_connection_distance=rack_info[
-                    'side_connection_clearance'],
-                back_connection_distance=rack_info[
+        for rack_section in message['rack_types']:
+            rack_sections.append(RackSection(
+                id=rack_section['id'],
+                length=rack_section['length'],
+                width=rack_section['width'],
+                height=rack_section['height'],
+                abs_quantity=rack_section['absolute'],
+                min_quantity=rack_section['min'],
+                rel_quantity=rack_section['relative'],
+                max_quantity=rack_section['max'],
+                pillar_width=rack_section[
+                    'pillar_width'],
+                back_connection_distance=rack_section[
                     'back_connection_clearance'],
-                front_distance=rack_info['front_clearance'],
-                side_distance=rack_info['side_clearance'],
-                back_distance=rack_info['back_clearance']))
+                front_distance=rack_section['front_clearance'],
+                side_distance=rack_section['side_clearance'],
+                back_distance=rack_section['back_clearance']))
 
-        packer = Packer(available_zones, rack_infos)
+        packer = Packer(available_zones, rack_sections)
         packer.pack()
+
+        # TODO: rewrite the following code
 
         racks = {}
         for rack_group in packer.rack_groups:
-            rack_id = str(rack_group.rack_info.id)
+            rack_id = str(rack_group.rack_section_info.id)
 
             if rack_id not in racks:
                 racks[rack_id] = []
 
             for rack in rack_group.racks:
-                racks[rack_id].append(
-                    list(zip(*rack.exterior.xy)))
+                rack_info = {
+                    'boundary': list(zip(*rack.get_exterior().xy)),
+                    'sections_in_length': rack.get_sections_in_length(),
+                    'sections_in_width': rack.get_sections_in_width()
+                }
+                racks[rack_id].append(rack_info)
     except Exception:
         print(traceback.format_exc())
         output_message = {
