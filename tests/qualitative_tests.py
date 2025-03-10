@@ -14,6 +14,7 @@ from src.packer import Packer
 from src.rack import RackSection
 from src.visualizer import Visualizer
 from src.available_zone import AvailableZone
+from src.postprocess import postprocess
 
 
 if __name__ == '__main__':
@@ -101,9 +102,15 @@ if __name__ == '__main__':
     buildings, zones, rack_infos = input_generator.generate(
         random_seed=args.random_seed)
 
+    forbidden_zone_1 = ForbiddenZone([(65, 155), (70, 163), (72, 163), (67, 157)], 0.5)
+    forbidden_zone_2 = ForbiddenZone([(73, 150), (74, 162), (75, 162), (73.5, 154)], 0.5)
+    forbidden_zone_3 = ForbiddenZone([(11, 31), (17, 31), (17, 28), (18, 28), (18, 31.5), (11, 31.5)], 0.5)
+    forbiden_zones = [forbidden_zone_1, forbidden_zone_2, forbidden_zone_3]
+    
     packer = Packer(zones, rack_infos)
-    packer.pack()
+    rack_groups = packer.pack()
+    rack_groups = postprocess(rack_groups, forbiden_zones)
 
     visualizer = Visualizer()
-    visualizer.plot(buildings, packer.rack_groups, zones)
+    visualizer.plot(buildings, packer.rack_groups, zones, forbiden_zones)
     visualizer.show()

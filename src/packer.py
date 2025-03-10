@@ -13,7 +13,7 @@ class Packer:
         self.rack_sections = rack_sections.copy()
         self.rack_groups = []
 
-    def pack(self) -> None:
+    def pack(self) -> List[RackGroup]:
         """Pack racks into available zones.
         """
         # Sort zones by available_area and height (highest first)
@@ -101,3 +101,5 @@ class Packer:
                     f"{int(self.rack_sections[0].quantity_left)} "
                     f"rack sections with id {self.rack_sections[0].id}")
                 self.rack_sections.pop(0)
+
+        return self.rack_groups.copy()

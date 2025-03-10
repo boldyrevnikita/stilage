@@ -64,16 +64,33 @@ class Rack:
                 self.pillar_rows[i][j] = shapely.affinity.rotate(
                     pillar, angle, origin)
 
+    def get_rack_components(self) -> List[shapely.geometry.Polygon]:
+        """Get the rack components.
+
+        Returns:
+            List: rack components
+        """
+        rack_components = []
+        [rack_components.extend(row) for row in self.shelf_rows]
+        [rack_components.extend(row) for row in self.pillar_rows]
+        return rack_components
+
+    def get_convex_hull(self) -> shapely.geometry.Polygon:
+        """Get the convex hull of the rack.
+
+        Returns:
+            shapely.geometry.Polygon: convex hull of the rack
+        """
+        rack_components = self.get_rack_components()
+        return shapely.MultiPolygon(rack_components).convex_hull
+
     def get_exterior(self) -> shapely.geometry.polygon.LinearRing:
         """Get the exterior of the rack.
 
         Returns:
             shapely.geometry.Polygon: exterior of the rack
         """
-        rack_components = []
-        [rack_components.extend(row) for row in self.shelf_rows]
-        [rack_components.extend(row) for row in self.pillar_rows]
-        return shapely.MultiPolygon(rack_components).convex_hull.exterior
+        return self.get_convex_hull().exterior
 
     def get_shelfs_exteriors(self
                              ) -> List[shapely.geometry.polygon.LinearRing]:

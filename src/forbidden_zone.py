@@ -23,4 +23,4 @@ class ForbiddenZone:
             bool: True if the object intersects with the area of the forbidden
             zone or its clearance, False otherwise
         """
-        return self.geometry_with_clearance.contains(object)
+        return self.geometry_with_clearance.intersects(object)
