@@ -48,7 +48,6 @@ variables:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker stack deploy -c $COMPOSE_PATH --prune --with-registry-auth $STACK_NAME
-    - docker service update stillage-api-stage_inkscape --mount-add type=bind,source=/s3/minio/stillage/svg,target=/config/svg
 
 .check-deploy: &check-deploy
   stage: check-deploy
