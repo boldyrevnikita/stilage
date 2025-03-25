@@ -20,8 +20,8 @@ if __name__ == '__main__':
     input_generator = InputGenerator()
     buildings, available_zones, forbiden_zones, rack_infos, roads_width = \
         input_generator.generate(random_seed=args.random_seed)
-    forbiden_zones, rack_infos = preprocess(forbiden_zones, rack_infos,
-                                            roads_width)
+    available_zones, forbiden_zones, rack_infos = preprocess(
+        available_zones, forbiden_zones, rack_infos, roads_width)
 
     packer = Packer(available_zones, rack_infos)
     rack_groups = packer.pack()

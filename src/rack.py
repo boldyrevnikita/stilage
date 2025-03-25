@@ -28,6 +28,15 @@ class RackSection:
         self.back_distance = back_distance
         self.side_distance = side_distance
 
+    def update_abs_quantity(self, quantity: int) -> None:
+        """Update the absolute quantity.
+
+        Args:
+            quantity (int): quantity
+        """
+        self.abs_quantity = quantity
+        self.quantity_left = quantity
+
 
 class Rack:
     def __init__(self, shelf_rows: List[List[shapely.geometry.Polygon]],

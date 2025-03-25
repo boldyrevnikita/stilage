@@ -141,8 +141,8 @@ def process_message_ml(message: Any, sender: Sender):
                 back_distance=rack_section['back_clearance']))
 
         roads_width = message['roads_width']
-        forbidden_zones, rack_sections = preprocess(forbidden_zones,
-                                                    rack_sections, roads_width)
+        available_zones, forbidden_zones, rack_sections = preprocess(
+            available_zones, forbidden_zones, rack_sections, roads_width)
 
         packer = Packer(available_zones, rack_sections)
         rack_groups = packer.pack()
