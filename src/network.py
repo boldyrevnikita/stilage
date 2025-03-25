@@ -160,7 +160,8 @@ def process_message_ml(message: Any, sender: Sender):
                     'boundary': list(zip(*rack.get_exterior().xy)),
                     'sections_in_length': rack.get_sections_in_length(),
                     'sections_in_width': rack.get_sections_in_width(),
-                    'sections_in_height': rack.get_sections_in_height()
+                    'sections_in_height': rack.get_sections_in_height(),
+                    'orientation': 0
                 }
                 racks[rack_id].append(rack_info)
     except Exception:
