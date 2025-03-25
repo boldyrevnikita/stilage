@@ -5,10 +5,11 @@ from typing import Any, Callable, Optional, Union
 import pika
 
 from src.available_zone import AvailableZone
-from src.packer import Packer
-from src.rack import RackSection
-from src.postprocess import postprocess
 from src.forbidden_zone import ForbiddenZone
+from src.packer import Packer
+from src.postprocess import postprocess
+from src.preprocess import preprocess
+from src.rack import RackSection
 
 
 class Sender:
@@ -136,6 +137,10 @@ def process_message_ml(message: Any, sender: Sender):
                 front_distance=rack_section['front_clearance'],
                 side_distance=rack_section['side_clearance'],
                 back_distance=rack_section['back_clearance']))
+
+        roads_width = message['roads_width']
+        forbidden_zones, rack_sections = preprocess(forbidden_zones,
+                                                    rack_sections, roads_width)
 
         packer = Packer(available_zones, rack_sections)
         rack_groups = packer.pack()

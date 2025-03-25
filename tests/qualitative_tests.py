@@ -9,6 +9,7 @@ from src.input_generator import InputGenerator  # noqa: E402
 from src.packer import Packer  # noqa: E402
 from src.visualizer import Visualizer  # noqa: E402
 from src.postprocess import postprocess  # noqa: E402
+from src.preprocess import preprocess  # noqa: E402
 
 
 if __name__ == '__main__':
@@ -17,8 +18,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     input_generator = InputGenerator()
-    buildings, available_zones, forbiden_zones, rack_infos = \
+    buildings, available_zones, forbiden_zones, rack_infos, roads_width = \
         input_generator.generate(random_seed=args.random_seed)
+    forbiden_zones, rack_infos = preprocess(forbiden_zones, rack_infos,
+                                            roads_width)
 
     packer = Packer(available_zones, rack_infos)
     rack_groups = packer.pack()

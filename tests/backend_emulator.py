@@ -30,7 +30,7 @@ arg_parser.add_argument('--random_seed', type=int, default=42)
 args = arg_parser.parse_args()
 
 input_generator = InputGenerator()
-buildings, available_zones, forbidden_zones, rack_infos = \
+buildings, available_zones, forbidden_zones, rack_infos, roads_width = \
     input_generator.generate(random_seed=args.random_seed)
 
 msg = {
@@ -39,6 +39,7 @@ msg = {
     "available_zones": [],
     "restricted_zones": [],
     "rack_types": [],
+    "roads_width": roads_width
 }
 
 for idx, building in enumerate(buildings):

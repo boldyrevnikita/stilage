@@ -37,7 +37,9 @@ class InputGenerator:
                  min_forbiden_zone_points: int = 3,
                  max_forbiden_zone_points: int = 6,
                  min_forbiden_zone_clearance: float = 0.5,
-                 max_forbiden_zone_clearance: float = 1.0) -> None:
+                 max_forbiden_zone_clearance: float = 1.0,
+                 min_roads_width: float = 1.0,
+                 max_roads_width: float = 2.0) -> None:
         self.min_building_size = min_building_size
         self.max_building_size = max_building_size
         self.min_distance_from_walls = min_distance_from_walls
@@ -76,6 +78,8 @@ class InputGenerator:
         self.max_forbiden_zone_points = max_forbiden_zone_points
         self.min_forbiden_zone_clearance = min_forbiden_zone_clearance
         self.max_forbiden_zone_clearance = max_forbiden_zone_clearance
+        self.min_roads_width = min_roads_width
+        self.max_roads_width = max_roads_width
 
     def __generate_building(self, buildings: List[Building]) -> Building:
         """Generate a new building.
@@ -211,7 +215,8 @@ class InputGenerator:
     def generate(self, random_seed=42) -> Tuple[List[Building],
                                                 List[AvailableZone],
                                                 List[ForbiddenZone],
-                                                List[RackSection]]:
+                                                List[RackSection],
+                                                float]:
         """Generate input data for the problem.
 
         Args:
@@ -219,9 +224,9 @@ class InputGenerator:
 
         Returns:
             Tuple[List[Building], List[AvailableZone],
-                List[ForbiddenZone] List[RackSection]]:
-                buildings, available zones, forbiden zones
-                and rack infos
+                List[ForbiddenZone], List[RackSection], float]:
+                buildings, available zones, forbiden zones, rack infos
+                and roads width
         """
         np.random.seed(random_seed)
 
@@ -250,4 +255,8 @@ class InputGenerator:
             rack_info = self.__generate_rack_info(rack_infos)
             rack_infos.append(rack_info)
 
-        return buildings, availavle_zones, forbidden_zones, rack_infos
+        roads_width = np.random.uniform(self.min_roads_width,
+                                        self.max_roads_width)
+
+        return (buildings, availavle_zones, forbidden_zones, rack_infos,
+                roads_width)
