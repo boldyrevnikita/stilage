@@ -20,24 +20,26 @@ arg_parser.add_argument('--username', default=None,
                         help='RabbitMQ username')
 arg_parser.add_argument('--password', default=None,
                         help='RabbitMQ password')
-arg_parser.add_argument('--input_queue', default='result_queue',
+arg_parser.add_argument('--input_queue', default='output_queue',
                         help='Input queue name')
-arg_parser.add_argument('--output_queue', default='task_queue',
+arg_parser.add_argument('--output_queue', default='input_queue',
                         help='Output queue name')
-arg_parser.add_argument('--output_routing_key', default='task_queue',
+arg_parser.add_argument('--output_routing_key', default='input_queue',
                         help='Input routing key')
 arg_parser.add_argument('--random_seed', type=int, default=42)
 args = arg_parser.parse_args()
 
 input_generator = InputGenerator()
-buildings, zones, rack_infos = input_generator.generate(
-    random_seed=args.random_seed)
+buildings, available_zones, forbidden_zones, rack_infos, roads_width = \
+    input_generator.generate(random_seed=args.random_seed)
 
 msg = {
     "task_id": '1'*32,
     "buildings": [],
     "available_zones": [],
+    "restricted_zones": [],
     "rack_types": [],
+    "roads_width": roads_width
 }
 
 for idx, building in enumerate(buildings):
@@ -48,7 +50,7 @@ for idx, building in enumerate(buildings):
     }
     msg["buildings"].append(building_dict)
 
-for idx, zone in enumerate(zones):
+for idx, zone in enumerate(available_zones):
     zone_dict = {
         "boundary": list(zip(*zone.geometry.exterior.xy)),
         "height": zone.height,
@@ -56,12 +58,22 @@ for idx, zone in enumerate(zones):
     }
     msg["available_zones"].append(zone_dict)
 
+for idx, zone in enumerate(forbidden_zones):
+    zone_dict = {
+        "boundary": list(zip(*zone.geometry.exterior.xy)),
+        "clearance": zone.distance_from_zone,
+        "id": str(idx) + str(3)
+    }
+    msg["restricted_zones"].append(zone_dict)
+
 for idx, rack_info in enumerate(rack_infos):
     rack_info_dict = {
         "id": rack_info.id,
         "length": rack_info.length,
         "width": rack_info.width,
-        "height": rack_info.height,
+        "height_0": rack_info.height_0,
+        "height_i": rack_info.height_i,
+        "height_delta": rack_info.height_delta,
         "absolute": rack_info.abs_quantity,
         "min": rack_info.min_quantity,
         "relative": rack_info.rel_quantity,

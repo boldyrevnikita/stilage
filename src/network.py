@@ -5,7 +5,10 @@ from typing import Any, Callable, Optional, Union
 import pika
 
 from src.available_zone import AvailableZone
+from src.forbidden_zone import ForbiddenZone
 from src.packer import Packer
+from src.postprocess import postprocess
+from src.preprocess import preprocess
 from src.rack import RackSection
 
 
@@ -103,6 +106,7 @@ def process_message_ml(message: Any, sender: Sender):
         sender (Sender): sender to send the results
     """
     available_zones = []
+    forbidden_zones = []
     rack_sections = []
 
     print('Message received')
@@ -112,12 +116,18 @@ def process_message_ml(message: Any, sender: Sender):
             available_zones.append(AvailableZone(zone['boundary'],
                                                  zone['height']))
 
+        for zone in message['restricted_zones']:
+            forbidden_zones.append(ForbiddenZone(zone['boundary'],
+                                                 zone['clearance']))
+
         for rack_section in message['rack_types']:
             rack_sections.append(RackSection(
                 id=rack_section['id'],
                 length=rack_section['length'],
                 width=rack_section['width'],
-                height=rack_section['height'],
+                height_0=rack_section['height_0'],
+                height_i=rack_section['height_i'],
+                height_delta=rack_section['height_delta'],
                 abs_quantity=rack_section['absolute'],
                 min_quantity=rack_section['min'],
                 rel_quantity=rack_section['relative'],
@@ -130,13 +140,16 @@ def process_message_ml(message: Any, sender: Sender):
                 side_distance=rack_section['side_clearance'],
                 back_distance=rack_section['back_clearance']))
 
-        packer = Packer(available_zones, rack_sections)
-        packer.pack()
+        roads_width = message['roads_width']
+        available_zones, forbidden_zones, rack_sections = preprocess(
+            available_zones, forbidden_zones, rack_sections, roads_width)
 
-        # TODO: rewrite the following code
+        packer = Packer(available_zones, rack_sections)
+        rack_groups = packer.pack()
+        rack_groups = postprocess(rack_groups, forbidden_zones)
 
         racks = {}
-        for rack_group in packer.rack_groups:
+        for rack_group in rack_groups:
             rack_id = str(rack_group.rack_section_info.id)
 
             if rack_id not in racks:
@@ -146,7 +159,9 @@ def process_message_ml(message: Any, sender: Sender):
                 rack_info = {
                     'boundary': list(zip(*rack.get_exterior().xy)),
                     'sections_in_length': rack.get_sections_in_length(),
-                    'sections_in_width': rack.get_sections_in_width()
+                    'sections_in_width': rack.get_sections_in_width(),
+                    'sections_in_height': rack.get_sections_in_height(),
+                    'orientation': 0
                 }
                 racks[rack_id].append(rack_info)
     except Exception:

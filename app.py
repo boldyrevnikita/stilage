@@ -8,11 +8,6 @@ from src.network import (MessageHandler, Sender, process_message_ml,
 
 settings = Settings()
 arg_parser = argparse.ArgumentParser()
-print(settings.RABBIT_HOST)
-print(settings.RABBIT_PORT)
-print(settings.RABBIT_VHOST)
-print(settings.RABBIT_USER)
-print(settings.RABBIT_PASS)
 arg_parser.add_argument('--host', default=settings.RABBIT_HOST,
                         help='RabbitMQ host')
 arg_parser.add_argument('--port', default=settings.RABBIT_PORT,
