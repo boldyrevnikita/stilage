@@ -3,7 +3,8 @@ from typing import List
 
 
 class RackSection:
-    def __init__(self, id: int, length: float, width: float, height: float,
+    def __init__(self, id: int, length: float, width: float, height_0: float,
+                 height_i: float, height_delta: float,
                  abs_quantity: int, min_quantity: int, max_quantity: int,
                  rel_quantity: float,
                  pillar_width: float,
@@ -13,7 +14,9 @@ class RackSection:
         self.id = id
         self.length = length
         self.width = width
-        self.height = height
+        self.height_0 = height_0
+        self.height_i = height_i
+        self.height_delta = height_delta
         self.abs_quantity = abs_quantity
         self.min_quantity = min_quantity
         self.max_quantity = max_quantity
@@ -28,9 +31,11 @@ class RackSection:
 
 class Rack:
     def __init__(self, shelf_rows: List[List[shapely.geometry.Polygon]],
-                 pillar_rows: List[List[shapely.geometry.Polygon]]):
+                 pillar_rows: List[List[shapely.geometry.Polygon]],
+                 sections_in_height: int):
         self.shelf_rows = shelf_rows
         self.pillar_rows = pillar_rows
+        self.sections_in_height = sections_in_height
 
     def translate(self, x_diff: float, y_diff: float) -> None:
         """Translate the rack.
@@ -133,3 +138,11 @@ class Rack:
             int: number of sections in width
         """
         return len(self.shelf_rows)
+
+    def get_sections_in_height(self) -> int:
+        """Get the number of sections in height.
+
+        Returns:
+            int: number of sections in height
+        """
+        return self.sections_in_height

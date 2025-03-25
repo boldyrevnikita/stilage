@@ -125,7 +125,9 @@ def process_message_ml(message: Any, sender: Sender):
                 id=rack_section['id'],
                 length=rack_section['length'],
                 width=rack_section['width'],
-                height=rack_section['height'],
+                height_0=rack_section['height_0'],
+                height_i=rack_section['height_i'],
+                height_delta=rack_section['height_delta'],
                 abs_quantity=rack_section['absolute'],
                 min_quantity=rack_section['min'],
                 rel_quantity=rack_section['relative'],
@@ -157,7 +159,8 @@ def process_message_ml(message: Any, sender: Sender):
                 rack_info = {
                     'boundary': list(zip(*rack.get_exterior().xy)),
                     'sections_in_length': rack.get_sections_in_length(),
-                    'sections_in_width': rack.get_sections_in_width()
+                    'sections_in_width': rack.get_sections_in_width(),
+                    'sections_in_height': rack.get_sections_in_height()
                 }
                 racks[rack_id].append(rack_info)
     except Exception:

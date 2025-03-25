@@ -5,10 +5,11 @@ from src.rack import RackSection, Rack
 
 class RackGroup:
     def __init__(self, rack_section_info: RackSection, group_length: int,
-                 group_width: int, init_racks=True):
+                 group_width: int, sections_in_height: int, init_racks=True):
         self.rack_section_info = rack_section_info
         self.group_length = group_length
         self.group_width = group_width
+        self.sections_in_height = sections_in_height
         self.racks = []
         self.physical_bounds = None
         self.restrictive_bounds = None
@@ -60,7 +61,8 @@ class RackGroup:
         x = self.rack_section_info.side_distance
         y = self.rack_section_info.back_distance
         shelf_row_1, pillar_row_1 = self.__create_rack_row(x, y)
-        self.racks.append(Rack([shelf_row_1], [pillar_row_1]))
+        self.racks.append(Rack([shelf_row_1], [pillar_row_1],
+                               self.sections_in_height))
 
         for _ in range((self.group_width - 1) // 2):
             y += (self.rack_section_info.width
@@ -71,13 +73,15 @@ class RackGroup:
             shelf_row_2, pillar_row_2 = self.__create_rack_row(x, y)
 
             self.racks.append(Rack([shelf_row_1, shelf_row_2],
-                                   [pillar_row_1, pillar_row_2]))
+                                   [pillar_row_1, pillar_row_2],
+                                   self.sections_in_height))
 
         if self.group_width % 2 == 0:
             y += (self.rack_section_info.width
                   + self.rack_section_info.front_distance)
             shelf_row_1, pillar_row_1 = self.__create_rack_row(x, y)
-            self.racks.append(Rack([shelf_row_1], [pillar_row_1]))
+            self.racks.append(Rack([shelf_row_1], [pillar_row_1],
+                                   self.sections_in_height))
 
     def __create_rack_row(self, x: float, y: float) -> None:
         """Initialize rack row.

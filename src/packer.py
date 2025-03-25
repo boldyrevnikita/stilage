@@ -25,14 +25,18 @@ class Packer:
         self.rack_sections.sort(
             key=lambda rack_section: rack_section.width * rack_section.length,
             reverse=True)
-        self.rack_sections.sort(key=lambda rack_section: rack_section.height,
+        self.rack_sections.sort(key=lambda rack_section: rack_section.height_0,
                                 reverse=True)
         while len(self.rack_sections) > 0:
             is_successful_rack_placement = False
 
             for zone in self.zones:
-                if zone.height < self.rack_sections[0].height:
+                if zone.height < self.rack_sections[0].height_0:
                     continue
+                height_diff = (zone.height - self.rack_sections[0].height_0
+                               - self.rack_sections[0].height_delta)
+                sections_in_height = (
+                    height_diff // self.rack_sections[0].height_i + 1)
 
                 bounds = zone.bounds
                 zone_x0, zone_y0 = bounds[:2]
@@ -40,7 +44,7 @@ class Packer:
                 group_length = 1
                 group_width = 1
                 rack_group = RackGroup(self.rack_sections[0], group_length,
-                                       group_width, False)
+                                       group_width, sections_in_height, False)
                 rack_group.translate(zone_x0, zone_y0)
 
                 while (zone.geometry.covers(rack_group.restrictive_bounds)
@@ -48,7 +52,8 @@ class Packer:
                        group_length * group_width >= 0):
                     group_length += 1
                     rack_group = RackGroup(self.rack_sections[0], group_length,
-                                           group_width, False)
+                                           group_width, sections_in_height,
+                                           False)
                     rack_group.translate(zone_x0, zone_y0)
                 group_length -= 1
 
@@ -56,7 +61,7 @@ class Packer:
                     continue
 
                 rack_group = RackGroup(self.rack_sections[0], group_length,
-                                       group_width, False)
+                                       group_width, sections_in_height, False)
                 rack_group.translate(zone_x0, zone_y0)
 
                 while (zone.geometry.covers(rack_group.restrictive_bounds)
@@ -64,7 +69,8 @@ class Packer:
                        group_length * group_width >= 0):
                     group_width += 1
                     rack_group = RackGroup(self.rack_sections[0], group_length,
-                                           group_width, False)
+                                           group_width, sections_in_height,
+                                           False)
                     rack_group.translate(zone_x0, zone_y0)
                 group_width -= 1
 
@@ -72,7 +78,7 @@ class Packer:
                     continue
 
                 rack_group = RackGroup(self.rack_sections[0], group_length,
-                                       group_width)
+                                       group_width, sections_in_height)
                 rack_group.translate(zone_x0, zone_y0)
 
                 self.rack_groups.append(rack_group)

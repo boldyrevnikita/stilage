@@ -40,7 +40,9 @@ def postprocess(rack_groups: List[RackGroup],
                                 for new_row in shelfs:
                                     new_row.pop()
                             if len(shelfs[-1]) > 0:
-                                new_racks.append(Rack(shelfs, pillars))
+                                new_racks.append(Rack(
+                                    shelfs, pillars,
+                                    rack.get_sections_in_height()))
                                 shelfs = [[] for _ in range(
                                     rack.get_sections_in_width())]
                             if len(pillars[-1]) > 0:
@@ -59,7 +61,9 @@ def postprocess(rack_groups: List[RackGroup],
                     for row in rack.shelf_rows:
                         if forbidden_zone.intersects(row[jdx]):
                             if len(shelfs[-1]) > 0:
-                                new_racks.append(Rack(shelfs, pillars))
+                                new_racks.append(Rack(
+                                    shelfs, pillars,
+                                    rack.get_sections_in_height()))
                                 shelfs = [[] for _ in range(
                                     rack.get_sections_in_width())]
                             if len(pillars[-1]) > 0:
@@ -88,7 +92,8 @@ def postprocess(rack_groups: List[RackGroup],
                         pillars[kdx].append(row[-1])
 
                 if len(shelfs[-1]) > 0:
-                    new_racks.append(Rack(shelfs, pillars))
+                    new_racks.append(Rack(shelfs, pillars,
+                                          rack.get_sections_in_height()))
             rack_group.racks = new_racks
 
     return rack_groups
