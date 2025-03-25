@@ -5,6 +5,7 @@ import numpy as np
 from src.building import Building
 from src.rack import RackSection
 from src.available_zone import AvailableZone
+from src.forbidden_zone import ForbiddenZone
 
 
 class InputGenerator:
@@ -30,7 +31,13 @@ class InputGenerator:
                  min_rack_side_distance: float = 0.5,
                  max_rack_side_distance: float = 1.0,
                  min_rack_info_num: int = 3,
-                 max_rack_info_num: int = 6) -> None:
+                 max_rack_info_num: int = 6,
+                 min_forbiden_zones_num: int = 2,
+                 max_forbiden_zones_num: int = 4,
+                 min_forbiden_zone_points: int = 3,
+                 max_forbiden_zone_points: int = 6,
+                 min_forbiden_zone_clearance: float = 0.5,
+                 max_forbiden_zone_clearance: float = 1.0) -> None:
         self.min_building_size = min_building_size
         self.max_building_size = max_building_size
         self.min_distance_from_walls = min_distance_from_walls
@@ -63,6 +70,12 @@ class InputGenerator:
         self.max_rack_side_distance = max_rack_side_distance
         self.min_rack_info_num = min_rack_info_num
         self.max_rack_info_num = max_rack_info_num
+        self.min_forbiden_zones_num = min_forbiden_zones_num
+        self.max_forbiden_zones_num = max_forbiden_zones_num
+        self.min_forbiden_zone_points = min_forbiden_zone_points
+        self.max_forbiden_zone_points = max_forbiden_zone_points
+        self.min_forbiden_zone_clearance = min_forbiden_zone_clearance
+        self.max_forbiden_zone_clearance = max_forbiden_zone_clearance
 
     def __generate_building(self, buildings: List[Building]) -> Building:
         """Generate a new building.
@@ -126,6 +139,42 @@ class InputGenerator:
                             for z in zones)):
                 return zone
 
+    def __generate_forbidden_zone(self, buildings: List[Building]
+                                  ) -> ForbiddenZone:
+        """Generate a new forbidden (for occupancy) zone.
+
+        Args:
+            buildings (List[Building]): existing buildings
+
+        Returns:
+            ForbiddenZone: a new forbidden zone
+        """
+
+        building_idx = np.random.randint(0, len(buildings))
+        building = buildings[building_idx]
+        building_bbox = building.available_space.bounds
+
+        center_x = np.random.uniform(building_bbox[0], building_bbox[2])
+        center_y = np.random.uniform(building_bbox[1], building_bbox[3])
+
+        num_points = np.random.randint(self.min_forbiden_zone_points,
+                                       self.max_forbiden_zone_points + 1)
+
+        min_radius = min(building_bbox[2] - building_bbox[0],
+                         building_bbox[3] - building_bbox[1]) / 8
+        max_radius = min(building_bbox[2] - building_bbox[0],
+                         building_bbox[3] - building_bbox[1]) / 2
+
+        random_angles = np.sort(np.random.uniform(0, 2 * np.pi, num_points))
+        random_radii = np.random.uniform(min_radius, max_radius, num_points)
+
+        points = [(center_x + r * np.cos(a), center_y + r * np.sin(a))
+                  for a, r in zip(random_angles, random_radii)]
+
+        return ForbiddenZone(points, np.random.uniform(
+            self.min_forbiden_zone_clearance, self.max_forbiden_zone_clearance
+        ))
+
     def __generate_rack_info(self, rack_infos: List[RackSection]
                              ) -> RackSection:
         """Generate a new type of racks.
@@ -161,6 +210,7 @@ class InputGenerator:
 
     def generate(self, random_seed=42) -> Tuple[List[Building],
                                                 List[AvailableZone],
+                                                List[ForbiddenZone],
                                                 List[RackSection]]:
         """Generate input data for the problem.
 
@@ -168,13 +218,16 @@ class InputGenerator:
             random_seed (int, optional): generator seed. Defaults to 42.
 
         Returns:
-            Tuple[List[Building], List[AvailableZone], List[RackSection]]:
-                buildings, available zones, and rack infos
+            Tuple[List[Building], List[AvailableZone],
+                List[ForbiddenZone] List[RackSection]]:
+                buildings, available zones, forbiden zones
+                and rack infos
         """
         np.random.seed(random_seed)
 
         buildings = []
-        zones = []
+        availavle_zones = []
+        forbidden_zones = []
         rack_infos = []
 
         for _ in range(np.random.randint(self.min_building_num,
@@ -184,12 +237,17 @@ class InputGenerator:
 
         for _ in range(np.random.randint(self.min_zone_num,
                                          self.max_zone_num + 1)):
-            zone = self.__generate_available_zone(zones, buildings)
-            zones.append(zone)
+            zone = self.__generate_available_zone(availavle_zones, buildings)
+            availavle_zones.append(zone)
+
+        for _ in range(np.random.randint(self.min_forbiden_zones_num,
+                                         self.max_forbiden_zones_num + 1)):
+            forbidden_zone = self.__generate_forbidden_zone(buildings)
+            forbidden_zones.append(forbidden_zone)
 
         for _ in range(np.random.randint(self.min_rack_info_num,
                                          self.max_rack_info_num + 1)):
             rack_info = self.__generate_rack_info(rack_infos)
             rack_infos.append(rack_info)
 
-        return buildings, zones, rack_infos
+        return buildings, availavle_zones, forbidden_zones, rack_infos
