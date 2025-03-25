@@ -7,6 +7,8 @@ import pika
 from src.available_zone import AvailableZone
 from src.packer import Packer
 from src.rack import RackSection
+from src.postprocess import postprocess
+from src.forbidden_zone import ForbiddenZone
 
 
 class Sender:
@@ -103,6 +105,7 @@ def process_message_ml(message: Any, sender: Sender):
         sender (Sender): sender to send the results
     """
     available_zones = []
+    forbidden_zones = []
     rack_sections = []
 
     print('Message received')
@@ -111,6 +114,10 @@ def process_message_ml(message: Any, sender: Sender):
         for zone in message['available_zones']:
             available_zones.append(AvailableZone(zone['boundary'],
                                                  zone['height']))
+
+        for zone in message['restricted_zones']:
+            forbidden_zones.append(ForbiddenZone(zone['boundary'],
+                                                 zone['clearance']))
 
         for rack_section in message['rack_types']:
             rack_sections.append(RackSection(
@@ -131,12 +138,11 @@ def process_message_ml(message: Any, sender: Sender):
                 back_distance=rack_section['back_clearance']))
 
         packer = Packer(available_zones, rack_sections)
-        packer.pack()
-
-        # TODO: rewrite the following code
+        rack_groups = packer.pack()
+        rack_groups = postprocess(rack_groups, forbidden_zones)
 
         racks = {}
-        for rack_group in packer.rack_groups:
+        for rack_group in rack_groups:
             rack_id = str(rack_group.rack_section_info.id)
 
             if rack_id not in racks:
