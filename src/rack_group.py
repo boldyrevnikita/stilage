@@ -5,11 +5,13 @@ from src.rack import RackSection, Rack
 
 class RackGroup:
     def __init__(self, rack_section_info: RackSection, group_length: int,
-                 group_width: int, sections_in_height: int, init_racks=True):
+                 group_width: int, sections_in_height: int,
+                 last_shelf_unit_length: int, init_racks=True):
         self.rack_section_info = rack_section_info
         self.group_length = group_length
         self.group_width = group_width
         self.sections_in_height = sections_in_height
+        self.last_shelf_unit_length = last_shelf_unit_length
         self.racks = []
         self.physical_bounds = None
         self.restrictive_bounds = None
@@ -22,7 +24,11 @@ class RackGroup:
         """Initialize physical and restrictive bounds for rack group.
         """
         x_0, y_0 = 0.0, 0.0
-        x_1 = (x_0 + self.rack_section_info.length * self.group_length
+        x_1 = (x_0 + self.rack_section_info.unit_length
+               * (self.group_length - 1)
+               * self.rack_section_info.max_unit_shelf_quantity
+               + self.rack_section_info.unit_length
+               * self.last_shelf_unit_length
                + self.rack_section_info.pillar_width
                * (self.group_length + 1)
                + 2 * self.rack_section_info.side_distance)
@@ -58,72 +64,41 @@ class RackGroup:
         """
         self.racks = []
 
+        shelfs_length_unit_quantity = (
+            [self.rack_section_info.max_unit_shelf_quantity]
+            * (self.group_length - 1)
+            + [self.last_shelf_unit_length]
+        )
+
         x = self.rack_section_info.side_distance
         y = self.rack_section_info.back_distance
-        shelf_row_1, pillar_row_1 = self.__create_rack_row(x, y)
-        self.racks.append(Rack([shelf_row_1], [pillar_row_1],
-                               self.sections_in_height))
+        self.racks.append(Rack(
+            x, y, self.rack_section_info,
+            self.group_length, 1,
+            self.sections_in_height, shelfs_length_unit_quantity
+        ))
 
         for _ in range((self.group_width - 1) // 2):
             y += (self.rack_section_info.width
                   + self.rack_section_info.front_distance)
-            shelf_row_1, pillar_row_1 = self.__create_rack_row(x, y)
+
+            self.racks.append(Rack(
+                x, y, self.rack_section_info,
+                self.group_length, 2,
+                self.sections_in_height, shelfs_length_unit_quantity
+            ))
+
             y += (self.rack_section_info.width
                   + self.rack_section_info.back_connection_distance)
-            shelf_row_2, pillar_row_2 = self.__create_rack_row(x, y)
-
-            self.racks.append(Rack([shelf_row_1, shelf_row_2],
-                                   [pillar_row_1, pillar_row_2],
-                                   self.sections_in_height))
 
         if self.group_width % 2 == 0:
             y += (self.rack_section_info.width
                   + self.rack_section_info.front_distance)
-            shelf_row_1, pillar_row_1 = self.__create_rack_row(x, y)
-            self.racks.append(Rack([shelf_row_1], [pillar_row_1],
-                                   self.sections_in_height))
-
-    def __create_rack_row(self, x: float, y: float) -> None:
-        """Initialize rack row.
-
-        Args:
-            x (float): starting x-coordinate of the row
-            y (float): starting y-coordinate of the row
-        """
-        shelf_row = []
-        pillar_row = []
-
-        for _ in range(self.group_length):
-            pillar = shapely.geometry.Polygon([
-                (x, y),
-                (x + self.rack_section_info.pillar_width, y),
-                (x + self.rack_section_info.pillar_width,
-                 y + self.rack_section_info.width),
-                (x, y + self.rack_section_info.width)])
-
-            x += self.rack_section_info.pillar_width
-
-            shelf = shapely.geometry.Polygon([
-                (x, y),
-                (x + self.rack_section_info.length, y),
-                (x + self.rack_section_info.length,
-                 y + self.rack_section_info.width),
-                (x, y + self.rack_section_info.width)])
-
-            x += self.rack_section_info.length
-
-            shelf_row.append(shelf)
-            pillar_row.append(pillar)
-
-        pillar_row.append(
-            shapely.geometry.Polygon([
-                (x, y),
-                (x + self.rack_section_info.pillar_width, y),
-                (x + self.rack_section_info.pillar_width,
-                 y + self.rack_section_info.width),
-                (x, y + self.rack_section_info.width)]))
-
-        return shelf_row, pillar_row
+            self.racks.append(Rack(
+                x, y, self.rack_section_info,
+                self.group_length, 1,
+                self.sections_in_height, shelfs_length_unit_quantity
+            ))
 
     def translate(self, x_diff: float, y_diff: float) -> None:
         """Shift rack group by specified offset values.

@@ -23,7 +23,8 @@ class Packer:
                         reverse=True)
         # Sort rack_sections by height and area (highest first)
         self.rack_sections.sort(
-            key=lambda rack_section: rack_section.width * rack_section.length,
+            key=lambda rack_section: rack_section.width
+            * rack_section.unit_length,
             reverse=True)
         self.rack_sections.sort(key=lambda rack_section: rack_section.height_0,
                                 reverse=True)
@@ -43,8 +44,12 @@ class Packer:
 
                 group_length = 1
                 group_width = 1
+                last_shelf_unit_length = (
+                    self.rack_sections[0].max_unit_shelf_quantity)
+
                 rack_group = RackGroup(self.rack_sections[0], group_length,
-                                       group_width, sections_in_height, False)
+                                       group_width, sections_in_height,
+                                       last_shelf_unit_length, False)
                 rack_group.translate(zone_x0, zone_y0)
 
                 while (zone.geometry.covers(rack_group.restrictive_bounds)
@@ -53,15 +58,36 @@ class Packer:
                     group_length += 1
                     rack_group = RackGroup(self.rack_sections[0], group_length,
                                            group_width, sections_in_height,
-                                           False)
+                                           last_shelf_unit_length, False)
                     rack_group.translate(zone_x0, zone_y0)
-                group_length -= 1
+
+                while (last_shelf_unit_length
+                       >= self.rack_sections[0].min_unit_shelf_quantity
+                       and self.rack_sections[0].quantity_left -
+                       group_length * group_width >= 0):
+                    last_shelf_unit_length -= 1
+                    rack_group = RackGroup(self.rack_sections[0],
+                                           group_length,
+                                           group_width, sections_in_height,
+                                           last_shelf_unit_length, False)
+                    rack_group.translate(zone_x0, zone_y0)
+                    if zone.geometry.covers(rack_group.restrictive_bounds):
+                        break
+
+                if (last_shelf_unit_length
+                    < self.rack_sections[0].min_unit_shelf_quantity
+                    or self.rack_sections[0].quantity_left -
+                        group_length * group_width < 0):
+                    last_shelf_unit_length = (
+                        self.rack_sections[0].max_unit_shelf_quantity)
+                    group_length -= 1
 
                 if group_length == 0:
                     continue
 
                 rack_group = RackGroup(self.rack_sections[0], group_length,
-                                       group_width, sections_in_height, False)
+                                       group_width, sections_in_height,
+                                       last_shelf_unit_length, False)
                 rack_group.translate(zone_x0, zone_y0)
 
                 while (zone.geometry.covers(rack_group.restrictive_bounds)
@@ -70,7 +96,7 @@ class Packer:
                     group_width += 1
                     rack_group = RackGroup(self.rack_sections[0], group_length,
                                            group_width, sections_in_height,
-                                           False)
+                                           last_shelf_unit_length, False)
                     rack_group.translate(zone_x0, zone_y0)
                 group_width -= 1
 
@@ -78,7 +104,8 @@ class Packer:
                     continue
 
                 rack_group = RackGroup(self.rack_sections[0], group_length,
-                                       group_width, sections_in_height)
+                                       group_width, sections_in_height,
+                                       last_shelf_unit_length)
                 rack_group.translate(zone_x0, zone_y0)
 
                 self.rack_groups.append(rack_group)
