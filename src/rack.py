@@ -1,10 +1,13 @@
 import shapely
-from typing import List
+from typing import List, Literal, Tuple
+import numpy as np
 
 
 class RackSection:
-    def __init__(self, id: int, length: float, width: float, height_0: float,
-                 height_i: float, height_delta: float,
+    def __init__(self, id: int, unit_length: float, width: float,
+                 height_0: float, height_i: float, height_delta: float,
+                 min_unit_shelf_quantity: int,
+                 max_unit_shelf_quantity: int,
                  abs_quantity: int, min_quantity: int, max_quantity: int,
                  rel_quantity: float,
                  pillar_width: float,
@@ -12,11 +15,13 @@ class RackSection:
                  front_distance: float,
                  back_distance: float, side_distance: float):
         self.id = id
-        self.length = length
+        self.unit_length = unit_length
         self.width = width
         self.height_0 = height_0
         self.height_i = height_i
         self.height_delta = height_delta
+        self.min_unit_shelf_quantity = min_unit_shelf_quantity
+        self.max_unit_shelf_quantity = max_unit_shelf_quantity
         self.abs_quantity = abs_quantity
         self.min_quantity = min_quantity
         self.max_quantity = max_quantity
@@ -39,12 +44,96 @@ class RackSection:
 
 
 class Rack:
-    def __init__(self, shelf_rows: List[List[shapely.geometry.Polygon]],
-                 pillar_rows: List[List[shapely.geometry.Polygon]],
-                 sections_in_height: int):
-        self.shelf_rows = shelf_rows
-        self.pillar_rows = pillar_rows
+    def __init__(self, *args, **kwargs):
+        if isinstance(args[0], float):
+            self.init_xy(*args, **kwargs)
+        else:
+            self.init_shelfs_pillars(*args, **kwargs)
+
+    def init_xy(self, x: float, y: float,
+                rack_section: RackSection, sections_in_length: int,
+                sections_in_width: Literal[1, 2], sections_in_height: int,
+                shelfs_length_unit_quantity: List[int]):
+        self.rack_section = rack_section
+        self.sections_in_length = sections_in_length
+        self.sections_in_width = sections_in_width
         self.sections_in_height = sections_in_height
+        self.shelfs_length_unit_quantity = shelfs_length_unit_quantity
+
+        self.shelf_rows, self.pillar_rows = self.__init_rack(x, y)
+
+    def init_shelfs_pillars(self,
+                            shelf_rows: List[List[shapely.geometry.Polygon]],
+                            pillar_rows: List[List[shapely.geometry.Polygon]],
+                            rack_section: RackSection,
+                            sections_in_height: int,
+                            shelfs_length_unit_quantity: List[int]):
+        self.rack_section = rack_section
+        self.sections_in_length = len(shelf_rows[0])
+        self.sections_in_width = len(shelf_rows)
+        self.sections_in_height = sections_in_height
+        self.shelfs_length_unit_quantity = shelfs_length_unit_quantity
+
+        self.shelf_rows, self.pillar_rows = shelf_rows, pillar_rows
+
+    def __init_rack(self, x: float, y: float
+                    ) -> Tuple[List[List[shapely.geometry.Polygon]],
+                               List[List[shapely.geometry.Polygon]]]:
+        if self.sections_in_width == 1:
+            shelf_row_1, pillar_row_1 = self.__init_rack_row(x, y)
+            return [shelf_row_1], [pillar_row_1]
+        elif self.sections_in_width == 2:
+            shelf_row_1, pillar_row_1 = self.__init_rack_row(x, y)
+            y += (self.rack_section.width
+                  + self.rack_section.back_connection_distance)
+            shelf_row_2, pillar_row_2 = self.__init_rack_row(x, y)
+            return [shelf_row_1, shelf_row_2], [pillar_row_1, pillar_row_2]
+        else:
+            raise ValueError("Rack width must be 1 or 2.")
+
+    def __init_rack_row(self, x: float, y: float
+                        ) -> Tuple[List[shapely.geometry.Polygon],
+                                   List[shapely.geometry.Polygon]]:
+        """Initialize the rack.
+        """
+        shelf_row = []
+        pillar_row = []
+
+        for col_idx in range(self.sections_in_length):
+            shelf_length = (
+                self.rack_section.unit_length
+                * self.shelfs_length_unit_quantity[col_idx])
+
+            pillar = shapely.geometry.Polygon([
+                (x, y),
+                (x + self.rack_section.pillar_width, y),
+                (x + self.rack_section.pillar_width,
+                 y + self.rack_section.width),
+                (x, y + self.rack_section.width)])
+
+            x += self.rack_section.pillar_width
+
+            shelf = shapely.geometry.Polygon([
+                (x, y),
+                (x + shelf_length, y),
+                (x + shelf_length,
+                 y + self.rack_section.width),
+                (x, y + self.rack_section.width)])
+
+            x += shelf_length
+
+            shelf_row.append(shelf)
+            pillar_row.append(pillar)
+
+        pillar_row.append(
+            shapely.geometry.Polygon([
+                (x, y),
+                (x + self.rack_section.pillar_width, y),
+                (x + self.rack_section.pillar_width,
+                 y + self.rack_section.width),
+                (x, y + self.rack_section.width)]))
+
+        return shelf_row, pillar_row
 
     def translate(self, x_diff: float, y_diff: float) -> None:
         """Translate the rack.
@@ -138,7 +227,7 @@ class Rack:
         Returns:
             int: number of sections in length
         """
-        return len(self.shelf_rows[0])
+        return self.sections_in_length
 
     def get_sections_in_width(self) -> int:
         """Get the number of sections in width.
@@ -146,7 +235,7 @@ class Rack:
         Returns:
             int: number of sections in width
         """
-        return len(self.shelf_rows)
+        return self.sections_in_width
 
     def get_sections_in_height(self) -> int:
         """Get the number of sections in height.
@@ -155,3 +244,27 @@ class Rack:
             int: number of sections in height
         """
         return self.sections_in_height
+
+    def get_shelfs_length_unit_quantity(self) -> List[int]:
+        """Get the shelfs length unit quantity.
+
+        Returns:
+            List: shelfs length unit quantity
+        """
+        shelfs_length_unit_quantity = [
+            self.shelfs_length_unit_quantity
+            for _ in range(self.sections_in_width)
+        ]
+
+        return shelfs_length_unit_quantity
+
+    def get_shelfs_special(self) -> List[int]:
+        """Get the special shelfs.
+        Returns:
+            List: special shelfs
+        """
+
+        shelfs_special = np.zeros_like(
+            self.get_shelfs_length_unit_quantity()).tolist()
+
+        return shelfs_special

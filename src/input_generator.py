@@ -17,11 +17,13 @@ class InputGenerator:
                  min_zone_size: float = 15, max_zone_size: float = 40,
                  min_zone_height: float = 3, max_zone_height: float = 5,
                  min_zone_num: int = 2, max_zone_num: int = 4,
-                 min_rack_size: float = 0.3, max_rack_size: float = 1,
+                 min_rack_size: float = 0.4, max_rack_size: float = 1,
                  min_rack_height_0: float = 0.5, max_rack_height_0: float = 1,
                  min_rack_height_i: float = 0.5, max_rack_height_i: float = 1,
                  min_rack_height_delta: float = 0.05,
                  max_rack_height_delta: float = 0.1,
+                 min_unit_shelf_quantity: int = 1,
+                 max_unit_shelf_quantity: int = 4,
                  min_rack_num: int = 200, max_rack_num: int = 400,
                  min_rack_back_connection_distance: float = 0.01,
                  max_rack_back_connection_distance: float = 0.05,
@@ -63,6 +65,8 @@ class InputGenerator:
         self.max_rack_height_i = max_rack_height_i
         self.min_rack_height_delta = min_rack_height_delta
         self.max_rack_height_delta = max_rack_height_delta
+        self.min_unit_shelf_quantity = min_unit_shelf_quantity
+        self.max_unit_shelf_quantity = max_unit_shelf_quantity
         self.min_rack_num = min_rack_num
         self.max_rack_num = max_rack_num
         self.min_rack_back_connection_distance = \
@@ -197,7 +201,7 @@ class InputGenerator:
             RackSection: a new type of racks
         """
         id = len(rack_infos)
-        length = np.random.uniform(self.min_rack_size, self.max_rack_size)
+        unit_length = np.random.uniform(self.min_rack_size, self.max_rack_size)
         width = np.random.uniform(self.min_rack_size, self.max_rack_size)
         height_0 = np.random.uniform(self.min_rack_height_0,
                                      self.max_rack_height_0)
@@ -205,6 +209,10 @@ class InputGenerator:
                                      self.max_rack_height_i)
         height_delta = np.random.uniform(self.min_rack_height_delta,
                                          self.max_rack_height_delta)
+        min_unit_shelf_quantity, max_unit_shelf_quantity = \
+            [int(num) for num in (np.sort(np.random.randint(
+                self.min_unit_shelf_quantity,
+                self.max_unit_shelf_quantity + 1, 2)))]
         abs_quantity = np.random.randint(self.min_rack_num, self.max_rack_num)
         pillar_width = np.random.uniform(
             self.min_rack_pillar_width,
@@ -219,8 +227,9 @@ class InputGenerator:
         side_distance = np.random.uniform(self.min_rack_side_distance,
                                           self.max_rack_side_distance)
 
-        return RackSection(id, length, width, height_0, height_i,
-                           height_delta, abs_quantity,
+        return RackSection(id, unit_length, width, height_0, height_i,
+                           height_delta, min_unit_shelf_quantity,
+                           max_unit_shelf_quantity, abs_quantity,
                            abs_quantity, abs_quantity, 1, pillar_width,
                            back_connection_distance, front_distance,
                            back_distance, side_distance)
