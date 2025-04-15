@@ -123,11 +123,15 @@ def process_message_ml(message: Any, sender: Sender):
         for rack_section in message['rack_types']:
             rack_sections.append(RackSection(
                 id=rack_section['id'],
-                length=rack_section['length'],
+                unit_length=rack_section['unit_length'],
                 width=rack_section['width'],
                 height_0=rack_section['height_0'],
                 height_i=rack_section['height_i'],
                 height_delta=rack_section['height_delta'],
+                min_unit_shelf_quantity=rack_section[
+                    'min_unit_shelf_quantity'],
+                max_unit_shelf_quantity=rack_section[
+                    'max_unit_shelf_quantity'],
                 abs_quantity=rack_section['absolute'],
                 min_quantity=rack_section['min'],
                 rel_quantity=rack_section['relative'],
@@ -161,6 +165,8 @@ def process_message_ml(message: Any, sender: Sender):
                     'sections_in_length': rack.get_sections_in_length(),
                     'sections_in_width': rack.get_sections_in_width(),
                     'sections_in_height': rack.get_sections_in_height(),
+                    'units': rack.get_shelfs_length_unit_quantity(),
+                    "special_units": rack.get_shelfs_special(),
                     'orientation': 0
                 }
                 racks[rack_id].append(rack_info)

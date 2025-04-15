@@ -35,6 +35,10 @@ buildings, available_zones, forbidden_zones, rack_infos, roads_width = \
 
 msg = {
     "task_id": '1'*32,
+    "file_id": '1'*32,
+    "forbiden_zone_wall_clearance": 2.5,
+    "forbiden_zone_pillar_clearance": 1.5,
+    "forbiden_zone_other_clearance": 2.5,
     "buildings": [],
     "available_zones": [],
     "restricted_zones": [],
@@ -69,11 +73,13 @@ for idx, zone in enumerate(forbidden_zones):
 for idx, rack_info in enumerate(rack_infos):
     rack_info_dict = {
         "id": rack_info.id,
-        "length": rack_info.length,
+        "unit_length": rack_info.unit_length,
         "width": rack_info.width,
         "height_0": rack_info.height_0,
         "height_i": rack_info.height_i,
         "height_delta": rack_info.height_delta,
+        "min_unit_shelf_quantity": rack_info.min_unit_shelf_quantity,
+        "max_unit_shelf_quantity": rack_info.max_unit_shelf_quantity,
         "absolute": rack_info.abs_quantity,
         "min": rack_info.min_quantity,
         "relative": rack_info.rel_quantity,

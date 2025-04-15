@@ -30,7 +30,7 @@ def update_racks_quantity(available_zones: List[AvailableZone],
             and rack_section.max_quantity is None
                 and rack_section.min_quantity is None):
             rack_section.update_abs_quantity(int(
-                sum_area / (rack_section.length * rack_section.width)))
+                sum_area / (rack_section.unit_length * rack_section.width)))
 
     return rack_infos
 
