@@ -98,7 +98,8 @@ class Visualizer():
                                line=dict(color=self.rack_colors[
                                          rack_group_id])))
                 shelfs_exteriors = rack.get_shelfs_exteriors()
-                for shelf_exterior in shelfs_exteriors:
+                shelf_specials = np.array(rack.get_shelfs_special()).flatten()
+                for sh_idx, shelf_exterior in enumerate(shelfs_exteriors):
                     self.fig.add_trace(
                         go.Scatter(x=np.array(shelf_exterior.xy[0]),
                                    y=np.array(shelf_exterior.xy[1]),
@@ -106,6 +107,19 @@ class Visualizer():
                                    line=dict(color=self.rack_colors[
                                              rack_group_id],
                                              )))
+                    if shelf_specials[sh_idx]:
+                        x_0 = min(shelf_exterior.xy[0])
+                        x_1 = max(shelf_exterior.xy[0])
+                        y_0 = min(shelf_exterior.xy[1])
+                        y_1 = max(shelf_exterior.xy[1])
+                        self.fig.add_trace(
+                            go.Scatter(x=[x_0, x_1, x_1, x_0],
+                                       y=[y_0, y_1, y_0, y_1],
+                                       name='Специальные полки '
+                                       f'типа {rack_group_id}',
+                                       line=dict(color=self.rack_colors[
+                                                 rack_group_id])))
+
                 pillars_exteriors = rack.get_pillars_exteriors()
                 for pillar_exterior in pillars_exteriors:
                     self.fig.add_trace(

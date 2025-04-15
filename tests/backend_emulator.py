@@ -30,7 +30,8 @@ arg_parser.add_argument('--random_seed', type=int, default=42)
 args = arg_parser.parse_args()
 
 input_generator = InputGenerator()
-buildings, available_zones, forbidden_zones, rack_infos, roads_width = \
+(buildings, available_zones, forbidden_zones,
+ road_zones, rack_infos, roads_width) = \
     input_generator.generate(random_seed=args.random_seed)
 
 msg = {
@@ -42,6 +43,7 @@ msg = {
     "buildings": [],
     "available_zones": [],
     "restricted_zones": [],
+    "road_zones": [],
     "rack_types": [],
     "roads_width": roads_width
 }
@@ -69,6 +71,26 @@ for idx, zone in enumerate(forbidden_zones):
         "id": str(idx) + str(3)
     }
     msg["restricted_zones"].append(zone_dict)
+
+for idx, zone in enumerate(road_zones):
+    if zone.orientation == 0:
+        y_0 = (zone.geometry.bounds[1] + zone.geometry.bounds[3]) / 2
+        width = zone.geometry.bounds[3] - zone.geometry.bounds[1]
+        x_0 = zone.geometry.bounds[0]
+        x_1 = zone.geometry.bounds[2]
+        y_1 = y_0
+    else:
+        x_0 = (zone.geometry.bounds[0] + zone.geometry.bounds[2]) / 2
+        width = zone.geometry.bounds[2] - zone.geometry.bounds[0]
+        y_0 = zone.geometry.bounds[1]
+        y_1 = zone.geometry.bounds[3]
+        x_1 = x_0
+    zone_dict = {
+        "line": [(x_0, y_0), (x_1, y_1)],
+        "width": width,
+        "id": str(idx) + str(5)
+    }
+    msg["road_zones"].append(zone_dict)
 
 for idx, rack_info in enumerate(rack_infos):
     rack_info_dict = {

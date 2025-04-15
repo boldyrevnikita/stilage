@@ -59,6 +59,8 @@ class Rack:
         self.sections_in_width = sections_in_width
         self.sections_in_height = sections_in_height
         self.shelfs_length_unit_quantity = shelfs_length_unit_quantity
+        self.shelfs_special = np.zeros_like(
+            self.get_shelfs_length_unit_quantity()).tolist()
 
         self.shelf_rows, self.pillar_rows = self.__init_rack(x, y)
 
@@ -67,12 +69,14 @@ class Rack:
                             pillar_rows: List[List[shapely.geometry.Polygon]],
                             rack_section: RackSection,
                             sections_in_height: int,
-                            shelfs_length_unit_quantity: List[int]):
+                            shelfs_length_unit_quantity: List[int],
+                            shelfs_special: List[int]):
         self.rack_section = rack_section
         self.sections_in_length = len(shelf_rows[0])
         self.sections_in_width = len(shelf_rows)
         self.sections_in_height = sections_in_height
         self.shelfs_length_unit_quantity = shelfs_length_unit_quantity
+        self.shelfs_special = shelfs_special
 
         self.shelf_rows, self.pillar_rows = shelf_rows, pillar_rows
 
@@ -264,7 +268,4 @@ class Rack:
             List: special shelfs
         """
 
-        shelfs_special = np.zeros_like(
-            self.get_shelfs_length_unit_quantity()).tolist()
-
-        return shelfs_special
+        return self.shelfs_special

@@ -18,14 +18,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     input_generator = InputGenerator()
-    buildings, available_zones, forbiden_zones, rack_infos, roads_width = \
+    (buildings, available_zones, forbiden_zones,
+     road_zones, rack_infos, roads_width) = \
         input_generator.generate(random_seed=args.random_seed)
+
     available_zones, forbiden_zones, rack_infos = preprocess(
         available_zones, forbiden_zones, rack_infos, roads_width)
 
     packer = Packer(available_zones, rack_infos)
     rack_groups = packer.pack()
-    rack_groups = postprocess(rack_groups, forbiden_zones)
+    rack_groups = postprocess(rack_groups, road_zones, forbiden_zones)
 
     visualizer = Visualizer()
     visualizer.plot(buildings, packer.rack_groups,
