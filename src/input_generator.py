@@ -5,7 +5,7 @@ import numpy as np
 from src.building import Building
 from src.rack import RackSection
 from src.available_zone import AvailableZone
-from src.forbidden_zone import ForbiddenZone
+from src.forbidden_zone import ForbiddenZone, RoadZone
 
 
 class InputGenerator:
@@ -17,7 +17,9 @@ class InputGenerator:
                  min_zone_size: float = 15, max_zone_size: float = 40,
                  min_zone_height: float = 3, max_zone_height: float = 5,
                  min_zone_num: int = 2, max_zone_num: int = 4,
-                 min_rack_size: float = 0.4, max_rack_size: float = 1,
+                 min_rack_unit_length: float = 0.7,
+                 max_rack_unit_length: float = 1.5,
+                 min_rack_width: float = 1, max_rack_width: float = 2,
                  min_rack_height_0: float = 0.5, max_rack_height_0: float = 1,
                  min_rack_height_i: float = 0.5, max_rack_height_i: float = 1,
                  min_rack_height_delta: float = 0.05,
@@ -43,8 +45,12 @@ class InputGenerator:
                  max_forbiden_zone_points: int = 6,
                  min_forbiden_zone_clearance: float = 0.5,
                  max_forbiden_zone_clearance: float = 1.0,
-                 min_roads_width: float = 1.0,
-                 max_roads_width: float = 2.0) -> None:
+                 min_roads_width: float = 0.3,
+                 max_roads_width: float = 0.5,
+                 min_special_roads_width: float = 2.0,
+                 max_special_roads_width: float = 5.0,
+                 min_special_roads_quantity: int = 1,
+                 max_special_roads_quantity: int = 5) -> None:
         self.min_building_size = min_building_size
         self.max_building_size = max_building_size
         self.min_distance_from_walls = min_distance_from_walls
@@ -57,8 +63,10 @@ class InputGenerator:
         self.max_zone_height = max_zone_height
         self.min_zone_num = min_zone_num
         self.max_zone_num = max_zone_num
-        self.min_rack_size = min_rack_size
-        self.max_rack_size = max_rack_size
+        self.min_rack_unit_length = min_rack_unit_length
+        self.max_rack_unit_length = max_rack_unit_length
+        self.min_rack_width = min_rack_width
+        self.max_rack_width = max_rack_width
         self.min_rack_height_0 = min_rack_height_0
         self.max_rack_height_0 = max_rack_height_0
         self.min_rack_height_i = min_rack_height_i
@@ -91,6 +99,10 @@ class InputGenerator:
         self.max_forbiden_zone_clearance = max_forbiden_zone_clearance
         self.min_roads_width = min_roads_width
         self.max_roads_width = max_roads_width
+        self.min_special_roads_width = min_special_roads_width
+        self.max_special_roads_width = max_special_roads_width
+        self.min_special_roads_quantity = min_special_roads_quantity
+        self.max_special_roads_quantity = max_special_roads_quantity
 
     def __generate_building(self, buildings: List[Building]) -> Building:
         """Generate a new building.
@@ -190,6 +202,49 @@ class InputGenerator:
             self.min_forbiden_zone_clearance, self.max_forbiden_zone_clearance
         ))
 
+    def __generate_road_zone(self, available_zones: List[AvailableZone],
+                             special_roads: List[RoadZone]) -> RoadZone:
+        """Generate a new road zone.
+
+        Args:
+            available_zones (List[AvailableZone]): existing available zones
+
+        Returns:
+            RoadZone: a new road zone
+        """
+
+        while True:
+            zone_idx = np.random.randint(0, len(available_zones))
+            available_zone = available_zones[zone_idx]
+            available_zone_bbox = available_zone.geometry.bounds
+
+            width = np.random.uniform(self.min_roads_width,
+                                      self.max_roads_width)
+            orientation = np.random.randint(0, 2)
+            if orientation == 0:
+                x_0 = min(available_zone_bbox[0], available_zone_bbox[2])
+                y_0 = np.random.uniform(available_zone_bbox[1],
+                                        available_zone_bbox[3])
+
+                x_1 = max(available_zone_bbox[0], available_zone_bbox[2])
+                y_1 = y_0
+            else:
+                x_0 = np.random.uniform(available_zone_bbox[0],
+                                        available_zone_bbox[2])
+                y_0 = min(available_zone_bbox[1], available_zone_bbox[3])
+
+                x_1 = x_0
+                y_1 = max(available_zone_bbox[1], available_zone_bbox[3])
+
+            road_zone = RoadZone([(x_0, y_0), (x_1, y_1)], width)
+
+            if not available_zone.geometry.contains(road_zone.geometry):
+                continue
+            if any(r.geometry.intersects(road_zone.geometry)
+                    for r in special_roads):
+                continue
+            return road_zone
+
     def __generate_rack_info(self, rack_infos: List[RackSection]
                              ) -> RackSection:
         """Generate a new type of racks.
@@ -201,8 +256,9 @@ class InputGenerator:
             RackSection: a new type of racks
         """
         id = len(rack_infos)
-        unit_length = np.random.uniform(self.min_rack_size, self.max_rack_size)
-        width = np.random.uniform(self.min_rack_size, self.max_rack_size)
+        unit_length = np.random.uniform(self.min_rack_unit_length,
+                                        self.max_rack_unit_length)
+        width = np.random.uniform(self.min_rack_width, self.max_rack_width)
         height_0 = np.random.uniform(self.min_rack_height_0,
                                      self.max_rack_height_0)
         height_i = np.random.uniform(self.min_rack_height_i,
@@ -237,6 +293,7 @@ class InputGenerator:
     def generate(self, random_seed=42) -> Tuple[List[Building],
                                                 List[AvailableZone],
                                                 List[ForbiddenZone],
+                                                List[RoadZone],
                                                 List[RackSection],
                                                 float]:
         """Generate input data for the problem.
@@ -246,15 +303,17 @@ class InputGenerator:
 
         Returns:
             Tuple[List[Building], List[AvailableZone],
-                List[ForbiddenZone], List[RackSection], float]:
-                buildings, available zones, forbiden zones, rack infos
-                and roads width
+                  List[ForbiddenZone], List[RoadZone],
+                  List[RackSection], float]:
+                buildings, available zones, forbidden zones, road zones,
+                rack info, roads width
         """
         np.random.seed(random_seed)
 
         buildings = []
         availavle_zones = []
         forbidden_zones = []
+        road_zones = []
         rack_infos = []
 
         for _ in range(np.random.randint(self.min_building_num,
@@ -272,6 +331,11 @@ class InputGenerator:
             forbidden_zone = self.__generate_forbidden_zone(buildings)
             forbidden_zones.append(forbidden_zone)
 
+        for _ in range(np.random.randint(self.min_special_roads_quantity,
+                                         self.max_special_roads_quantity + 1)):
+            road_zone = self.__generate_road_zone(availavle_zones, road_zones)
+            road_zones.append(road_zone)
+
         for _ in range(np.random.randint(self.min_rack_info_num,
                                          self.max_rack_info_num + 1)):
             rack_info = self.__generate_rack_info(rack_infos)
@@ -280,5 +344,5 @@ class InputGenerator:
         roads_width = np.random.uniform(self.min_roads_width,
                                         self.max_roads_width)
 
-        return (buildings, availavle_zones, forbidden_zones, rack_infos,
-                roads_width)
+        return (buildings, availavle_zones, forbidden_zones, road_zones,
+                rack_infos, roads_width)

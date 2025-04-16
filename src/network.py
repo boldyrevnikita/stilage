@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, Union
 import pika
 
 from src.available_zone import AvailableZone
-from src.forbidden_zone import ForbiddenZone
+from src.forbidden_zone import ForbiddenZone, RoadZone
 from src.packer import Packer
 from src.postprocess import postprocess
 from src.preprocess import preprocess
@@ -107,6 +107,7 @@ def process_message_ml(message: Any, sender: Sender):
     """
     available_zones = []
     forbidden_zones = []
+    road_zones = []
     rack_sections = []
 
     print('Message received')
@@ -115,6 +116,10 @@ def process_message_ml(message: Any, sender: Sender):
         for zone in message['available_zones']:
             available_zones.append(AvailableZone(zone['boundary'],
                                                  zone['height']))
+
+        for zone in message['road_zones']:
+            road_zones.append(RoadZone(zone['line'],
+                                       zone['width']))
 
         for zone in message['restricted_zones']:
             forbidden_zones.append(ForbiddenZone(zone['boundary'],
@@ -150,7 +155,7 @@ def process_message_ml(message: Any, sender: Sender):
 
         packer = Packer(available_zones, rack_sections)
         rack_groups = packer.pack()
-        rack_groups = postprocess(rack_groups, forbidden_zones)
+        rack_groups = postprocess(rack_groups, road_zones, forbidden_zones)
 
         racks = {}
         for rack_group in rack_groups:
