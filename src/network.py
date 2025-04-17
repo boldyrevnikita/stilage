@@ -3,6 +3,8 @@ import traceback
 from typing import Any, Callable, Optional, Union
 
 import pika
+import ezdxf
+import base64
 
 from src.available_zone import AvailableZone
 from src.forbidden_zone import ForbiddenZone, RoadZone
@@ -10,6 +12,27 @@ from src.packer import Packer
 from src.postprocess import postprocess
 from src.preprocess import preprocess
 from src.rack import RackSection
+from minio import Minio
+from src.settings import Settings
+
+
+def get_dxf_doc_from_s3(key: str) -> ezdxf.document.Drawing:
+    settings = Settings()
+    key = f'{settings.S3_DXF_FOLDER_NAME}/{key}.dxf'
+
+    bucket_name = settings.S3_BUCKET_NAME
+
+    client = Minio(settings.S3_ENDPOINT,
+                   access_key=settings.S3_ACCESS_KEY,
+                   secret_key=settings.S3_SECRET_KEY)
+
+    try:
+        response = client.get_object(bucket_name=bucket_name, object_name=key)
+        doc = ezdxf.decode_base64(base64.b64encode(response.read()))
+        return doc
+    except Exception as e:
+        print(f"Error retrieving file from S3: {e}")
+        return None
 
 
 class Sender:
@@ -150,8 +173,14 @@ def process_message_ml(message: Any, sender: Sender):
                 back_distance=rack_section['back_clearance']))
 
         roads_width = message['roads_width']
+        file_id = message['file_id']
+        forbidden_zone_clearance = message['forbiden_zone_other_clearance']
+
+        doc = get_dxf_doc_from_s3(file_id)
+
         available_zones, forbidden_zones, rack_sections = preprocess(
-            available_zones, forbidden_zones, rack_sections, roads_width)
+            doc, available_zones, forbidden_zones, rack_sections, roads_width,
+            forbidden_zone_clearance)
 
         packer = Packer(available_zones, rack_sections)
         rack_groups = packer.pack()
