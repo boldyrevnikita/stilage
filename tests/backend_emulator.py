@@ -110,7 +110,8 @@ for idx, rack_info in enumerate(rack_infos):
         "back_connection_clearance": rack_info.back_connection_distance,
         "front_clearance": rack_info.front_distance,
         "side_clearance": rack_info.side_distance,
-        "back_clearance": rack_info.back_distance
+        "back_clearance": rack_info.back_distance,
+        "cargo_weight": rack_info.cargo_weight
     }
     msg["rack_types"].append(rack_info_dict)
 

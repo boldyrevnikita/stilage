@@ -13,15 +13,16 @@ class RackSection:
                  pillar_width: float,
                  back_connection_distance: float,
                  front_distance: float,
-                 back_distance: float, side_distance: float):
+                 back_distance: float, side_distance: float,
+                 cargo_weight: float = 0.0) -> None:
         self.id = id
         self.unit_length = unit_length
         self.width = width
         self.height_0 = height_0
         self.height_i = height_i
         self.height_delta = height_delta
-        self.min_unit_shelf_quantity = min_unit_shelf_quantity
-        self.max_unit_shelf_quantity = max_unit_shelf_quantity
+        self.min_unit_shelf_quantity = 2
+        self.max_unit_shelf_quantity = 4
         self.abs_quantity = abs_quantity
         self.min_quantity = min_quantity
         self.max_quantity = max_quantity
@@ -32,6 +33,23 @@ class RackSection:
         self.front_distance = front_distance
         self.back_distance = back_distance
         self.side_distance = side_distance
+        self.cargo_weight = cargo_weight
+        self.max_available_weight_on_shelf = [
+            5000.0, 3800.0, 2100
+        ]
+
+        available_height_i = [750.0, 1000.0, 1250.0, 1500.0, 1750.0, 2000.0]
+        available_max_weight_load = [21000.0, 20800.0, 20500.0,
+                                     19600.0, 18900.0, 18000.0]
+        self.max_load_weight = available_max_weight_load[-1]
+        height_i = available_height_i[-1]
+
+        for i in range(len(available_height_i)):
+            if self.height_i <= available_height_i[i]:
+                self.max_load_weight = available_max_weight_load[i]
+                height_i = available_height_i[i]
+                break
+        self.height_i = height_i
 
     def update_abs_quantity(self, quantity: int) -> None:
         """Update the absolute quantity.
@@ -45,6 +63,7 @@ class RackSection:
 
 class Rack:
     def __init__(self, *args, **kwargs):
+        self.available_lengths = [1850.0, 2700.0, 3600.0]
         if isinstance(args[0], float):
             self.init_xy(*args, **kwargs)
         else:
@@ -105,8 +124,8 @@ class Rack:
 
         for col_idx in range(self.sections_in_length):
             shelf_length = (
-                self.rack_section.unit_length
-                * self.shelfs_length_unit_quantity[col_idx])
+                self.available_lengths[
+                    self.shelfs_length_unit_quantity[col_idx] - 2])
 
             pillar = shapely.geometry.Polygon([
                 (x, y),

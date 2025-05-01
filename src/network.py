@@ -170,7 +170,8 @@ def process_message_ml(message: Any, sender: Sender):
                     'back_connection_clearance'],
                 front_distance=rack_section['front_clearance'],
                 side_distance=rack_section['side_clearance'],
-                back_distance=rack_section['back_clearance']))
+                back_distance=rack_section['back_clearance'],
+                cargo_weight=rack_section['cargo_weight']))
 
         roads_width = message['roads_width']
         file_id = message['file_id']
