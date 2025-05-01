@@ -13,16 +13,17 @@ from src.forbidden_zone import ForbiddenZone
 from src.rack import RackSection
 
 
-def preprocess(doc: ezdxf.document.Drawing,
-               available_zones: List[AvailableZone],
+def preprocess(available_zones: List[AvailableZone],
                forbidden_zones: List[ForbiddenZone],
                rack_infos: List[RackSection],
                roads_width: float,
-               forbiden_zone_clearance) -> Tuple[List[AvailableZone],
-                                                 List[ForbiddenZone],
-                                                 List[RackSection]]:
-    forbidden_zones += scan_for_forbidden_zones(doc, available_zones,
-                                                forbiden_zone_clearance)
+               doc: ezdxf.document.Drawing = None,
+               forbiden_zone_clearance: float = None
+               ) -> Tuple[List[AvailableZone], List[ForbiddenZone],
+                          List[RackSection]]:
+    if doc is not None and forbiden_zone_clearance is not None:
+        forbidden_zones += scan_for_forbidden_zones(doc, available_zones,
+                                                    forbiden_zone_clearance)
     forbidden_zones, rack_infos = update_clearance(forbidden_zones,
                                                    rack_infos, roads_width)
     rack_infos = update_racks_quantity(available_zones, rack_infos)
@@ -55,11 +56,11 @@ def update_clearance(forbidden_zones: List[ForbiddenZone],
 
     for rack_section in rack_infos:
         rack_section.side_distance = max(rack_section.side_distance,
-                                         roads_width / 2)
+                                         roads_width)
         rack_section.back_distance = max(rack_section.back_distance,
-                                         roads_width / 2)
+                                         roads_width)
         rack_section.front_distance = max(rack_section.front_distance,
-                                          roads_width / 2)
+                                          roads_width)
 
     return forbidden_zones, rack_infos
 

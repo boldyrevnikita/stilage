@@ -179,8 +179,8 @@ def process_message_ml(message: Any, sender: Sender):
         doc = get_dxf_doc_from_s3(file_id)
 
         available_zones, forbidden_zones, rack_sections = preprocess(
-            doc, available_zones, forbidden_zones, rack_sections, roads_width,
-            forbidden_zone_clearance)
+            available_zones, forbidden_zones, rack_sections, roads_width,
+            doc, forbidden_zone_clearance)
 
         packer = Packer(available_zones, rack_sections)
         rack_groups = packer.pack()
