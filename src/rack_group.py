@@ -6,15 +6,19 @@ from src.rack import RackSection, Rack
 class RackGroup:
     def __init__(self, rack_section_info: RackSection, group_length: int,
                  group_width: int, sections_in_height: int,
-                 last_shelf_unit_length: int, init_racks=True):
+                 last_shelf_unit_length: int, max_unit_shelf_quantity,
+                 init_racks=True):
         self.rack_section_info = rack_section_info
         self.group_length = group_length
         self.group_width = group_width
         self.sections_in_height = sections_in_height
+        self.max_unit_shelf_quantity = max_unit_shelf_quantity
         self.last_shelf_unit_length = last_shelf_unit_length
         self.racks = []
         self.physical_bounds = None
         self.restrictive_bounds = None
+
+        self.available_lengths = [1850.0, 2700, 3600.0]
 
         self.__init_bounds()
         if init_racks:
@@ -24,11 +28,10 @@ class RackGroup:
         """Initialize physical and restrictive bounds for rack group.
         """
         x_0, y_0 = 0.0, 0.0
-        x_1 = (x_0 + self.rack_section_info.unit_length
+        x_1 = (x_0 + self.available_lengths[
+            self.max_unit_shelf_quantity-2]
                * (self.group_length - 1)
-               * self.rack_section_info.max_unit_shelf_quantity
-               + self.rack_section_info.unit_length
-               * self.last_shelf_unit_length
+               + self.available_lengths[self.last_shelf_unit_length-2]
                + self.rack_section_info.pillar_width
                * (self.group_length + 1)
                + 2 * self.rack_section_info.side_distance)
@@ -65,7 +68,7 @@ class RackGroup:
         self.racks = []
 
         shelfs_length_unit_quantity = (
-            [self.rack_section_info.max_unit_shelf_quantity]
+            [self.max_unit_shelf_quantity]
             * (self.group_length - 1)
             + [self.last_shelf_unit_length]
         )
