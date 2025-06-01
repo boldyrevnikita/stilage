@@ -1,5 +1,6 @@
 from shapely import Polygon
 from copy import deepcopy
+import shapely
 
 
 class Zone:
@@ -38,6 +39,29 @@ class Zone:
                 False otherwise.
         """
         return self.contour.intersects(geometry)
+
+    def contains(self, geometry: Polygon) -> bool:
+        """
+        Checks if the zone contains a given geometry.
+
+        Args:
+            geometry (Polygon): The geometry to check for containment.
+
+        Returns:
+            bool: True if the zone contains the geometry,
+                False otherwise.
+        """
+        return self.contour.contains(geometry)
+
+    def bounds(self) -> tuple[float, float, float, float]:
+        """
+        Returns the bounding box of the zone's contour.
+
+        Returns:
+            tuple[float, float, float, float]: The bounding box of the zone
+                in the format (min_x, min_y, max_x, max_y).
+        """
+        return self.contour.bounds
 
 
 class OccupiedZone(Zone):
@@ -161,3 +185,61 @@ class AvailableZone(Zone):
         for zone in special_road_zones:
             if zone.intersects(self.contour):
                 self.special_road_zones.append(deepcopy(zone))
+
+    def rotate_az_90_clockwise(self) -> None:
+        """
+        Rotates the available zone's contour 90 degrees clockwise.
+        """
+        bounds = self.contour.bounds
+        rot_point = bounds[0], bounds[1]
+        y_shift = bounds[2] - bounds[0]
+
+        self.rotate(angle=90, rot_point=rot_point)
+        self.translate(0, y_shift)
+
+    def rotate_az_90_counterclockwise(self) -> None:
+        """
+        Rotates the available zone's contour 90 degrees counterclockwise.
+        """
+        bounds = self.contour.bounds
+        rot_point = bounds[0], bounds[1]
+        x_shift = bounds[3] - bounds[1]
+
+        self.rotate(angle=-90, rot_point=rot_point)
+        self.translate(x_shift, 0)
+
+    def rotate(self, angle, rot_point) -> None:
+        for zone in self.occupied_zones:
+            zone.contour = shapely.affinity.rotate(
+                zone.contour, angle=angle, origin=rot_point)
+            zone.contour_with_clearance = shapely.affinity.rotate(
+                zone.contour_with_clearance, angle=angle, origin=rot_point)
+            zone.contour_with_roads_width = shapely.affinity.rotate(
+                zone.contour_with_roads_width, angle=angle, origin=rot_point)
+
+        for zone in self.special_road_zones:
+            zone.contour = shapely.affinity.rotate(
+                zone.contour, angle=angle, origin=rot_point)
+
+        self.contour = shapely.affinity.rotate(
+            self.contour, angle=angle, origin=rot_point)
+
+    def translate(self, dx: float, dy: float) -> None:
+        """
+        Translates the available zone's contour by dx and dy.
+
+        Args:
+            dx (float): The translation distance in the x direction.
+            dy (float): The translation distance in the y direction.
+        """
+
+        self.contour = shapely.affinity.translate(self.contour, dx, dy)
+        for zone in self.occupied_zones:
+            zone.contour = shapely.affinity.translate(zone.contour, dx, dy)
+            zone.contour_with_clearance = shapely.affinity.translate(
+                zone.contour_with_clearance, dx, dy)
+            zone.contour_with_roads_width = shapely.affinity.translate(
+                zone.contour_with_roads_width, dx, dy)
+
+        for zone in self.special_road_zones:
+            zone.contour = shapely.affinity.translate(zone.contour, dx, dy)

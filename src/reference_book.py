@@ -4,9 +4,6 @@ from src.rack import BeamType, UprightType
 
 class ReferenceBook:
     def __init__(self):
-        '''
-        PALLET TYPES
-        '''
         self.pallet_types = {
             1: PalletType(
                 pallet_type_id=1,
@@ -23,18 +20,27 @@ class ReferenceBook:
                 weight=30.0
             )
         }
+        self.beam_types: dict[int, list[BeamType]] = self.__init_beam_types()
+        self.upright_types: list[UprightType] = self.__init_upright_types()
 
-        '''
-        BEAM TYPES
-        '''
+        self.frame_height2pallet_extra_space = [
+            (3000.0, 75.0),
+            (9000.0, 125.0),
+            (12000.0, 150.0),
+        ]
 
-        self.beam_lengths = [1850.0, 2300.0, 2700.0,
-                             3300.0, 3600.0]
-        self.beam_sections = [(85.0, 1.5), (100.0, 1.5),
-                              (110.0, 1.5), (125.0, 1.5),
-                              (140.0, 1.5), (160.0, 1.5),
-                              (160.0, 2.0)]
-        self.beam_max_shelf_load_capacity_kg_table = [
+        self.roads_width = 3000.0
+        self.forbidden_zone_clearance = 250.0
+        self.frame_height_eps = 100.0
+
+    def __init_beam_types(self) -> dict[int, list[BeamType]]:
+        beam_lengths = [1850.0, 2300.0, 2700.0,
+                        3300.0, 3600.0]
+        beam_sections = [(85.0, 1.5), (100.0, 1.5),
+                         (110.0, 1.5), (125.0, 1.5),
+                         (140.0, 1.5), (160.0, 1.5),
+                         (160.0, 2.0)]
+        beam_max_shelf_load_capacity_kg_table = [
             [2200.0, 1700.0, 1300.0, 800.0, 800.0],
             [3600.0, 2600.0, 2200.0, 1400.0, 1100.0],
             [3700.0, 3000.0, 2500.0, 1700.0, 1400.0],
@@ -43,35 +49,54 @@ class ReferenceBook:
             [5500.0, 5000.0, 4300.0, 3400.0, 2800.0],
             [6000.0, 5300.0, 4800.0, 4200.0, 4000.0]
         ]
-        self.beam_max_rack_load_capacity_pallets = [2, 2, 3, 3, 4]
+        beam_max_rack_load_capacity_pallets = [2, 2, 3, 3, 4]
 
-        self.beam_types = {}
+        pallet_types2beam_types = {
+            1: [4, 2, 0],
+            2: [3, 1]
+        }
+
+        beam_types = {
+            1: [],
+            2: [],
+        }
         for i in range(len(self.beam_lengths)):
             for j in range(len(self.beam_sections)):
                 beam_type_id = i * 100 + j
-                self.beam_types[beam_type_id] = (
+
+                rack_type = -1
+                if i in pallet_types2beam_types[1]:
+                    rack_type = 1
+                elif i in pallet_types2beam_types[2]:
+                    rack_type = 2
+
+                beam_types[rack_type].append(
                     BeamType(
                         beam_type_id=beam_type_id,
-                        length=self.beam_lengths[i],
-                        beam_section=self.beam_sections[j],
+                        length=beam_lengths[i],
+                        beam_section=beam_sections[j],
                         max_shelf_load_capacity_kg=(
-                            self.beam_max_shelf_load_capacity_kg_table[j][i]),
+                            beam_max_shelf_load_capacity_kg_table[j][i]),
                         max_shelf_load_capacity_pallets=(
-                            self.beam_max_rack_load_capacity_pallets[i])
+                            beam_max_rack_load_capacity_pallets[i])
                     )
                 )
+        for key in beam_types.keys():
+            beam_types[key].sort(
+                key=lambda x: (-x.length,
+                               x.max_shelf_load_capacity_kg))
 
-        '''
-        UPRIGHT TYPES
-        '''
-        self.upright_max_shelf_height = [750.0, 1000.0, 1250.0,
-                                         1500.0, 1750.0, 2000.0]
-        self.upright_sections = [(80.0, 75.0, 2.0), (100.0, 75.0, 2.0),
-                                 (120.0, 75.0, 2.0), (140.0, 75.0, 2.0),
-                                 (120.0, 100.0, 2.0), (120.0, 75.0, 2.5),
-                                 (140.0, 75.0, 2.5), (120.0, 100.0, 2.5),
-                                 (140.0, 100.0, 2.5), (160.0, 100.0, 2.5)]
-        self.uprigth_max_frame_load_capacity_kg_table = [
+        return beam_types
+
+    def __init_upright_types(self) -> list[UprightType]:
+        upright_max_shelf_height = [750.0, 1000.0, 1250.0,
+                                    1500.0, 1750.0, 2000.0]
+        upright_sections = [(80.0, 75.0, 2.0), (100.0, 75.0, 2.0),
+                            (120.0, 75.0, 2.0), (140.0, 75.0, 2.0),
+                            (120.0, 100.0, 2.0), (120.0, 75.0, 2.5),
+                            (140.0, 75.0, 2.5), (120.0, 100.0, 2.5),
+                            (140.0, 100.0, 2.5), (160.0, 100.0, 2.5)]
+        uprigth_max_frame_load_capacity_kg_table = [
             [11600.0, 11500.0, 10500.0, 10000.0, 9600.0, 8500.0],
             [16500.0, 16100.0, 15300.0, 14400.0, 13500.0, 12800.0],
             [18800.0, 18000.0, 17700.0, 16500.0, 16000.0, 15800.0],
@@ -83,36 +108,26 @@ class ReferenceBook:
             [26700.0, 26100.0, 25400.0, 24600.0, 24000.0, 23200.0],
             [28300.0, 27700.0, 27100.0, 26300.0, 25600.0, 25000.0]
         ]
-        self.upright_types = {}
+
+        upright_types = []
         for i in range(len(self.upright_max_shelf_height)):
             for j in range(len(self.upright_sections)):
                 upright_type_id = i * 100 + j
-                self.upright_types[upright_type_id] = (
+                upright_types.append(
                     UprightType(
                         upright_type_id=upright_type_id,
-                        upright_section=self.upright_sections[j],
-                        max_shelf_height=self.upright_max_shelf_height[i],
+                        upright_section=upright_sections[j],
+                        max_shelf_height=upright_max_shelf_height[i],
                         max_frame_load_capacity_kg=(
-                            self.uprigth_max_frame_load_capacity_kg_table[j][i]
+                            uprigth_max_frame_load_capacity_kg_table[j][i]
                         )
                     )
                 )
-
-        '''
-        PALLET TYPES TO BEAM TYPES
-        '''
-
-        self.pallet_types2beam_types = {
-            1: [0, 2, 4],
-            2: [1, 3]
-        }
-
-        '''
-        OTHER DEFAULTS
-        '''
-
-        self.roads_width = 3000.0
-        self.forbidden_zone_clearance = 250.0
+        upright_types.sort(
+            key=lambda x: (x.max_shelf_height,
+                           x.max_frame_load_capacity_kg)
+        )
+        return upright_types
 
     def get_pallet_types(self) -> dict[int, PalletType]:
         """

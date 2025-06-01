@@ -60,3 +60,8 @@ class Pallet(BaseModel):
     def width(self) -> float:
         """Width of the pallet"""
         return self.pallet_type.width
+
+    @property
+    def length(self) -> float:
+        """Length of the pallet"""
+        return self.pallet_type.length

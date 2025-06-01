@@ -1,0 +1,50 @@
+from enum import Enum
+from src.zone import AvailableZone
+from src.pallet import Pallet
+from src.rack import RackGroup
+from copy import deepcopy
+
+
+class ActionStatus(Enum):
+    NOT_STARTED = 1
+    SUCCESS = 2
+    FAILED = 3
+
+
+class State:
+    def __init__(self, process_function: callable,
+                 next_success_state_name_list: list[str] = [],
+                 next_failure_state_name_list: list[str] = []):
+        self.process_function = process_function
+        self.next_success_state_name_list = next_success_state_name_list
+        self.next_failure_state_name_list = next_failure_state_name_list
+
+
+class Solution:
+    def __init__(self, available_zones: list[AvailableZone],
+                 pallets: list[Pallet],
+                 state: State,
+                 available_zone_idx: int = 0,
+                 pallet_idx: int = 0,
+                 saved_rack_groups: list[RackGroup] = [],
+                 current_rack_group: RackGroup = None,
+                 action_status: ActionStatus = (
+                     ActionStatus.NOT_STARTED),
+                 pallet_count: dict[int, int] = {}):
+        self.available_zones = deepcopy(available_zones)
+        self.available_zone_idx = available_zone_idx
+        self.pallets = deepcopy(pallets)
+        self.pallet_count = pallet_count
+        self.pallet_idx = pallet_idx
+
+        self.saved_rack_groups = saved_rack_groups
+        self.current_rack_group = current_rack_group
+
+        self.state = state
+        self.action_status = action_status
+
+        # Beam and Upright types
+        self.beam_types = []
+        self.upright_type = None
+        self.beam_type_idx = 0
+        self.pallet_extra_space = 0.0

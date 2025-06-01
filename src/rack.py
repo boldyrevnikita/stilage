@@ -1,90 +1,86 @@
-from pydantic import BaseModel, Field
 from shapely import Polygon
+from src.pallet import Pallet
+
+class BeamType:
+    def __init__(self, beam_type_id: int, length: float,
+                 beam_section: tuple[float, float],
+                 max_shelf_load_capacity_kg: float,
+                 max_shelf_load_capacity_pallets: int):
+        self.beam_type_id = beam_type_id
+        self.length = length
+        self.beam_section = beam_section
+        self.max_shelf_load_capacity_kg = max_shelf_load_capacity_kg
+        self.max_shelf_load_capacity_pallets = max_shelf_load_capacity_pallets
 
 
-class BeamType(BaseModel):
-    beam_type_id: int = Field(
-        frozen=True,
-        description="Unique identifier for the beam type")
-    length: float = Field(
-        gt=0, frozen=True,
-        description="Length of the beam type in millimeters")
-    beam_section: tuple[float, float] = Field(
-        frozen=True,
-        description="Dimensions of the beam section in millimeters")
-    max_shelf_load_capacity_kg: float = Field(
-        gt=0, frozen=True,
-        description="Maximum load capacity of the shelf in kilograms")
-    max_shelf_load_capacity_pallets: int = Field(
-        gt=0, frozen=True,
-        description="Maximum load capacity of the shelf in pallets")
+class UprightType:
+    def __init__(self, upright_type_id: int,
+                upright_section: tuple[float, float, float],
+                max_shelf_height: float,
+                max_frame_load_capacity_kg: float):
+        self.upright_type_id = upright_type_id
+        self.upright_section = upright_section
+        self.max_shelf_height = max_shelf_height
+        self.max_frame_load_capacity_kg = max_frame_load_capacity_kg
+    
+    @property
+    def width(self) -> float:
+        """Width of the upright"""
+        return self.upright_section[0] 
 
 
-class UprightType(BaseModel):
-    upright_type_id: int = Field(
-        frozen=True,
-        description="Unique identifier for the upright type")
-    upright_section: tuple[float, float, float] = Field(
-        frozen=True,
-        description="Dimensions of the upright section in millimeters")
-    max_shelf_height: float = Field(
-        gt=0, frozen=True,
-        description="Maximum height between shelves in millimeters")
-    max_frame_load_capacity_kg: float = Field(
-        gt=0, frozen=True,
-        description="Maximum load capacity of the frame in kilograms")
-
-
-class Rack(BaseModel):
-    beam_type: BeamType = Field(
-        description="Beam type of the rack")
-    upright_type: UprightType = Field(
-        description="Upright type of the rack")
-    height_0: float = Field(
-        default=upright_type.max_shelf_height,
-        gt=0, lt=upright_type.max_shelf_height,
-        description="Height of the first beam from the ground")
-    height_i: float = Field(
-        default=upright_type.max_shelf_height,
-        gt=0, lt=upright_type.max_shelf_height,
-        description="Height between the i-th and (i+1)-th beams"
-    )
-    height_delta: float = Field(
-        gt=0,
-        description="Height after the last beam")
-    decks_quantity: int = Field(
-        gt=0,
-        description="Number of decks in the rack")
-    frames_quantity: int = Field(
-        gt=0,
-        description="Number of frames in the rack")
-
-    def __init__(self, beam_type: BeamType, upright_type: UprightType,
-                 height_0: float, height_i: float, height_delta: float,
-                 decks_quantity: int, frames_quantity: int):
-        super().__init__(
-            beam_type=beam_type,
-            upright_type=upright_type,
-            height_0=height_0,
-            height_i=height_i,
-            height_delta=height_delta,
-            decks_quantity=decks_quantity,
-            frames_quantity=frames_quantity
-        )
-        self.contour: Polygon = Field(
-            default=self.build_contour(),
-            description="Contour of the rack in millimeters")
-
+class Rack:
+    def __init__(self, beam_type: BeamType, upright_type: UprightType):
+        self.beam_type = beam_type
+        self.upright_type = upright_type
+        self.decks: list[Polygon] = []
+        self.uprights: list[Polygon] = []
+        self.enabled_rack
+        self.contour: Polygon = self.build_contour()
+    
+    def __init_simple_rack(self) -> None:
+        pass
+    
     def build_contour(self) -> Polygon:
         pass
 
+
+class DoubleRack(Rack):
 
 class RackGroup():
-    def __init__(self, racks: list[Rack]):
-        self.racks = racks
-        self.contour: Polygon = Field(
-            default=self.build_contour(),
-            description="Contour of the rack group in millimeters")
+    def __init__(self, position: tuple[float, float],
+                 roads_width: float,
+                 beam_types: list[BeamType],
+                 upright_type: UprightType,
+                 pallet: Pallet):
+        self.position = position
+        self.roads_width = roads_width
+        self.next_rack_placement = self._get_first_rack_placement()
+        self.current_rack: Rack = 
 
-    def build_contour(self) -> Polygon:
-        pass
+    def _get_first_rack_placement(self) -> tuple[float, float]:
+        return (self.position[0] + self.roads_width,
+                self.position[1] + self.roads_width)
+    
+    def _get_first_rack(self) -> Rack:
+        smallest_beam_type = solution.beam_types[-1]
+        upright_type = solution.upright_type
+        pallet = solution.pallets[solution.pallet_idx]
+        
+        minimal_rack_length = (upright_type.upright_section[0] * 2
+                           + smallest_beam_type.length
+                           + reference_book.roads_width * 2)
+        minimal_rack_width = pallet.length + reference_book.roads_width * 2
+
+        minimal_rack_contour = shapely.geometry.Polygon(
+            [
+                (0, 0),
+                (minimal_rack_length, 0),
+                (minimal_rack_length, minimal_rack_width),
+                (0, minimal_rack_width),
+            ])
+        minimal_rack_contour = shapely.affinity.translate(
+            minimal_rack_contour,
+            xoff=available_zone.contour.bounds[0],
+            yoff=available_zone.contour.bounds[1]
+    )

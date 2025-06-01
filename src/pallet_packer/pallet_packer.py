@@ -7,23 +7,6 @@ from enum import Enum
 from copy import deepcopy
 
 
-class Actions(Enum):
-    CREATE_HORIZONTAL_GROUP = 1
-    CREATE_VERTICAL_GROUP = 2
-    ADD_SINGLE_RACK = 3
-    ADD_CONNECTED_RACK = 4
-    JUMP_OVER_OBSTACLE = 5
-    GET_AROUND_OBSTACLE = 6
-    HANDLE_SPECIAL_ROAD = 7
-
-
-class TaskCompletionStatus(Enum):
-    NOTHING_PLANNED = 0
-    NOT_STARTED = 1
-    SUCCESS = 2
-    FAILED = 3
-
-
 class PalletPackerSolution:
     def __init__(self, available_zones: list[AvailableZone],
                  current_available_zone: AvailableZone = None,
