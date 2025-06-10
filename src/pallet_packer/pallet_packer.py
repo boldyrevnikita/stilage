@@ -3,9 +3,9 @@ from copy import deepcopy
 
 from src.pallet import Pallet
 from src.reference_book import ReferenceBook
-from src.solution import Solution
+from src.pallet_packer.solution import Solution
 from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
-from state_machine import StateMachine
+from src.pallet_packer.state_machine import StateMachine
 
 
 class PalletPacker:

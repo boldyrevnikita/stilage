@@ -2,7 +2,7 @@ from src.reference_book import ReferenceBook
 from zone import AvailableZone
 from pallet import Pallet
 from src.rack import BeamType, UprightType
-from src.solution import Solution, ActionStatus
+from src.pallet_packer.solution import Solution, ActionStatus
 
 
 def find_suitable_beams_and_upright(

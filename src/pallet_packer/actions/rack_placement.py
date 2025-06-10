@@ -1,5 +1,5 @@
 from reference_book import ReferenceBook
-from solution import Solution, ActionStatus
+from src.pallet_packer.solution import Solution, ActionStatus
 from src.rack import RackGroup, DoubleRack, Rack
 
 

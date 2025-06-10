@@ -1,5 +1,5 @@
 from src.reference_book import ReferenceBook
-from src.solution import Solution, ActionStatus
+from src.pallet_packer.solution import Solution, ActionStatus
 import shapely
 
 

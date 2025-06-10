@@ -1,4 +1,4 @@
-from src.solution import State, ActionStatus, Solution
+from src.pallet_packer.solution import State, ActionStatus, Solution
 import src.pallet_packer.actions as actions
 from enum import Enum
 from copy import deepcopy
