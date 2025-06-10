@@ -27,32 +27,7 @@ class Zone:
         """
         return self.contour.area
 
-    def intersects(self, geometry: Polygon) -> bool:
-        """
-        Checks if the zone intersects with a given geometry.
-
-        Args:
-            geometry (Polygon): The geometry to check for intersection.
-
-        Returns:
-            bool: True if the zone intersects with the geometry,
-                False otherwise.
-        """
-        return self.contour.intersects(geometry)
-
-    def contains(self, geometry: Polygon) -> bool:
-        """
-        Checks if the zone contains a given geometry.
-
-        Args:
-            geometry (Polygon): The geometry to check for containment.
-
-        Returns:
-            bool: True if the zone contains the geometry,
-                False otherwise.
-        """
-        return self.contour.contains(geometry)
-
+    @property
     def bounds(self) -> tuple[float, float, float, float]:
         """
         Returns the bounding box of the zone's contour.
@@ -62,6 +37,10 @@ class Zone:
                 in the format (min_x, min_y, max_x, max_y).
         """
         return self.contour.bounds
+
+    def rotate(self, angle, rot_point) -> None:
+        self.contour = shapely.affinity.rotate(
+            self.contour, angle=angle, origin=rot_point)
 
 
 class OccupiedZone(Zone):
@@ -92,33 +71,12 @@ class OccupiedZone(Zone):
         self.contour_with_roads_width: Polygon = self.contour.buffer(
             self.roads_width, join_style=2)
 
-    def intersects_with_clearance(self, geometry: Polygon) -> bool:
-        """
-        Checks if the occupied zone intersects with a given geometry
-            considering the clearance.
-
-        Args:
-            geometry (Polygon): The geometry to check for intersection.
-
-        Returns:
-            bool: True if the occupied zone intersects with the geometry
-                considering the clearance, False otherwise.
-        """
-        return self.contour_with_clearance.intersects(geometry)
-
-    def intersects_with_roads_width(self, geometry: Polygon) -> bool:
-        """
-        Checks if the occupied zone intersects with a given geometry
-            considering the roads width.
-
-        Args:
-            geometry (Polygon): The geometry to check for intersection.
-
-        Returns:
-            bool: True if the occupied zone intersects with the geometry
-                considering the roads width, False otherwise.
-        """
-        return self.contour_with_roads_width.intersects(geometry)
+    def rotate(self, angle, rot_point):
+        super().rotate(angle, rot_point)
+        self.contour_with_clearance = shapely.affinity.rotate(
+            self.contour_with_clearance, angle=angle, origin=rot_point)
+        self.contour_with_roads_width = shapely.affinity.rotate(
+            self.contour_with_roads_width, angle=angle, origin=rot_point)
 
 
 class SpecialRoadZone(Zone):
@@ -151,7 +109,50 @@ class SpecialRoadZone(Zone):
             list[tuple[float, float]]: A list of tuples representing the
                 vertices of the road zone's contour.
         """
-        pass
+        min_x_idx = 0
+        if self.line[0][0] > self.line[1][0]:
+            min_x_idx = 1
+        min_y_idx = 0
+        if self.line[0][1] > self.line[1][1]:
+            min_y_idx = 1
+
+        orientation = (0 if abs(self.line[0][0] - self.line[1][0])
+                       > abs(self.line[0][1] - self.line[1][1]) else 1)
+
+        if orientation == 0:
+            x_0, y_0 = self.line[min_x_idx]
+            x_1, y_1 = self.line[abs(min_x_idx - 1)]
+            if min_x_idx == min_y_idx:
+                y_0 = y_0 - self.width / 2
+                y_1 = y_1 + self.width / 2
+            else:
+                y_0 = y_0 + self.width / 2
+                y_1 = y_1 - self.width / 2
+        else:
+            x_0, y_0 = self.line[min_y_idx]
+            x_1, y_1 = self.line[abs(min_y_idx - 1)]
+            if min_x_idx == min_y_idx:
+                x_0 = x_0 - self.width / 2
+                x_1 = x_1 + self.width / 2
+            else:
+                x_0 = x_0 + self.width / 2
+                x_1 = x_1 - self.width / 2
+
+        polygon = [(x_0, y_0), (x_1, y_0), (x_1, y_1), (x_0, y_1)]
+
+        return polygon
+
+    def is_horizontal(self) -> int:
+        """
+        Returns the orientation of the road zone.
+
+        Returns:
+            int: True if the road is horizontal, False if vertical.
+        """
+        bounds = self.contour.bounds
+        orientation = (True if abs(bounds[0] - bounds[2])
+                       > abs(bounds[1] - bounds[3]) else False)
+        return orientation
 
 
 class AvailableZone(Zone):
@@ -170,76 +171,90 @@ class AvailableZone(Zone):
         if self.height <= 0:
             raise ValueError("Height must be greater than zero")
 
-        self.occupied_zones: list[OccupiedZone] = []
-        self.special_road_zones: list[SpecialRoadZone] = []
-
-    def add_occupied_zones(self, occupied_zones: list[OccupiedZone]) -> None:
+    def get_intersecting_occupied_zones(self,
+                                        occupied_zones: list[OccupiedZone]
+                                        ) -> list[OccupiedZone]:
+        intersecting_occupied_zones = []
         for zone in occupied_zones:
-            if (zone.intersects_with_clearance(self.contour)
-                    or zone.intersects_with_roads_width(self.contour)):
-                self.occupied_zones.append(deepcopy(zone))
+            if (shapely.intersects(self.contour, zone.contour_with_clearance)
+                    or shapely.intersects(self.contour,
+                                          zone.contour_with_roads_width)):
+                intersecting_occupied_zones.append(deepcopy(zone))
+        return intersecting_occupied_zones
 
-    def add_special_road_zones(self,
-                               special_road_zones: list[SpecialRoadZone]
-                               ) -> None:
+    def get_intersecting_road_zones(self,
+                                    special_road_zones: list[SpecialRoadZone]
+                                    ) -> list[SpecialRoadZone]:
+        intersecting_special_road_zones = []
         for zone in special_road_zones:
             if zone.intersects(self.contour):
-                self.special_road_zones.append(deepcopy(zone))
+                intersecting_special_road_zones.append(deepcopy(zone))
+        return intersecting_special_road_zones
 
-    def rotate_az_90_clockwise(self) -> None:
-        """
-        Rotates the available zone's contour 90 degrees clockwise.
-        """
-        bounds = self.contour.bounds
-        rot_point = bounds[0], bounds[1]
-        y_shift = bounds[2] - bounds[0]
-
-        self.rotate(angle=90, rot_point=rot_point)
-        self.translate(0, y_shift)
-
-    def rotate_az_90_counterclockwise(self) -> None:
-        """
-        Rotates the available zone's contour 90 degrees counterclockwise.
-        """
-        bounds = self.contour.bounds
-        rot_point = bounds[0], bounds[1]
-        x_shift = bounds[3] - bounds[1]
-
-        self.rotate(angle=-90, rot_point=rot_point)
-        self.translate(x_shift, 0)
-
-    def rotate(self, angle, rot_point) -> None:
-        for zone in self.occupied_zones:
-            zone.contour = shapely.affinity.rotate(
-                zone.contour, angle=angle, origin=rot_point)
-            zone.contour_with_clearance = shapely.affinity.rotate(
-                zone.contour_with_clearance, angle=angle, origin=rot_point)
-            zone.contour_with_roads_width = shapely.affinity.rotate(
-                zone.contour_with_roads_width, angle=angle, origin=rot_point)
-
-        for zone in self.special_road_zones:
-            zone.contour = shapely.affinity.rotate(
-                zone.contour, angle=angle, origin=rot_point)
-
-        self.contour = shapely.affinity.rotate(
-            self.contour, angle=angle, origin=rot_point)
-
-    def translate(self, dx: float, dy: float) -> None:
-        """
-        Translates the available zone's contour by dx and dy.
+    def split_zone(self, point: tuple[float, float]) -> tuple['AvailableZone',
+                                                              'AvailableZone']:
+        """Split the zone with a point. The point must be inside the zone.
+        One of the two zones should be as big as possible.
 
         Args:
-            dx (float): The translation distance in the x direction.
-            dy (float): The translation distance in the y direction.
+            point (Tuple[float, float]): The point to split the zone
+
+        Raises:
+            ValueError: If the point is not inside the zone
+
+        Returns:
+            Tuple[AvailableZone, AvailableZone]: The two zones after the split
         """
+        x0, y0, x1, y1 = self.bounds
 
-        self.contour = shapely.affinity.translate(self.contour, dx, dy)
-        for zone in self.occupied_zones:
-            zone.contour = shapely.affinity.translate(zone.contour, dx, dy)
-            zone.contour_with_clearance = shapely.affinity.translate(
-                zone.contour_with_clearance, dx, dy)
-            zone.contour_with_roads_width = shapely.affinity.translate(
-                zone.contour_with_roads_width, dx, dy)
+        if not shapely.contains(self.contour, shapely.geometry.Point(point)):
+            raise ValueError("Point is not inside the zone")
 
-        for zone in self.special_road_zones:
-            zone.contour = shapely.affinity.translate(zone.contour, dx, dy)
+        zone_1_l, zone_2_l, max_area_l = self.__get_split_zones(
+            (x0, y0), (x1, y1), point, True)
+        zone_1_r, zone_2_r, max_area_r = self.__get_split_zones(
+            (x0, y0), (x1, y1), point, False)
+
+        if max_area_l > max_area_r:
+            return zone_1_l, zone_2_l
+        else:
+            return zone_1_r, zone_2_r
+
+    def __get_split_zones(self, p0: tuple[float, float],
+                          p1: tuple[float, float],
+                          ps: tuple[float, float], is_left_smallest: bool
+                          ) -> tuple['AvailableZone', 'AvailableZone', float]:
+        """Get the two zones after splitting the current zone with a
+        point
+
+        Args:
+            p0 (Tuple[float, float]): The down-left point of the zone
+            p1 (Tuple[float, float]): The up-right point of the zone
+            ps (Tuple[float, float]): The point to split the zone
+            is_left_smallest (bool): True if the left zone should
+                be the smallest
+
+        Returns:
+            Tuple[AvailableZone, AvailableZone, float]: The two zones and the
+            maximum available area among them
+        """
+        x0, y0 = p0
+        x1, y1 = p1
+        xs, ys = ps
+
+        if is_left_smallest:
+            zone_1 = AvailableZone([(x0, ys), (xs, ys), (xs, y1), (x0, y1)],
+                                   self.height)
+            zone_2 = AvailableZone([(xs, y0), (x1, y0), (x1, y1), (xs, y1)],
+                                   self.height)
+            max_available_area = max(zone_1.area,
+                                     zone_2.area)
+        else:
+            zone_1 = AvailableZone([(x0, ys), (x1, ys), (x1, y1), (x0, y1)],
+                                   self.height)
+            zone_2 = AvailableZone([(xs, y0), (x1, y0), (x1, ys), (xs, ys)],
+                                   self.height)
+            max_available_area = max(zone_1.area,
+                                     zone_2.area)
+
+        return zone_1, zone_2, max_available_area

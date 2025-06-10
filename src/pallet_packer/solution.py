@@ -1,5 +1,5 @@
 from enum import Enum
-from src.zone import AvailableZone
+from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
 from src.pallet import Pallet
 from src.rack import RackGroup
 from copy import deepcopy
@@ -22,9 +22,11 @@ class State:
 
 class Solution:
     def __init__(self, available_zones: list[AvailableZone],
+                 occupied_zones: list[OccupiedZone],
+                 road_zones: list[SpecialRoadZone],
                  pallets: list[Pallet],
                  state: State,
-                 available_zone_idx: int = 0,
+                 available_zone_idx: int = -1,
                  pallet_idx: int = 0,
                  saved_rack_groups: list[RackGroup] = [],
                  current_rack_group: RackGroup = None,
@@ -33,9 +35,16 @@ class Solution:
                  pallet_count: dict[int, int] = {}):
         self.available_zones = deepcopy(available_zones)
         self.available_zone_idx = available_zone_idx
+        self.rot_point: tuple[float, float] = (0.0, 0.0)
         self.pallets = deepcopy(pallets)
         self.pallet_count = pallet_count
         self.pallet_idx = pallet_idx
+
+        self.occupied_zones = deepcopy(occupied_zones)
+        self.road_zones = deepcopy(road_zones)
+        self.current_occupied_zones: list[OccupiedZone] = []
+        self.current_road_zones: list[SpecialRoadZone] = []
+        self.intersected_special_zone: OccupiedZone | SpecialRoadZone = None
 
         self.saved_rack_groups = saved_rack_groups
         self.current_rack_group = current_rack_group
