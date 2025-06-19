@@ -60,8 +60,8 @@ class ReferenceBook:
             1: [],
             2: [],
         }
-        for i in range(len(self.beam_lengths)):
-            for j in range(len(self.beam_sections)):
+        for i in range(len(beam_lengths)):
+            for j in range(len(beam_sections)):
                 beam_type_id = i * 100 + j
 
                 rack_type = -1
@@ -110,8 +110,8 @@ class ReferenceBook:
         ]
 
         upright_types = []
-        for i in range(len(self.upright_max_shelf_height)):
-            for j in range(len(self.upright_sections)):
+        for i in range(len(upright_max_shelf_height)):
+            for j in range(len(upright_sections)):
                 upright_type_id = i * 100 + j
                 upright_types.append(
                     UprightType(

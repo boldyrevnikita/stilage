@@ -38,7 +38,7 @@ class Zone:
         """
         return self.contour.bounds
 
-    def rotate(self, angle, rot_point) -> None:
+    def rotate(self, rot_point: tuple[float, float], angle: float) -> None:
         self.contour = shapely.affinity.rotate(
             self.contour, angle=angle, origin=rot_point)
 
@@ -71,8 +71,8 @@ class OccupiedZone(Zone):
         self.contour_with_roads_width: Polygon = self.contour.buffer(
             self.roads_width, join_style=2)
 
-    def rotate(self, angle, rot_point):
-        super().rotate(angle, rot_point)
+    def rotate(self, rot_point: tuple[float, float], angle: float):
+        super().rotate(rot_point, angle)
         self.contour_with_clearance = shapely.affinity.rotate(
             self.contour_with_clearance, angle=angle, origin=rot_point)
         self.contour_with_roads_width = shapely.affinity.rotate(

@@ -25,6 +25,7 @@ def rotate_everything_90_clockwise(
     for road_zone in solution.current_road_zones:
         road_zone.rotate(solution.rot_point, angle)
 
+    solution.is_rotated = True
     solution.action_status = ActionStatus.SUCCESS
 
 
@@ -40,15 +41,20 @@ def rotate_evetything_90_counterclockwise(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
-    available_zone = solution.available_zones[solution.available_zone_idx]
-    angle = -90
+    if solution.is_rotated:
+        available_zone = solution.available_zones[solution.available_zone_idx]
+        angle = -90
 
-    available_zone.rotate(solution.rot_point, angle)
-    for occupied_zone in solution.current_occupied_zones:
-        occupied_zone.rotate(solution.rot_point, angle)
-    for road_zone in solution.current_road_zones:
-        road_zone.rotate(solution.rot_point, angle)
-    solution.current_rack_group.rotate(solution.rot_point, angle)
+        available_zone.rotate(solution.rot_point, angle)
+        for occupied_zone in solution.current_occupied_zones:
+            occupied_zone.rotate(solution.rot_point, angle)
+        for road_zone in solution.current_road_zones:
+            road_zone.rotate(solution.rot_point, angle)
+        solution.current_rack_group.rotate(angle, solution.rot_point)
+
+        solution.is_rotated = False
+
+    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_next_zone(
@@ -119,7 +125,7 @@ def split_available_zone(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
-    current_rack = solution.current_rack_group.get_current_rack()
+    current_rack = solution.current_rack_group.racks[-1]
     available_zone = solution.available_zones[solution.available_zone_idx]
     new_zones = available_zone.split_zone(current_rack.bounds[2:])
     solution.available_zones.pop(solution.available_zone_idx)
@@ -136,14 +142,12 @@ def check_if_current_rack_intersecting_occupied_zones(
 
     for occupied_zone in solution.current_occupied_zones:
         if (shapely.intersects(
-                occupied_zone.contour_with_clearance, current_rack.contour)
-            or shapely.intersects(
-                occupied_zone.contour_with_roads_width, current_rack.contour)):
+                occupied_zone.contour, current_rack.contour)):
             solution.intersected_special_zone = occupied_zone
-            solution.action_status = ActionStatus.FAILED
+            solution.action_status = ActionStatus.SUCCESS
             return
 
-    solution.action_status = ActionStatus.SUCCESS
+    solution.action_status = ActionStatus.FAILED
 
 
 def check_if_current_rack_intersecting_road_zones(
@@ -156,10 +160,10 @@ def check_if_current_rack_intersecting_road_zones(
         if shapely.intersects(
                 road_zone.contour, сurrent_rack.contour):
             solution.intersected_special_zone = road_zone
-            solution.action_status = ActionStatus.FAILED
+            solution.action_status = ActionStatus.SUCCESS
             return
 
-    solution.action_status = ActionStatus.SUCCESS
+    solution.action_status = ActionStatus.FAILED
 
 
 def check_if_intersected_road_horizontal(
@@ -202,11 +206,11 @@ def check_if_both_racks_intersecting_occupied_zone(
 
     is_first_rack_intersecting = (
         shapely.intersects(
-            current_occupied_zone.contour_with_clearance,
+            current_occupied_zone.contour,
             current_rack.rack_1.contour))
     is_second_rack_intersecting = (
         shapely.intersects(
-            current_occupied_zone.contour_with_clearance,
+            current_occupied_zone.contour,
             current_rack.rack_2.contour))
 
     if is_first_rack_intersecting and is_second_rack_intersecting:
@@ -221,7 +225,7 @@ def check_if_first_rack_intersecting_occupied_zone(
 ) -> None:
     is_first_rack_intersecting = (
         shapely.intersects(
-            solution.current_occupied_zones[0].contour_with_clearance,
+            solution.intersected_special_zone.contour,
             solution.current_rack_group.get_current_rack().rack_1.contour))
     if is_first_rack_intersecting:
         solution.action_status = ActionStatus.SUCCESS
@@ -235,7 +239,7 @@ def check_if_second_rack_intersecting_occupied_zone(
 ) -> None:
     is_second_rack_intersecting = (
         shapely.intersects(
-            solution.current_occupied_zones[0].contour_with_clearance,
+            solution.intersected_special_zone.contour,
             solution.current_rack_group.get_current_rack().rack_2.contour))
     if is_second_rack_intersecting:
         solution.action_status = ActionStatus.SUCCESS
@@ -330,6 +334,8 @@ def get_corresponding_occupied_zones_and_road_zones(
                 road_zone.contour, available_zone.contour):
             solution.current_road_zones.append(road_zone)
 
+    solution.action_status = ActionStatus.SUCCESS
+
 
 def sort_available_zones_by_area_and_height(
     _: ReferenceBook,
@@ -345,3 +351,47 @@ def sort_available_zones_by_area_and_height(
     solution.available_zones.sort(
         key=lambda x: (x.area, x.height))
     solution.action_status = ActionStatus.SUCCESS
+
+
+def check_if_rack_intersecting_occupied_zone(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Checks if the current rack is intersecting with the occupied zone.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+    current_rack = solution.current_rack_group.get_current_rack()
+    current_occupied_zone = solution.intersected_special_zone
+
+    if (shapely.intersects(
+            current_occupied_zone.contour,
+            current_rack.contour)):
+        solution.action_status = ActionStatus.SUCCESS
+    else:
+        solution.action_status = ActionStatus.FAILED
+
+
+def check_if_rack_intersecting_road_zone(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Checks if the current rack is intersecting with the road zone.
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+    current_rack = solution.current_rack_group.get_current_rack()
+    current_road_zone = solution.intersected_special_zone
+
+    if shapely.intersects(
+            current_road_zone.contour, current_rack.contour):
+        solution.action_status = ActionStatus.SUCCESS
+    else:
+        solution.action_status = ActionStatus.FAILED

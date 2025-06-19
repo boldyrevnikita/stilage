@@ -1,4 +1,4 @@
-from reference_book import ReferenceBook
+from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionStatus
 from src.rack import RackGroup, DoubleRack, Rack
 
@@ -11,7 +11,10 @@ def place_horizontal_rack_group(
 
     rack_group = RackGroup(
         position=available_zone.bounds[:2],
-        roads_width=reference_book.roads_width
+        roads_width=reference_book.roads_width,
+        beam_types=solution.beam_types,
+        upright_type=solution.upright_type,
+        pallet=solution.pallets[solution.pallet_idx],
     )
 
     solution.current_rack_group = rack_group
@@ -86,6 +89,11 @@ def swap_double_rack_to_single_rack(
     solution: Solution
 ) -> None:
     current_rack_group = solution.current_rack_group
+
+    if not isinstance(current_rack_group.current_rack, DoubleRack):
+        solution.action_status = ActionStatus.FAILED
+        return
+
     current_rack_group.current_rack = current_rack_group.current_rack.rack_1
     solution.action_status = ActionStatus.SUCCESS
 
@@ -100,9 +108,10 @@ def move_current_rack_verticaly(
     rack_bounds = current_rack.contour.bounds
     road_bounds = road_zone.bounds
 
-    xoff, yoff = 0, road_bounds[3] - rack_bounds[1]
+    xoff, yoff = 0, road_bounds[3] - rack_bounds[1] + 1
 
     current_rack.translate(xoff, yoff)
+    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_current_frame_as_special(
@@ -227,4 +236,30 @@ def disable_last_frame_for_second_rack(
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack().rack_2
     current_rack.disable_frame(len(current_rack) - 1)
+    solution.action_status = ActionStatus.SUCCESS
+
+
+def save_rack(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    current_rack = solution.current_rack_group.get_current_rack()
+    if len(current_rack) == 0:
+        solution.action_status = ActionStatus.SUCCESS
+        return
+    solution.current_rack_group.commit_current_rack()
+    solution.action_status = ActionStatus.SUCCESS
+
+
+def save_rack_group(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    if len(solution.current_rack_group.racks) == 0:
+        solution.action_status = ActionStatus.FAILED
+        return
+
+    solution.saved_rack_groups.append(
+        solution.current_rack_group
+    )
     solution.action_status = ActionStatus.SUCCESS

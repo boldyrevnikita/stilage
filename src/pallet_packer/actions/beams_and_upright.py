@@ -1,6 +1,6 @@
 from src.reference_book import ReferenceBook
-from zone import AvailableZone
-from pallet import Pallet
+from src.zone import AvailableZone
+from src.pallet import Pallet
 from src.rack import BeamType, UprightType
 from src.pallet_packer.solution import Solution, ActionStatus
 
@@ -95,7 +95,7 @@ def _find_suitable_upright_type(
     for upright_type in reference_book.upright_types:
         if (upright_type.max_shelf_height >= shelf_height and
                 upright_type.max_frame_load_capacity_kg >= max_frame_load_kg):
-            return upright_type
+            return upright_type, pallet_extra_space
 
     if upright_type.max_shelf_height < shelf_height:
         raise ValueError(

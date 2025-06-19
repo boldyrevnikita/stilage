@@ -2,6 +2,7 @@ from src.pallet_packer.solution import State, ActionStatus, Solution
 import src.pallet_packer.actions as actions
 from enum import Enum
 from copy import deepcopy
+# from src.visualize import visualize_solution_decorator
 
 
 class Block(Enum):
@@ -13,19 +14,23 @@ class Block(Enum):
     EOZ = 6
 
 
+def default_function(_, solution: Solution) -> ActionStatus:
+    solution.action_status = ActionStatus.SUCCESS
+
+
 def get_general_states() -> dict[str, State]:
     return {
-        'GFS': State(lambda r, s: ActionStatus.SUCCESS, ['GFS'], ['GFS']),
-        'TS-DEL': State(lambda r, s: ActionStatus.SUCCESS,
+        'GFS': State(default_function, ['GFS'], ['GFS']),
+        'TS-DEL': State(default_function,
                         ['TS-DEL'], ['TS-DEL']),
-        'TS': State(lambda r, s: ActionStatus.SUCCESS, ['TS'], ['TS'])
+        'TS': State(default_function, ['TS'], ['TS'])
     }
 
 
 def get_main_loop_states() -> dict[str, State]:
     return {
         f'{Block.MAIN}-S': State(
-            lambda r, s: ActionStatus.SUCCESS,
+            default_function,
             [f'{Block.MAIN}-SoP'], ['GFS']),
         f'{Block.MAIN}-SoP': State(
             actions.sort_pallets_by_weight_height_width,
@@ -50,7 +55,7 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-CTNOZ'], [f'{Block.MAIN}-DFS']),
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
-            [f'{Block.MAIN}-PHG'], [f'{Block.MAIN}-SNZ']),
+            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-SNZ']),
         f'{Block.MAIN}-SNZ': State(
             actions.set_next_zone,
             [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
@@ -72,12 +77,12 @@ def get_main_loop_states() -> dict[str, State]:
 def get_rack_placement_states() -> dict[str, State]:
     return {
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
-            actions.check_if_rack_intersecting_occupied_zone,
+            actions.check_if_current_rack_intersecting_occupied_zones,
             [f'{Block.GOOZ}-DLF', f'{Block.JOOZ}-DLF',
-             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR']
+             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR'],
             [f'{Block.RACK_PLACEMENT}-CNTRZ']),
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
-            actions.check_if_rack_intersecting_road_zone,
+            actions.check_if_current_rack_intersecting_road_zones,
             [f'{Block.RACK_PLACEMENT}-CIRH'],
             [f'{Block.RACK_PLACEMENT}-SNF']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
@@ -87,6 +92,14 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-CESFFR': State(
             actions.check_if_current_rack_fits_available_zone,
             [f'{Block.RACK_PLACEMENT}-CTNOZ'],
+            [f'{Block.RACK_PLACEMENT}-DLF']),
+        f'{Block.RACK_PLACEMENT}-DLF': State(
+            actions.delete_last_frame,
+            [f'{Block.RACK_PLACEMENT}-SR'],
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-SR': State(
+            actions.save_rack,
+            [f'{Block.RACK_PLACEMENT}-SNLH-DEF'],
             [f'{Block.RACK_PLACEMENT}-SNLH-DEF']),
         f'{Block.RACK_PLACEMENT}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
@@ -103,6 +116,10 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-DD2R': State(
             actions.swap_double_rack_to_single_rack,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
+            [f'{Block.RACK_PLACEMENT}-SRG']),
+        f'{Block.RACK_PLACEMENT}-SRG': State(
+            actions.save_rack_group,
+            [f'{Block.MAIN}-RZCC-90'],
             [f'{Block.MAIN}-RZCC-90']),
         f'{Block.RACK_PLACEMENT}-CIRH': State(
             actions.check_if_intersected_road_horizontal,
@@ -173,19 +190,19 @@ def get_dsfx_states() -> dict[str, State]:
     return {
         f'{Block.DSFX}-IDR': State(
             actions.check_if_current_rack_is_double,
-            [f'{Block.DSFX}-IBRI', f'{Block.DSFX}-DFS-R'],
-            ['GFS']),
+            [f'{Block.DSFX}-IBRI'],
+            [f'{Block.DSFX}-DFS-R']),
         f'{Block.DSFX}-IBRI': State(
-            actions.check_if_both_racks_intersecting_occupied_zones,
+            actions.check_if_both_racks_intersecting_occupied_zone,
             [f'{Block.DSFX}-DFS-RB'],
             [f'{Block.DSFX}-IFRI', f'{Block.DSFX}-ISRI']),
         f'{Block.DSFX}-DFS-R': State(
             actions.decrease_current_frame_length,
-            [f'{Block.DSFX}-CTNOZ'],
+            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
             ['TS-DEL']),
         f'{Block.DSFX}-DFS-RB': State(
             actions.decrease_current_frame_length,
-            [f'{Block.DSFX}-CTNOZ'],
+            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
             ['TS-DEL']),
         f'{Block.DSFX}-IFRI': State(
             actions.check_if_first_rack_intersecting_occupied_zone,
@@ -197,11 +214,11 @@ def get_dsfx_states() -> dict[str, State]:
             ['TS-DEL']),
         f'{Block.DSFX}-DFS-R1': State(
             actions.decrease_first_rack_frame_length,
-            [f'{Block.DSFX}-CTNOZ'],
+            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
             ['TS-DEL']),
         f'{Block.DSFX}-DFS-R2': State(
             actions.decrease_second_rack_frame_length,
-            [f'{Block.DSFX}-CTNOZ'],
+            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
             ['TS-DEL'])
     }
 
@@ -212,14 +229,14 @@ def get_eoz_states() -> dict[str, State]:
             actions.check_if_current_rack_is_double,
             [f'{Block.EOZ}-IBRI'], [f'{Block.EOZ}-COZ']),
         f'{Block.EOZ}-IBRI': State(
-            actions.check_if_both_racks_intersecting_occupied_zones,
+            actions.check_if_both_racks_intersecting_occupied_zone,
             ['TS-DEL'], [f'{Block.EOZ}-IFRI', f'{Block.EOZ}-ISRI']),
         f'{Block.EOZ}-COZ': State(
             actions.check_if_last_rack_shelf_covers_occupied_zone,
             [f'{Block.EOZ}-DR'], ['TS-DEL']),
         f'{Block.EOZ}-DR': State(
             actions.disable_last_frame,
-            [f'{Block.RACK_PLACEMENT}-CTNRZ'],
+            [f'{Block.RACK_PLACEMENT}-CNTRZ'],
             ['GFS']),
         f'{Block.EOZ}-IFRI': State(
             actions.check_if_first_rack_intersecting_occupied_zone,
@@ -237,11 +254,11 @@ def get_eoz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.EOZ}-DR-R1': State(
             actions.disable_last_frame_for_first_rack,
-            [f'{Block.RACK_PLACEMENT}-CTNRZ'],
+            [f'{Block.RACK_PLACEMENT}-CNTRZ'],
             ['GFS']),
         f'{Block.EOZ}-DR-R2': State(
             actions.disable_last_frame_for_second_rack,
-            [f'{Block.RACK_PLACEMENT}-CTNRZ'],
+            [f'{Block.RACK_PLACEMENT}-CNTRZ'],
             ['GFS'])
     }
 
@@ -274,16 +291,15 @@ class StateMachine:
     def get_end_delete_state(self) -> State:
         return self.states['TS-DEL']
 
+    # @visualize_solution_decorator
     def apply_action(self, solution: Solution) -> ActionStatus:
         try:
             current_state = solution.state
             action_function = current_state.process_function
-            action_status = action_function(self.reference_book,
-                                            solution)
+            action_function(self.reference_book, solution)
         except Exception as e:
             print(f"Error applying action: {e}")
-            action_status = ActionStatus.FAILED
-        return action_status
+        return solution
 
     def choose_next_action(self, solution: Solution) -> list[Solution]:
         current_state = solution.state
@@ -309,6 +325,8 @@ class StateMachine:
             new_solution = deepcopy(solution)
             new_solution.state = next_state
             new_solution.action_status = ActionStatus.NOT_STARTED
+            new_solution.state_history.append(next_state_name)
+            new_solutions.append(new_solution)
 
         return new_solutions
 

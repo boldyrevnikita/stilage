@@ -2,10 +2,11 @@ from collections import deque
 from copy import deepcopy
 
 from src.pallet import Pallet
-from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution
-from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
 from src.pallet_packer.state_machine import StateMachine
+from src.reference_book import ReferenceBook
+from src.utils import check_if_debugger_is_active
+from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
 
 
 class PalletPacker:
@@ -13,9 +14,9 @@ class PalletPacker:
     def pack_pallets(cls, pallets: list[Pallet],
                      available_zones: list[AvailableZone],
                      occupied_zones: list[OccupiedZone],
-                     special_road_zones: list[SpecialRoadZone]
+                     special_road_zones: list[SpecialRoadZone],
+                     reference_book: ReferenceBook = ReferenceBook()
                      ) -> Solution | None:
-        reference_book = ReferenceBook()
         solutions_queue: deque[Solution] = deque()
         ready_solutions: list[Solution] = []
 
@@ -47,6 +48,12 @@ class PalletPacker:
             solutions_queue.extend(transitional_solutions)
 
             solutions_queue = cls.__prune_solutions(solutions_queue)
+            if check_if_debugger_is_active():
+                print(f"Queue size: {len(solutions_queue)}")
+                print(f"Ready solutions: {len(ready_solutions)}")
+                print("Current function name: "
+                      f"{current_solution.state.process_function.__name__}")
+                print()
 
         return cls.__get_best_solution(ready_solutions)
 
@@ -73,7 +80,8 @@ class PalletPacker:
     @staticmethod
     def __calculate_solution_score(solution: Solution) -> int:
         score = 0
-        for pallet_idx, pallet_count in solution.pallet_count.items():
-            pallet = solution.pallets[pallet_idx]
-            score += min(pallet_count, pallet.cargo.quantity)
+        for rack_group in solution.saved_rack_groups:
+            print(type(rack_group.racks))
+            for rack in rack_group.racks:
+                score += 1
         return score

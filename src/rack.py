@@ -46,9 +46,10 @@ class DeckStatus(Enum):
 class Rack:
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
                  pallet: Pallet, position: tuple[float, float] = (0.0, 0.0)):
-        self.beam_types = beam_types.sort(key=lambda x: -x.length)
-        self.beam_type_idx = 0
+        self.beam_types = beam_types
+        self.beam_types.sort(key=lambda x: -x.length)
 
+        self.beam_type_idx = 0
         self.beam_type: BeamType = self.beam_types[self.beam_type_idx]
         self.upright_type = upright_type
         self.pallet = pallet
@@ -60,6 +61,7 @@ class Rack:
         self.pillar_status: list[PillarStatus] = []
         self.contour: Polygon | None = None
         self.__init_first_frame()
+        self.__update_contour()
 
     def add_frame(self) -> None:
         if not self.decks:
@@ -85,7 +87,7 @@ class Rack:
         if (frame_idx > 0
                 and self.deck_status[frame_idx-1] == DeckStatus.DISABLED):
             self.pillar_status[frame_idx] = PillarStatus.DISABLED
-        if (frame_idx < len(self.decks)
+        if (frame_idx < len(self.decks) - 1
                 and self.deck_status[frame_idx+1] == DeckStatus.DISABLED):
             self.pillar_status[frame_idx + 1] = PillarStatus.DISABLED
 
@@ -146,6 +148,8 @@ class Rack:
             self.next_element_position = (
                 self.rack_position[0], self.rack_position[1])
 
+        self.__update_contour()
+
     def get_current_shelf_length(self) -> float:
         """Returns the length of the current shelf."""
         return self.beam_type.length
@@ -171,6 +175,13 @@ class Rack:
         return self.decks[-1]
 
     @property
+    def last_pillar_contour(self) -> Polygon | None:
+        """Returns the contour of the last pillar."""
+        if not self.pillars:
+            return None
+        return self.pillars[-1]
+
+    @property
     def bounds(self) -> tuple[float, float, float, float]:
         """Returns the bounds of the rack."""
         if self.contour is None:
@@ -182,13 +193,26 @@ class Rack:
         self.__append_pillar()
         self.__append_deck()
         self.__append_pillar()
-        self.contour = shapely.coverage_union(
-            self.pillars + self.decks
-        )
 
     def __update_contour(self) -> None:
-        self.contour = shapely.coverage_union(
-            self.contour, self.pillars[-1], self.decks[-1])
+        """Initializes the contour of the rack."""
+        if not self.decks or not self.pillars:
+            return
+        min_x, min_y, max_x, max_y = self.pillars[0].bounds
+        for pillar in self.pillars:
+            min_x = min(min_x, pillar.bounds[0])
+            min_y = min(min_y, pillar.bounds[1])
+            max_x = max(max_x, pillar.bounds[2])
+            max_y = max(max_y, pillar.bounds[3])
+
+        for deck in self.decks:
+            min_x = min(min_x, deck.bounds[0])
+            min_y = min(min_y, deck.bounds[1])
+            max_x = max(max_x, deck.bounds[2])
+            max_y = max(max_y, deck.bounds[3])
+
+        self.contour = Polygon([(min_x, min_y), (max_x, min_y),
+                                (max_x, max_y), (min_x, max_y)])
 
     def __append_pillar(self) -> None:
         """Appends a pillar to the rack."""
@@ -323,9 +347,12 @@ class DoubleRack():
 
     def __update_contour(self) -> None:
         """Updates the contour of the double rack."""
-        self.contour = shapely.coverage_union(
-            self.rack_1.contour, self.rack_2.contour
-        )
+        min_x = min(self.rack_1.bounds[0], self.rack_2.bounds[0])
+        min_y = min(self.rack_1.bounds[1], self.rack_2.bounds[1])
+        max_x = max(self.rack_1.bounds[2], self.rack_2.bounds[2])
+        max_y = max(self.rack_1.bounds[3], self.rack_2.bounds[3])
+        self.contour = Polygon([(min_x, min_y), (max_x, min_y),
+                                (max_x, max_y), (min_x, max_y)])
 
 
 class RackGroup():
@@ -341,7 +368,10 @@ class RackGroup():
         self.position = position
         self.roads_width = roads_width
         self.next_rack_placement = self._get_first_rack_placement()
-        self.current_rack: Rack | DoubleRack = self.place_single_rack()
+
+        self.current_rack: Rack | DoubleRack | None = None
+        self.place_single_rack()
+
         self.racks: list[Rack | DoubleRack] = []
 
     def get_current_rack(self) -> Rack | DoubleRack:
@@ -351,8 +381,8 @@ class RackGroup():
         return self.current_rack
 
     def _get_first_rack_placement(self) -> tuple[float, float]:
-        return (self.position[0] + self.roads_width,
-                self.position[1] + self.roads_width)
+        return [self.position[0] + self.roads_width,
+                self.position[1] + self.roads_width]
 
     def commit_current_rack(self) -> None:
         """Commits the current rack to the group."""
