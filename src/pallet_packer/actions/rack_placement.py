@@ -1,5 +1,5 @@
 from src.reference_book import ReferenceBook
-from src.pallet_packer.solution import Solution, ActionStatus
+from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import RackGroup, DoubleRack, Rack
 
 
@@ -18,7 +18,6 @@ def place_horizontal_rack_group(
     )
 
     solution.current_rack_group = rack_group
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def decrease_current_frame_length(
@@ -31,9 +30,8 @@ def decrease_current_frame_length(
         current_rack.set_next_beam_type()
         current_rack.delete_last_frame()
         current_rack.add_frame()
-        solution.action_status = ActionStatus.SUCCESS
     else:
-        solution.action_status = ActionStatus.FAILED
+        raise ActionFailure("Cannot decrease frame length further.")
 
 
 def place_new_frame(
@@ -42,7 +40,6 @@ def place_new_frame(
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.add_frame()
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_next_rack_position_higher_default(
@@ -57,11 +54,10 @@ def set_next_rack_position_higher_default(
     nr_position[1] = current_rack.bounds[3] + reference_book.roads_width
 
     solution.current_rack_group.next_rack_placement = nr_position
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_next_rack_position_higher_oz(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     rg_position = solution.current_rack_group.position
@@ -72,7 +68,6 @@ def set_next_rack_position_higher_oz(
     nr_position[1] = ocupied_zone.contour_with_clearance.bounds[3]
 
     solution.current_rack_group.next_rack_placement = nr_position
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def place_new_double_rack(
@@ -81,7 +76,6 @@ def place_new_double_rack(
 ) -> None:
     current_rack_group = solution.current_rack_group
     current_rack_group.place_double_rack()
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def swap_double_rack_to_single_rack(
@@ -91,15 +85,15 @@ def swap_double_rack_to_single_rack(
     current_rack_group = solution.current_rack_group
 
     if not isinstance(current_rack_group.current_rack, DoubleRack):
-        solution.action_status = ActionStatus.FAILED
-        return
+        raise ActionFailure(
+            "Current rack is not a DoubleRack, cannot swap to single rack."
+        )
 
     current_rack_group.current_rack = current_rack_group.current_rack.rack_1
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def move_current_rack_verticaly(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     road_zone = solution.intersected_special_zone
@@ -111,7 +105,6 @@ def move_current_rack_verticaly(
     xoff, yoff = 0, road_bounds[3] - rack_bounds[1] + 1
 
     current_rack.translate(xoff, yoff)
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_current_frame_as_special(
@@ -122,7 +115,6 @@ def set_current_frame_as_special(
     current_rack.made_frame_bridge(
         len(current_rack) - 1
     )
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_default_frame_size(
@@ -139,7 +131,6 @@ def delete_last_frame(
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.delete_last_frame()
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def set_next_rack_position_righter(
@@ -153,7 +144,6 @@ def set_next_rack_position_righter(
     nr_position[0] = forbidden_zone.contour_with_clearance.bounds[2]
 
     current_rack_group.next_rack_placement = nr_position
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def create_new_rack(
@@ -170,73 +160,73 @@ def create_new_rack(
     else:
         raise TypeError("Unknown rack type in current rack group")
 
-    solution.action_status = ActionStatus.SUCCESS
 
-
-def check_if_current_rack_is_double(
+def assert_current_rack_is_double(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack()
-    if isinstance(current_rack, DoubleRack):
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+
+    if not isinstance(current_rack, DoubleRack):
+        raise ActionFailure(
+            "Current rack is not a DoubleRack, cannot perform this action."
+        )
 
 
 def decrease_first_rack_frame_length(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack().rack_1
-    if current_rack.is_possible_set_next_beam_type():
-        current_rack.set_next_beam_type()
-        current_rack.delete_last_frame()
-        current_rack.add_frame()
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+
+    if not current_rack.is_possible_set_next_beam_type():
+        raise ActionFailure(
+            "Cannot decrease frame length further for the first rack."
+        )
+
+    current_rack.set_next_beam_type()
+    current_rack.delete_last_frame()
+    current_rack.add_frame()
 
 
 def decrease_second_rack_frame_length(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack().rack_2
-    if current_rack.is_possible_set_next_beam_type():
-        current_rack.set_next_beam_type()
-        current_rack.delete_last_frame()
-        current_rack.add_frame()
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+
+    if not current_rack.is_possible_set_next_beam_type():
+        raise ActionFailure(
+            "Cannot decrease frame length further for the second rack."
+        )
+
+    current_rack.set_next_beam_type()
+    current_rack.delete_last_frame()
+    current_rack.add_frame()
 
 
 def disable_last_frame(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.disable_frame(len(current_rack) - 1)
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def disable_last_frame_for_first_rack(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack().rack_1
     current_rack.disable_frame(len(current_rack) - 1)
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def disable_last_frame_for_second_rack(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack().rack_2
     current_rack.disable_frame(len(current_rack) - 1)
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def save_rack(
@@ -245,10 +235,8 @@ def save_rack(
 ) -> None:
     current_rack = solution.current_rack_group.get_current_rack()
     if len(current_rack) == 0:
-        solution.action_status = ActionStatus.SUCCESS
         return
     solution.current_rack_group.commit_current_rack()
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def save_rack_group(
@@ -256,10 +244,8 @@ def save_rack_group(
     solution: Solution
 ) -> None:
     if len(solution.current_rack_group.racks) == 0:
-        solution.action_status = ActionStatus.FAILED
-        return
+        raise ActionFailure("Cannot save an empty rack group.")
 
     solution.saved_rack_groups.append(
         solution.current_rack_group
     )
-    solution.action_status = ActionStatus.SUCCESS

@@ -1,8 +1,8 @@
+from src.pallet import Pallet
+from src.pallet_packer.solution import Solution
+from src.rack import BeamType, UprightType
 from src.reference_book import ReferenceBook
 from src.zone import AvailableZone
-from src.pallet import Pallet
-from src.rack import BeamType, UprightType
-from src.pallet_packer.solution import Solution, ActionStatus
 
 
 def find_suitable_beams_and_upright(
@@ -24,8 +24,6 @@ def find_suitable_beams_and_upright(
     solution.beam_types = beam_types
     solution.upright_type = upright_type
     solution.pallet_extra_space = pallet_extra_space
-
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def _find_suitable_beams_and_upright(

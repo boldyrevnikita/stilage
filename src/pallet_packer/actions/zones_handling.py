@@ -1,5 +1,5 @@
 from src.reference_book import ReferenceBook
-from src.pallet_packer.solution import Solution, ActionStatus
+from src.pallet_packer.solution import Solution, ActionFailure
 import shapely
 
 
@@ -26,7 +26,6 @@ def rotate_everything_90_clockwise(
         road_zone.rotate(solution.rot_point, angle)
 
     solution.is_rotated = True
-    solution.action_status = ActionStatus.SUCCESS
 
 
 def rotate_evetything_90_counterclockwise(
@@ -54,8 +53,6 @@ def rotate_evetything_90_counterclockwise(
 
         solution.is_rotated = False
 
-    solution.action_status = ActionStatus.SUCCESS
-
 
 def set_next_zone(
     _: ReferenceBook,
@@ -68,11 +65,10 @@ def set_next_zone(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
-    if solution.available_zone_idx < len(solution.available_zones) - 1:
-        solution.available_zone_idx += 1
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if solution.available_zone_idx >= len(solution.available_zones) - 1:
+        raise ActionFailure("No more available zones to process.")
+
+    solution.available_zone_idx += 1
 
 
 def set_zero_zone(
@@ -88,10 +84,9 @@ def set_zero_zone(
         solution (Solution): The current solution containing available zones.
     """
     solution.available_zone_idx = 0
-    solution.action_status = ActionStatus.SUCCESS
 
 
-def check_if_current_rack_fits_available_zone(
+def assert_current_rack_fits_available_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -108,13 +103,13 @@ def check_if_current_rack_fits_available_zone(
 
     if not shapely.contains(
             available_zone.contour, current_rack.contour):
-        solution.action_status = ActionStatus.FAILED
-    else:
-        solution.action_status = ActionStatus.SUCCESS
+        raise ActionFailure(
+            "Current rack does not fit into the available zone."
+        )
 
 
 def split_available_zone(
-    reference_book: ReferenceBook,
+    _: ReferenceBook,
     solution: Solution
 ) -> None:
     """
@@ -131,10 +126,8 @@ def split_available_zone(
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zones.extend(new_zones)
 
-    solution.action_status = ActionStatus.SUCCESS
 
-
-def check_if_current_rack_intersecting_occupied_zones(
+def assert_current_rack_intersecting_occupied_zones(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -144,13 +137,14 @@ def check_if_current_rack_intersecting_occupied_zones(
         if (shapely.intersects(
                 occupied_zone.contour, current_rack.contour)):
             solution.intersected_special_zone = occupied_zone
-            solution.action_status = ActionStatus.SUCCESS
             return
 
-    solution.action_status = ActionStatus.FAILED
+    raise ActionFailure(
+        "Current rack does not intersect with any occupied zone."
+    )
 
 
-def check_if_current_rack_intersecting_road_zones(
+def assert_current_rack_intersecting_road_zones(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -160,23 +154,24 @@ def check_if_current_rack_intersecting_road_zones(
         if shapely.intersects(
                 road_zone.contour, сurrent_rack.contour):
             solution.intersected_special_zone = road_zone
-            solution.action_status = ActionStatus.SUCCESS
             return
 
-    solution.action_status = ActionStatus.FAILED
+    raise ActionFailure(
+        "Current rack does not intersect with any road zone."
+    )
 
 
-def check_if_intersected_road_horizontal(
+def assert_intersected_road_horizontal(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
-    if solution.intersected_special_zone.is_horizontal():
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not solution.intersected_special_zone.is_horizontal():
+        raise ActionFailure(
+            "Intersected road zone is not horizontal."
+        )
 
 
-def check_if_current_shelf_length_enough_for_road(
+def assert_current_shelf_length_enough_for_road(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -191,13 +186,13 @@ def check_if_current_shelf_length_enough_for_road(
     current_rack = solution.current_rack_group.get_current_rack()
     current_road = solution.intersected_special_zone
 
-    if current_rack.get_current_shelf_length() >= current_road.width:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if current_rack.get_current_shelf_length() < current_road.width:
+        raise ActionFailure(
+            "Current shelf length is not enough for the road width."
+        )
 
 
-def check_if_both_racks_intersecting_occupied_zone(
+def assert_both_racks_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -213,13 +208,17 @@ def check_if_both_racks_intersecting_occupied_zone(
             current_occupied_zone.contour,
             current_rack.rack_2.contour))
 
-    if is_first_rack_intersecting and is_second_rack_intersecting:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not is_first_rack_intersecting:
+        raise ActionFailure(
+            "First rack does not intersect with the occupied zone."
+        )
+    if not is_second_rack_intersecting:
+        raise ActionFailure(
+            "Second rack does not intersect with the occupied zone."
+        )
 
 
-def check_if_first_rack_intersecting_occupied_zone(
+def assert_first_rack_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -227,13 +226,13 @@ def check_if_first_rack_intersecting_occupied_zone(
         shapely.intersects(
             solution.intersected_special_zone.contour,
             solution.current_rack_group.get_current_rack().rack_1.contour))
-    if is_first_rack_intersecting:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not is_first_rack_intersecting:
+        raise ActionFailure(
+            "First rack does not intersect with the occupied zone."
+        )
 
 
-def check_if_second_rack_intersecting_occupied_zone(
+def assert_second_rack_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -241,13 +240,13 @@ def check_if_second_rack_intersecting_occupied_zone(
         shapely.intersects(
             solution.intersected_special_zone.contour,
             solution.current_rack_group.get_current_rack().rack_2.contour))
-    if is_second_rack_intersecting:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not is_second_rack_intersecting:
+        raise ActionFailure(
+            "Second rack does not intersect with the occupied zone."
+        )
 
 
-def check_if_last_rack_shelf_covers_occupied_zone(
+def assert_last_rack_shelf_covers_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -259,13 +258,13 @@ def check_if_last_rack_shelf_covers_occupied_zone(
             current_rack.last_shelf_contour,
             current_occupied_zone.contour))
 
-    if is_last_shelf_covers:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not is_last_shelf_covers:
+        raise ActionFailure(
+            "Last shelf of the current rack does not cover the occupied zone."
+        )
 
 
-def check_if_last_shelf_of_first_rack_covers_occupied_zone(
+def assert_last_shelf_of_first_rack_covers_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -277,13 +276,13 @@ def check_if_last_shelf_of_first_rack_covers_occupied_zone(
             current_rack.rack_1.last_shelf_contour,
             current_occupied_zone.contour))
 
-    if is_last_shelf_covers:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not is_last_shelf_covers:
+        raise ActionFailure(
+            "Last shelf of the first rack does not cover the occupied zone."
+        )
 
 
-def check_if_last_shelf_of_second_rack_covers_occupied_zone(
+def assert_last_shelf_of_second_rack_covers_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -295,10 +294,10 @@ def check_if_last_shelf_of_second_rack_covers_occupied_zone(
             current_rack.rack_2.last_shelf_contour,
             current_occupied_zone.contour))
 
-    if is_last_shelf_covers:
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    if not is_last_shelf_covers:
+        raise ActionFailure(
+            "Last shelf of the second rack does not cover the occupied zone."
+        )
 
 
 def get_corresponding_occupied_zones_and_road_zones(
@@ -334,8 +333,6 @@ def get_corresponding_occupied_zones_and_road_zones(
                 road_zone.contour, available_zone.contour):
             solution.current_road_zones.append(road_zone)
 
-    solution.action_status = ActionStatus.SUCCESS
-
 
 def sort_available_zones_by_area_and_height(
     _: ReferenceBook,
@@ -348,50 +345,4 @@ def sort_available_zones_by_area_and_height(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
-    solution.available_zones.sort(
-        key=lambda x: (x.area, x.height))
-    solution.action_status = ActionStatus.SUCCESS
-
-
-def check_if_rack_intersecting_occupied_zone(
-    _: ReferenceBook,
-    solution: Solution
-) -> None:
-    """
-    Checks if the current rack is intersecting with the occupied zone.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
-    """
-    current_rack = solution.current_rack_group.get_current_rack()
-    current_occupied_zone = solution.intersected_special_zone
-
-    if (shapely.intersects(
-            current_occupied_zone.contour,
-            current_rack.contour)):
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
-
-
-def check_if_rack_intersecting_road_zone(
-    _: ReferenceBook,
-    solution: Solution
-) -> None:
-    """
-    Checks if the current rack is intersecting with the road zone.
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
-    """
-    current_rack = solution.current_rack_group.get_current_rack()
-    current_road_zone = solution.intersected_special_zone
-
-    if shapely.intersects(
-            current_road_zone.contour, current_rack.contour):
-        solution.action_status = ActionStatus.SUCCESS
-    else:
-        solution.action_status = ActionStatus.FAILED
+    solution.available_zones.sort(key=lambda x: (x.area, x.height))

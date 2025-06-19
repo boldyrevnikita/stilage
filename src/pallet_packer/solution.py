@@ -5,6 +5,12 @@ from src.rack import RackGroup
 from copy import deepcopy
 
 
+class ActionFailure(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
 class ActionStatus(Enum):
     NOT_STARTED = 1
     SUCCESS = 2

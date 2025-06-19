@@ -1,5 +1,5 @@
 from src.reference_book import ReferenceBook
-from src.pallet_packer.solution import Solution, ActionStatus
+from src.pallet_packer.solution import Solution, ActionFailure
 
 
 def set_next_pallet(
@@ -17,9 +17,8 @@ def set_next_pallet(
 
     if solution.pallet_idx < len(solution.pallets) - 1:
         solution.pallet_idx += 1
-        solution.action_status = ActionStatus.SUCCESS
     else:
-        solution.action_status = ActionStatus.FAILED
+        raise ActionFailure("No more pallets to process.")
 
 
 def sort_pallets_by_weight_height_width(
@@ -34,4 +33,3 @@ def sort_pallets_by_weight_height_width(
         solution (Solution): The current solution containing pallets.
     """
     solution.pallets.sort(key=lambda x: (x.weight, x.height, x.width))
-    solution.action_status = ActionStatus.SUCCESS
