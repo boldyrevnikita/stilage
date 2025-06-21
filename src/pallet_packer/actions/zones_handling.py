@@ -109,7 +109,7 @@ def assert_current_rack_fits_available_zone(
 
 
 def split_available_zone(
-    _: ReferenceBook,
+    reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
     """
@@ -122,9 +122,15 @@ def split_available_zone(
     """
     current_rack = solution.current_rack_group.racks[-1]
     available_zone = solution.available_zones[solution.available_zone_idx]
-    new_zones = available_zone.split_zone(current_rack.bounds[2:])
+    split_point = list(current_rack.bounds[2:])
+    split_point[1] += reference_book.roads_width
+
+    if available_zone.contains_point(split_point):
+        new_zones = available_zone.split_zone(split_point)
+        solution.available_zones.extend(new_zones)
+
     solution.available_zones.pop(solution.available_zone_idx)
-    solution.available_zones.extend(new_zones)
+    solution.available_zone_idx -= 1
 
 
 def assert_current_rack_intersecting_occupied_zones(
@@ -300,7 +306,7 @@ def assert_last_shelf_of_second_rack_covers_occupied_zone(
         )
 
 
-def get_corresponding_occupied_zones_and_road_zones(
+def set_current_occupied_zones_and_road_zones(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
@@ -316,16 +322,16 @@ def get_corresponding_occupied_zones_and_road_zones(
     available_zone = solution.available_zones[solution.available_zone_idx]
 
     for occupied_zone in solution.occupied_zones:
-        is_intersects_with_clearance = (
+        intersects_with_clearance = (
             shapely.intersects(
                 occupied_zone.contour_with_clearance, available_zone.contour))
-        is_intersects_with_roads_width = (
+        intersects_with_roads_width = (
             shapely.intersects(
                 occupied_zone.contour_with_roads_width, available_zone.contour)
             )
 
-        if (is_intersects_with_clearance or
-                is_intersects_with_roads_width):
+        if (intersects_with_clearance or
+                intersects_with_roads_width):
             solution.current_occupied_zones.append(occupied_zone)
 
     for road_zone in solution.road_zones:
@@ -345,4 +351,4 @@ def sort_available_zones_by_area_and_height(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
-    solution.available_zones.sort(key=lambda x: (x.area, x.height))
+    solution.available_zones.sort(key=lambda x: (-x.height, -x.area))

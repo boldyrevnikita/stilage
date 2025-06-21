@@ -81,7 +81,6 @@ class PalletPacker:
     def __calculate_solution_score(solution: Solution) -> int:
         score = 0
         for rack_group in solution.saved_rack_groups:
-            print(type(rack_group.racks))
             for rack in rack_group.racks:
                 score += 1
         return score

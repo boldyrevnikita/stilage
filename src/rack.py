@@ -15,6 +15,11 @@ class BeamType:
         self.max_shelf_load_capacity_kg = max_shelf_load_capacity_kg
         self.max_shelf_load_capacity_pallets = max_shelf_load_capacity_pallets
 
+    @property
+    def height(self) -> float:
+        """Height of the beam"""
+        return self.beam_section[0]
+
 
 class UprightType:
     def __init__(self, upright_type_id: int,
@@ -367,7 +372,7 @@ class RackGroup():
 
         self.position = position
         self.roads_width = roads_width
-        self.next_rack_placement = self._get_first_rack_placement()
+        self.next_rack_placement = list(self.position)
 
         self.current_rack: Rack | DoubleRack | None = None
         self.place_single_rack()
@@ -379,10 +384,6 @@ class RackGroup():
         if self.current_rack is None:
             raise ValueError("No current rack set.")
         return self.current_rack
-
-    def _get_first_rack_placement(self) -> tuple[float, float]:
-        return [self.position[0] + self.roads_width,
-                self.position[1] + self.roads_width]
 
     def commit_current_rack(self) -> None:
         """Commits the current rack to the group."""

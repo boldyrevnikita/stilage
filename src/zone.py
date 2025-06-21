@@ -191,6 +191,17 @@ class AvailableZone(Zone):
                 intersecting_special_road_zones.append(deepcopy(zone))
         return intersecting_special_road_zones
 
+    def contains_point(self, point: tuple[float, float]) -> bool:
+        """Check if the point is inside the zone.
+
+        Args:
+            point (Tuple[float, float]): The point to check
+
+        Returns:
+            bool: True if the point is inside the zone, False otherwise
+        """
+        return shapely.contains(self.contour, shapely.geometry.Point(point))
+
     def split_zone(self, point: tuple[float, float]) -> tuple['AvailableZone',
                                                               'AvailableZone']:
         """Split the zone with a point. The point must be inside the zone.
@@ -207,7 +218,7 @@ class AvailableZone(Zone):
         """
         x0, y0, x1, y1 = self.bounds
 
-        if not shapely.contains(self.contour, shapely.geometry.Point(point)):
+        if not self.contains_point(point):
             raise ValueError("Point is not inside the zone")
 
         zone_1_l, zone_2_l, max_area_l = self.__get_split_zones(

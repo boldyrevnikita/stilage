@@ -39,7 +39,8 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         f'{Block.MAIN}-CBaU': State(
             actions.find_suitable_beams_and_upright,
-            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PHG'], ['GFS']),
+            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PHG'],
+            [f'{Block.MAIN}-SNZ']),
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
             [f'{Block.MAIN}-PHG'], ['GFS']),
@@ -59,7 +60,7 @@ def get_main_loop_states() -> dict[str, State]:
             actions.set_next_zone,
             [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
         f'{Block.MAIN}-GCOZARZ': State(
-            actions.get_corresponding_occupied_zones_and_road_zones,
+            actions.set_current_occupied_zones_and_road_zones,
             [f'{Block.MAIN}-CBaU'], ['GFS']),
         f'{Block.MAIN}-SZZ': State(
             actions.set_zero_zone,

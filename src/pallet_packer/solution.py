@@ -39,6 +39,8 @@ class Solution:
                  action_status: ActionStatus = (
                      ActionStatus.NOT_STARTED),
                  pallet_count: dict[int, int] = {}):
+        self.initial_available_zones = deepcopy(available_zones)
+
         self.available_zones = deepcopy(available_zones)
         self.available_zone_idx = available_zone_idx
         self.rot_point: tuple[float, float] = (0.0, 0.0)

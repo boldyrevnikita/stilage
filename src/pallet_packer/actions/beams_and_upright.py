@@ -1,5 +1,5 @@
 from src.pallet import Pallet
-from src.pallet_packer.solution import Solution
+from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import BeamType, UprightType
 from src.reference_book import ReferenceBook
 from src.zone import AvailableZone
@@ -65,7 +65,7 @@ def _find_suitable_beam_type(
         if shelf_load_kg <= beam_type.max_shelf_load_capacity_kg:
             return beam_type
 
-    raise ValueError(
+    raise ActionFailure(
         "No suitable beam type found for the given pallet."
     )
 
@@ -85,23 +85,24 @@ def _find_suitable_upright_type(
             pallet_extra_space = extra_space
             break
 
-    shelf_height = pallet.height + pallet_extra_space
+    shelf_height = pallet.height + pallet_extra_space + beam_type.height
     max_shelfs = available_zone.height // shelf_height
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
 
+    # TODO: Handle specific cases, when max_frame_load_kg could be decreased
     for upright_type in reference_book.upright_types:
         if (upright_type.max_shelf_height >= shelf_height and
                 upright_type.max_frame_load_capacity_kg >= max_frame_load_kg):
             return upright_type, pallet_extra_space
 
     if upright_type.max_shelf_height < shelf_height:
-        raise ValueError(
+        raise ActionFailure(
             "No suitable upright type found for the given pallet, "
             "since the pallet+cargo height exceeds maximum shelf height"
         )
     if upright_type.max_frame_load_capacity_kg < shelf_load_kg:
-        raise ValueError(
+        raise ActionFailure(
             "No suitable upright type found for the given pallet, "
             "since the pallet weight exceeds maximum frame load capacity"
         )
