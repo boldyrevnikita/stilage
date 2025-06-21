@@ -15,6 +15,7 @@ def place_horizontal_rack_group(
         beam_types=solution.beam_types,
         upright_type=solution.upright_type,
         pallet=solution.pallets[solution.pallet_idx],
+        max_shelfs=solution.max_shelfs,
     )
 
     solution.current_rack_group = rack_group

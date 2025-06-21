@@ -50,7 +50,8 @@ class DeckStatus(Enum):
 
 class Rack:
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
-                 pallet: Pallet, position: tuple[float, float] = (0.0, 0.0)):
+                 pallet: Pallet, max_shelfs: int,
+                 position: tuple[float, float] = (0.0, 0.0)):
         self.beam_types = beam_types
         self.beam_types.sort(key=lambda x: -x.length)
 
@@ -58,9 +59,11 @@ class Rack:
         self.beam_type: BeamType = self.beam_types[self.beam_type_idx]
         self.upright_type = upright_type
         self.pallet = pallet
+        self.max_shelfs = max_shelfs
         self.rack_position = position
         self.next_element_position = position
         self.decks: list[Polygon] = []
+        self.beams: list[BeamType] = []
         self.pillars: list[Polygon] = []
         self.deck_status: list[DeckStatus] = []
         self.pillar_status: list[PillarStatus] = []
@@ -139,6 +142,7 @@ class Rack:
 
         self.decks.pop()
         self.deck_status.pop()
+        self.beams.pop()
         self.pillars.pop()
         self.pillar_status.pop()
 
@@ -168,6 +172,17 @@ class Rack:
         for i in range(len(self.pillars)):
             self.pillars[i] = shapely.affinity.translate(
                 self.pillars[i], xoff, yoff)
+
+    def calculate_pallet_capacity(self) -> int:
+        """Calculates the total number of pallets
+            that can be stored in the rack."""
+        total_pallets = 0
+        for beam_type, status in zip(self.beams, self.deck_status):
+            if status == DeckStatus.ENABLED:
+                total_pallets += (
+                    self.beam_type.max_shelf_load_capacity_pallets
+                    * self.max_shelfs)
+        return total_pallets
 
     def __len__(self) -> int:
         return len(self.decks)
@@ -234,6 +249,7 @@ class Rack:
         self.decks.append(
             self.__create_deck(self.next_element_position))
         self.deck_status.append(DeckStatus.ENABLED)
+        self.beams.append(self.beam_type)
 
         self.next_element_position = (
             self.next_element_position[0] + self.decks[-1].bounds[2],
@@ -268,16 +284,17 @@ class Rack:
 
 class DoubleRack():
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
-                 pallet: Pallet, position: tuple[float, float] = (0.0, 0.0),
+                 pallet: Pallet, max_shelfs: int,
+                 position: tuple[float, float] = (0.0, 0.0),
                  rack_distance: float = 200.0):
         self.rack_distance = rack_distance
 
         self.first_rack_position = position
-        self.rack_1 = Rack(beam_types, upright_type, pallet,
+        self.rack_1 = Rack(beam_types, upright_type, pallet, max_shelfs,
                            self.first_rack_position)
 
         self.second_rack_position = self.__calculate_2nd_rack_position()
-        self.rack_2 = Rack(beam_types, upright_type, pallet,
+        self.rack_2 = Rack(beam_types, upright_type, pallet, max_shelfs,
                            self.second_rack_position)
         self.contour: Polygon = self.__update_contour()
 
@@ -336,6 +353,12 @@ class DoubleRack():
         self.rack_1.translate(xoff, yoff)
         self.rack_2.translate(xoff, yoff)
 
+    def calculate_pallet_capacity(self) -> int:
+        """Calculates the total number of pallets
+            that can be stored in both racks."""
+        return (self.rack_1.calculate_pallet_capacity() +
+                self.rack_2.calculate_pallet_capacity())
+
     def __len__(self) -> int:
         """Returns the frame length of the double rack."""
         return max(len(self.rack_1), len(self.rack_2))
@@ -365,10 +388,12 @@ class RackGroup():
                  roads_width: float,
                  beam_types: list[BeamType],
                  upright_type: UprightType,
-                 pallet: Pallet):
+                 pallet: Pallet,
+                 max_shelfs: int):
         self.beam_types = beam_types
         self.upright_type = upright_type
         self.pallet = pallet
+        self.max_shelfs = max_shelfs
 
         self.position = position
         self.roads_width = roads_width
@@ -394,12 +419,14 @@ class RackGroup():
     def place_single_rack(self) -> None:
         """Places the first rack in the group."""
         self.current_rack = Rack(self.beam_types, self.upright_type,
-                                 self.pallet, self.next_rack_placement)
+                                 self.pallet, self.max_shelfs,
+                                 self.next_rack_placement)
 
     def place_double_rack(self) -> None:
         """Places a double rack in the group."""
         self.current_rack = DoubleRack(self.beam_types, self.upright_type,
-                                       self.pallet, self.next_rack_placement)
+                                       self.pallet, self.max_shelfs,
+                                       self.next_rack_placement)
 
     def rotate(self, angle: float,
                rot_point: tuple[float, float] = (0.0, 0.0)) -> None:

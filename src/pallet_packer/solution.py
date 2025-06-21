@@ -65,6 +65,7 @@ class Solution:
         self.upright_type = None
         self.beam_type_idx = 0
         self.pallet_extra_space = 0.0
+        self.max_shelfs = 0
 
         self.state_history = []
         self.is_rotated = False

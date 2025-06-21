@@ -82,5 +82,5 @@ class PalletPacker:
         score = 0
         for rack_group in solution.saved_rack_groups:
             for rack in rack_group.racks:
-                score += 1
+                score += rack.calculate_pallet_capacity()
         return score

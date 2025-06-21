@@ -13,7 +13,7 @@ def find_suitable_beams_and_upright(
         solution.available_zone_idx
     ]
     pallet = solution.pallets[solution.pallet_idx]
-    beam_types, upright_type, pallet_extra_space = (
+    beam_types, upright_type, max_shelfs, pallet_extra_space = (
         _find_suitable_beams_and_upright(
             reference_book=reference_book,
             available_zone=available_zone,
@@ -24,22 +24,25 @@ def find_suitable_beams_and_upright(
     solution.beam_types = beam_types
     solution.upright_type = upright_type
     solution.pallet_extra_space = pallet_extra_space
+    solution.max_shelfs = max_shelfs
 
 
 def _find_suitable_beams_and_upright(
     reference_book: ReferenceBook,
     available_zone: AvailableZone,
     pallet: Pallet
-) -> tuple[list[BeamType], UprightType, float]:
+) -> tuple[list[BeamType], UprightType, float, float]:
     choosed_beam_type = _find_suitable_beam_type(
         reference_book=reference_book,
         pallet=pallet
     )
-    choosed_upright_type, pallet_extra_space = _find_suitable_upright_type(
-        reference_book=reference_book,
-        available_zone=available_zone,
-        pallet=pallet,
-        beam_type=choosed_beam_type
+    choosed_upright_type, pallet_extra_space, max_shelfs = (
+        _find_suitable_upright_type(
+            reference_book=reference_book,
+            available_zone=available_zone,
+            pallet=pallet,
+            beam_type=choosed_beam_type
+        )
     )
     all_suitable_beam_types = _find_all_suitable_beam_types(
         reference_book=reference_book,
@@ -47,7 +50,8 @@ def _find_suitable_beams_and_upright(
         beam_type=choosed_beam_type
     )
 
-    return all_suitable_beam_types, choosed_upright_type, pallet_extra_space
+    return (all_suitable_beam_types, choosed_upright_type,
+            max_shelfs, pallet_extra_space)
 
 
 def _find_suitable_beam_type(
@@ -75,7 +79,7 @@ def _find_suitable_upright_type(
     available_zone: AvailableZone,
     pallet: Pallet,
     beam_type: BeamType
-) -> tuple[UprightType, float]:
+) -> tuple[UprightType, float, float]:
     available_height = available_zone.height - reference_book.frame_height_eps
 
     pallet_extra_space = reference_book.frame_height2pallet_extra_space[-1][1]
@@ -90,11 +94,15 @@ def _find_suitable_upright_type(
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
 
-    # TODO: Handle specific cases, when max_frame_load_kg could be decreased
-    for upright_type in reference_book.upright_types:
-        if (upright_type.max_shelf_height >= shelf_height and
-                upright_type.max_frame_load_capacity_kg >= max_frame_load_kg):
-            return upright_type, pallet_extra_space
+    while max_shelfs >= 0:
+        for upright_type in reference_book.upright_types:
+            if (upright_type.max_shelf_height >= shelf_height and
+                upright_type.max_frame_load_capacity_kg
+                    >= max_frame_load_kg):
+                return upright_type, pallet_extra_space, max_shelfs
+
+        max_shelfs -= 1
+        max_frame_load_kg -= shelf_load_kg
 
     if upright_type.max_shelf_height < shelf_height:
         raise ActionFailure(
@@ -107,7 +115,7 @@ def _find_suitable_upright_type(
             "since the pallet weight exceeds maximum frame load capacity"
         )
 
-    return upright_type, pallet_extra_space
+    return upright_type, pallet_extra_space, max_shelfs
 
 
 def _find_all_suitable_beam_types(
