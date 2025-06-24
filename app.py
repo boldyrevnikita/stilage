@@ -1,6 +1,6 @@
 import argparse
 import pika
-from src.settings import Settings
+from src.network import Settings
 
 from src.network import (MessageHandler, Sender, process_message_ml,
                          process_message_print)
@@ -51,6 +51,7 @@ elif args.process == 'print':
                               args.heartbeat)
 else:
     raise ValueError(f'Unknown processing function: {args.process}')
+
 receiver.receive()
 receiver.close()
 sender.close()

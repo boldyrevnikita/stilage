@@ -30,6 +30,7 @@ class ReferenceBook:
         ]
 
         self.roads_width = 3000.0
+        self.roads_height = 5000.0
         self.forbidden_zone_clearance = 250.0
         self.frame_height_eps = 100.0
 
