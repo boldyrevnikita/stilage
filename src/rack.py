@@ -71,6 +71,8 @@ class Rack:
         self.__init_first_frame()
         self.__update_contour()
 
+        self.orientation = 0  # 0 - horizontal, 1 - vertical
+
     def add_frame(self) -> None:
         if not self.decks:
             self.__init_first_frame()
@@ -116,6 +118,8 @@ class Rack:
         for i in range(len(self.pillars)):
             self.pillars[i] = shapely.affinity.rotate(self.pillars[i], angle,
                                                       origin=rot_point)
+
+        self.orientation = abs(self.orientation - 1)
 
     def is_possible_set_next_beam_type(self) -> bool:
         if self.beam_type_idx < len(self.beam_types) - 1:
@@ -304,6 +308,7 @@ class DoubleRack():
 
         self.contour = None
         self.__update_contour()
+        self.orientation = 0  # 0 - horizontal, 1 - vertical
 
     def add_frame(self) -> None:
         """Adds a frame to both racks."""
@@ -323,6 +328,7 @@ class DoubleRack():
                                                origin=rot_point)
         self.rack_1.rotate(angle, rot_point)
         self.rack_2.rotate(angle, rot_point)
+        self.orientation = abs(self.orientation - 1)
 
     def is_possible_set_next_beam_type(self) -> bool:
         """Checks if the next beam type can be set for both racks."""

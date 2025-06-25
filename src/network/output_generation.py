@@ -20,8 +20,7 @@ def generate_output(solution: Solution, task_id: str,
             # TODO: Handle special sections in height
             sections_in_height_special = rack.max_shelfs
 
-            # TODO: Handle orientation
-            orientation = -1
+            orientation = rack.orientation
 
             upright_section = rack.upright_type.upright_section
             beam_section = rack.beam_type.beam_section
