@@ -1,290 +1,471 @@
 import shapely
-from typing import List, Literal, Tuple
-import numpy as np
+from shapely import Polygon
+from src.pallet import Pallet
+from enum import Enum
 
 
-class RackSection:
-    def __init__(self, id: int, unit_length: float, width: float,
-                 height_0: float, height_i: float, height_delta: float,
-                 min_unit_shelf_quantity: int,
-                 max_unit_shelf_quantity: int,
-                 abs_quantity: int, min_quantity: int, max_quantity: int,
-                 rel_quantity: float,
-                 pillar_width: float,
-                 back_connection_distance: float,
-                 front_distance: float,
-                 back_distance: float, side_distance: float,
-                 cargo_weight: float = 0.0) -> None:
-        self.id = id
-        self.unit_length = unit_length
-        self.width = width
-        self.height_0 = height_0
-        self.height_i = height_i
-        self.height_delta = height_delta
-        self.min_unit_shelf_quantity = 2
-        self.max_unit_shelf_quantity = 4
-        self.abs_quantity = abs_quantity
-        self.min_quantity = min_quantity
-        self.max_quantity = max_quantity
-        self.rel_quantity = rel_quantity
-        self.quantity_left = abs_quantity
-        self.pillar_width = pillar_width
-        self.back_connection_distance = back_connection_distance
-        self.front_distance = front_distance
-        self.back_distance = back_distance
-        self.side_distance = side_distance
-        self.cargo_weight = cargo_weight
-        self.max_available_weight_on_shelf = [
-            5000.0, 3800.0, 2100
-        ]
+class BeamType:
+    def __init__(self, beam_type_id: int, length: float,
+                 beam_section: tuple[float, float],
+                 max_shelf_load_capacity_kg: float,
+                 max_shelf_load_capacity_pallets: int):
+        self.beam_type_id = beam_type_id
+        self.length = length
+        self.beam_section = beam_section
+        self.max_shelf_load_capacity_kg = max_shelf_load_capacity_kg
+        self.max_shelf_load_capacity_pallets = max_shelf_load_capacity_pallets
 
-        available_height_i = [750.0, 1000.0, 1250.0, 1500.0, 1750.0, 2000.0]
-        available_max_weight_load = [21000.0, 20800.0, 20500.0,
-                                     19600.0, 18900.0, 18000.0]
-        self.max_load_weight = available_max_weight_load[-1]
-        height_i = available_height_i[-1]
+    @property
+    def height(self) -> float:
+        """Height of the beam"""
+        return self.beam_section[0]
 
-        for i in range(len(available_height_i)):
-            if self.height_i <= available_height_i[i]:
-                self.max_load_weight = available_max_weight_load[i]
-                height_i = available_height_i[i]
-                break
-        self.height_i = height_i
 
-    def update_abs_quantity(self, quantity: int) -> None:
-        """Update the absolute quantity.
+class UprightType:
+    def __init__(self, upright_type_id: int,
+                 upright_section: tuple[float, float, float],
+                 max_shelf_height: float,
+                 max_frame_load_capacity_kg: float):
+        self.upright_type_id = upright_type_id
+        self.upright_section = upright_section
+        self.max_shelf_height = max_shelf_height
+        self.max_frame_load_capacity_kg = max_frame_load_capacity_kg
 
-        Args:
-            quantity (int): quantity
-        """
-        self.abs_quantity = quantity
-        self.quantity_left = quantity
+    @property
+    def width(self) -> float:
+        """Width of the upright"""
+        return self.upright_section[0]
+
+
+class PillarStatus(Enum):
+    ENABLED = 1
+    DISABLED = 2
+
+
+class DeckStatus(Enum):
+    ENABLED = 1
+    DISABLED = 2
+    RACK_BRIDGE = 3
 
 
 class Rack:
-    def __init__(self, *args, **kwargs):
-        self.available_lengths = [1850.0, 2700.0, 3600.0]
-        if isinstance(args[0], float):
-            self.init_xy(*args, **kwargs)
+    def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
+                 pallet: Pallet, max_shelfs: int,
+                 position: tuple[float, float] = (0.0, 0.0)):
+        self.beam_types = beam_types
+        self.beam_types.sort(key=lambda x: -x.length)
+
+        self.beam_type_idx = 0
+        self.beam_type: BeamType = self.beam_types[self.beam_type_idx]
+        self.upright_type = upright_type
+        self.pallet = pallet
+        self.max_shelfs = max_shelfs
+        self.rack_position = position
+        self.next_element_position = position
+        self.decks: list[Polygon] = []
+        self.beams: list[BeamType] = []
+        self.pillars: list[Polygon] = []
+        self.deck_status: list[DeckStatus] = []
+        self.pillar_status: list[PillarStatus] = []
+        self.contour: Polygon | None = None
+        self.__init_first_frame()
+        self.__update_contour()
+
+        self.orientation = 0  # 0 - horizontal, 1 - vertical
+
+    def add_frame(self) -> None:
+        if not self.decks:
+            self.__init_first_frame()
+            return
+
+        self.__append_deck()
+        self.__append_pillar()
+        self.__update_contour()
+
+    def disable_frame(self, frame_idx: int) -> None:
+        """Disables the frame at the given index."""
+        if frame_idx < 0 or frame_idx >= len(self.decks):
+            raise IndexError("Frame index out of range.")
+
+        self.deck_status[frame_idx] = DeckStatus.DISABLED
+
+        if frame_idx == 0:
+            self.pillar_status[frame_idx] = PillarStatus.DISABLED
+        elif frame_idx == len(self.decks) - 1:
+            self.pillar_status[frame_idx + 1] = PillarStatus.DISABLED
+
+        if (frame_idx > 0
+                and self.deck_status[frame_idx-1] == DeckStatus.DISABLED):
+            self.pillar_status[frame_idx] = PillarStatus.DISABLED
+        if (frame_idx < len(self.decks) - 1
+                and self.deck_status[frame_idx+1] == DeckStatus.DISABLED):
+            self.pillar_status[frame_idx + 1] = PillarStatus.DISABLED
+
+    def made_frame_bridge(self, frame_idx: int) -> None:
+        """Makes the frame at the given index a bridge."""
+        if frame_idx < 0 or frame_idx >= len(self.decks):
+            raise IndexError("Frame index out of range.")
+        self.deck_status[frame_idx] = DeckStatus.RACK_BRIDGE
+
+    def rotate(self, angle: float,
+               rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
+        """Rotates the rack around a point."""
+        self.contour = shapely.affinity.rotate(self.contour, angle,
+                                               origin=rot_point)
+        for i in range(len(self.decks)):
+            self.decks[i] = shapely.affinity.rotate(self.decks[i], angle,
+                                                    origin=rot_point)
+        for i in range(len(self.pillars)):
+            self.pillars[i] = shapely.affinity.rotate(self.pillars[i], angle,
+                                                      origin=rot_point)
+
+        self.orientation = abs(self.orientation - 1)
+
+    def is_possible_set_next_beam_type(self) -> bool:
+        if self.beam_type_idx < len(self.beam_types) - 1:
+            return True
+        return False
+
+    def set_next_beam_type(self) -> None:
+        """Sets the next beam type for the rack."""
+        if self.is_possible_set_next_beam_type():
+            self.beam_type_idx += 1
+            self.beam_type = self.beam_types[self.beam_type_idx]
         else:
-            self.init_shelfs_pillars(*args, **kwargs)
+            raise IndexError("No more beam types available.")
 
-    def init_xy(self, x: float, y: float,
-                rack_section: RackSection, sections_in_length: int,
-                sections_in_width: Literal[1, 2], sections_in_height: int,
-                shelfs_length_unit_quantity: List[int]):
-        self.rack_section = rack_section
-        self.sections_in_length = sections_in_length
-        self.sections_in_width = sections_in_width
-        self.sections_in_height = sections_in_height
-        self.shelfs_length_unit_quantity = shelfs_length_unit_quantity
-        self.shelfs_special = np.zeros_like(
-            self.get_shelfs_length_unit_quantity()).tolist()
+    def set_zero_beam_type(self) -> None:
+        """Sets the beam type index to zero."""
+        self.beam_type_idx = 0
+        self.beam_type = self.beam_types[self.beam_type_idx]
 
-        self.shelf_rows, self.pillar_rows = self.__init_rack(x, y)
+    def delete_last_frame(self) -> None:
+        """Deletes the last frame from the rack."""
+        if not self.decks:
+            raise IndexError("No frames to delete.")
 
-    def init_shelfs_pillars(self,
-                            shelf_rows: List[List[shapely.geometry.Polygon]],
-                            pillar_rows: List[List[shapely.geometry.Polygon]],
-                            rack_section: RackSection,
-                            sections_in_height: int,
-                            shelfs_length_unit_quantity: List[int],
-                            shelfs_special: List[int]):
-        self.rack_section = rack_section
-        self.sections_in_length = len(shelf_rows[0])
-        self.sections_in_width = len(shelf_rows)
-        self.sections_in_height = sections_in_height
-        self.shelfs_length_unit_quantity = shelfs_length_unit_quantity
-        self.shelfs_special = shelfs_special
+        self.decks.pop()
+        self.deck_status.pop()
+        self.beams.pop()
+        self.pillars.pop()
+        self.pillar_status.pop()
 
-        self.shelf_rows, self.pillar_rows = shelf_rows, pillar_rows
-
-    def __init_rack(self, x: float, y: float
-                    ) -> Tuple[List[List[shapely.geometry.Polygon]],
-                               List[List[shapely.geometry.Polygon]]]:
-        if self.sections_in_width == 1:
-            shelf_row_1, pillar_row_1 = self.__init_rack_row(x, y)
-            return [shelf_row_1], [pillar_row_1]
-        elif self.sections_in_width == 2:
-            shelf_row_1, pillar_row_1 = self.__init_rack_row(x, y)
-            y += (self.rack_section.width
-                  + self.rack_section.back_connection_distance)
-            shelf_row_2, pillar_row_2 = self.__init_rack_row(x, y)
-            return [shelf_row_1, shelf_row_2], [pillar_row_1, pillar_row_2]
+        if self.decks:
+            self.next_element_position = (
+                self.decks[-1].bounds[0] + self.decks[-1].bounds[2],
+                self.next_element_position[1])
         else:
-            raise ValueError("Rack width must be 1 or 2.")
+            self.pillars.pop()
+            self.pillar_status.pop()
 
-    def __init_rack_row(self, x: float, y: float
-                        ) -> Tuple[List[shapely.geometry.Polygon],
-                                   List[shapely.geometry.Polygon]]:
-        """Initialize the rack.
-        """
-        shelf_row = []
-        pillar_row = []
+            self.next_element_position = (
+                self.rack_position[0], self.rack_position[1])
 
-        for col_idx in range(self.sections_in_length):
-            shelf_length = (
-                self.available_lengths[
-                    self.shelfs_length_unit_quantity[col_idx] - 2])
+        self.__update_contour()
 
-            pillar = shapely.geometry.Polygon([
-                (x, y),
-                (x + self.rack_section.pillar_width, y),
-                (x + self.rack_section.pillar_width,
-                 y + self.rack_section.width),
-                (x, y + self.rack_section.width)])
+    def get_current_shelf_length(self) -> float:
+        """Returns the length of the current shelf."""
+        return self.beam_type.length
 
-            x += self.rack_section.pillar_width
+    def translate(self, xoff: float, yoff: float) -> None:
+        """Translates the rack by a given offset."""
+        self.contour = shapely.affinity.translate(self.contour, xoff, yoff)
+        for i in range(len(self.decks)):
+            self.decks[i] = shapely.affinity.translate(
+                self.decks[i], xoff, yoff)
+        for i in range(len(self.pillars)):
+            self.pillars[i] = shapely.affinity.translate(
+                self.pillars[i], xoff, yoff)
 
-            shelf = shapely.geometry.Polygon([
-                (x, y),
-                (x + shelf_length, y),
-                (x + shelf_length,
-                 y + self.rack_section.width),
-                (x, y + self.rack_section.width)])
+    def calculate_pallet_capacity(self) -> int:
+        """Calculates the total number of pallets
+            that can be stored in the rack."""
+        total_pallets = 0
+        for beam_type, status in zip(self.beams, self.deck_status):
+            if status == DeckStatus.ENABLED:
+                total_pallets += (
+                    self.beam_type.max_shelf_load_capacity_pallets
+                    * self.max_shelfs)
+        return total_pallets
 
-            x += shelf_length
+    def __len__(self) -> int:
+        return len(self.decks)
 
-            shelf_row.append(shelf)
-            pillar_row.append(pillar)
+    @property
+    def last_shelf_contour(self) -> Polygon | None:
+        """Returns the contour of the last shelf."""
+        if not self.decks:
+            return None
+        return self.decks[-1]
 
-        pillar_row.append(
-            shapely.geometry.Polygon([
-                (x, y),
-                (x + self.rack_section.pillar_width, y),
-                (x + self.rack_section.pillar_width,
-                 y + self.rack_section.width),
-                (x, y + self.rack_section.width)]))
+    @property
+    def last_pillar_contour(self) -> Polygon | None:
+        """Returns the contour of the last pillar."""
+        if not self.pillars:
+            return None
+        return self.pillars[-1]
 
-        return shelf_row, pillar_row
+    @property
+    def bounds(self) -> tuple[float, float, float, float]:
+        """Returns the bounds of the rack."""
+        if self.contour is None:
+            return (0.0, 0.0, 0.0, 0.0)
+        return self.contour.bounds
 
-    def translate(self, x_diff: float, y_diff: float) -> None:
-        """Translate the rack.
+    def __init_first_frame(self) -> None:
+        """Initializes a simple rack with one deck and two pillars."""
+        self.__append_pillar()
+        self.__append_deck()
+        self.__append_pillar()
 
-        Args:
-            x_diff (float): x translation
-            y_diff (float): y translation
-        """
-        for i, row in enumerate(self.shelf_rows):
-            for j, shelf in enumerate(row):
-                self.shelf_rows[i][j] = shapely.affinity.translate(
-                    shelf, x_diff, y_diff)
-        for i, row in enumerate(self.pillar_rows):
-            for j, pillar in enumerate(row):
-                self.pillar_rows[i][j] = shapely.affinity.translate(
-                    pillar, x_diff, y_diff)
+    def __update_contour(self) -> None:
+        """Initializes the contour of the rack."""
+        if not self.decks or not self.pillars:
+            return
+        min_x, min_y, max_x, max_y = self.pillars[0].bounds
+        for pillar in self.pillars:
+            min_x = min(min_x, pillar.bounds[0])
+            min_y = min(min_y, pillar.bounds[1])
+            max_x = max(max_x, pillar.bounds[2])
+            max_y = max(max_y, pillar.bounds[3])
 
-    def rotate(self, angle: float, origin: shapely.geometry.Point) -> None:
-        """Rotate the rack.
+        for deck in self.decks:
+            min_x = min(min_x, deck.bounds[0])
+            min_y = min(min_y, deck.bounds[1])
+            max_x = max(max_x, deck.bounds[2])
+            max_y = max(max_y, deck.bounds[3])
 
-        Args:
-            angle (float): angle of rotation
-            origin (shapely.geometry.Point): origin of rotation
-        """
-        for i, row in enumerate(self.shelf_rows):
-            for j, shelf in enumerate(row):
-                self.shelf_rows[i][j] = shapely.affinity.rotate(
-                    shelf, angle, origin)
-        for i, row in enumerate(self.pillar_rows):
-            for j, pillar in enumerate(row):
-                self.pillar_rows[i][j] = shapely.affinity.rotate(
-                    pillar, angle, origin)
+        self.contour = Polygon([(min_x, min_y), (max_x, min_y),
+                                (max_x, max_y), (min_x, max_y)])
 
-    def get_rack_components(self) -> List[shapely.geometry.Polygon]:
-        """Get the rack components.
+    def __append_pillar(self) -> None:
+        """Appends a pillar to the rack."""
+        self.pillars.append(
+            self.__create_pillar(self.next_element_position))
+        self.pillar_status.append(PillarStatus.ENABLED)
 
-        Returns:
-            List: rack components
-        """
-        rack_components = []
-        [rack_components.extend(row) for row in self.shelf_rows]
-        [rack_components.extend(row) for row in self.pillar_rows]
-        return rack_components
+        self.next_element_position = (
+            self.pillars[-1].bounds[2],
+            self.next_element_position[1])
 
-    def get_convex_hull(self) -> shapely.geometry.Polygon:
-        """Get the convex hull of the rack.
+    def __append_deck(self) -> None:
+        """Appends a deck to the rack."""
+        self.decks.append(
+            self.__create_deck(self.next_element_position))
+        self.deck_status.append(DeckStatus.ENABLED)
+        self.beams.append(self.beam_type)
 
-        Returns:
-            shapely.geometry.Polygon: convex hull of the rack
-        """
-        rack_components = self.get_rack_components()
-        return shapely.MultiPolygon(rack_components).convex_hull
+        self.next_element_position = (
+            self.decks[-1].bounds[2],
+            self.next_element_position[1])
 
-    def get_exterior(self) -> shapely.geometry.polygon.LinearRing:
-        """Get the exterior of the rack.
+    def __create_pillar(self, position: tuple[float, float]) -> Polygon:
+        length = self.upright_type.width
+        depth = self.pallet.length
 
-        Returns:
-            shapely.geometry.Polygon: exterior of the rack
-        """
-        return self.get_convex_hull().exterior
+        pillar = Polygon([
+            (position[0], position[1]),
+            (position[0] + length, position[1]),
+            (position[0] + length, position[1] + depth),
+            (position[0], position[1] + depth),
+        ])
 
-    def get_shelfs_exteriors(self
-                             ) -> List[shapely.geometry.polygon.LinearRing]:
-        """Get the exterior of the shelfs.
+        return pillar
 
-        Returns:
-            List: exterior of the shelfs
-        """
-        exteriors = []
-        for row in self.shelf_rows:
-            for shelf in row:
-                exteriors.append(shelf.exterior)
-        return exteriors
+    def __create_deck(self, position: tuple[float, float]) -> Polygon:
+        length = self.beam_type.length
+        depth = self.pallet.length
 
-    def get_pillars_exteriors(self
-                              ) -> List[shapely.geometry.polygon.LinearRing]:
-        """Get the exterior of the pillars.
+        deck = Polygon([
+            (position[0], position[1]),
+            (position[0] + length, position[1]),
+            (position[0] + length, position[1] + depth),
+            (position[0], position[1] + depth),
+        ])
 
-        Returns:
-            List: exterior of the pillars
-        """
-        exteriors = []
-        for row in self.pillar_rows:
-            for pillar in row:
-                exteriors.append(pillar.exterior)
-        return exteriors
+        return deck
 
-    def get_sections_in_length(self) -> int:
-        """Get the number of sections in length.
 
-        Returns:
-            int: number of sections in length
-        """
-        return self.sections_in_length
+class DoubleRack():
+    def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
+                 pallet: Pallet, max_shelfs: int,
+                 position: tuple[float, float] = (0.0, 0.0),
+                 rack_distance: float = 200.0):
+        self.beam_type = beam_types[0]
+        self.upright_type = upright_type
+        self.pallet = pallet
+        self.max_shelfs = max_shelfs
 
-    def get_sections_in_width(self) -> int:
-        """Get the number of sections in width.
+        self.rack_distance = rack_distance
 
-        Returns:
-            int: number of sections in width
-        """
-        return self.sections_in_width
+        self.first_rack_position = position
+        self.rack_1 = Rack(beam_types, upright_type, pallet, max_shelfs,
+                           self.first_rack_position)
 
-    def get_sections_in_height(self) -> int:
-        """Get the number of sections in height.
+        self.second_rack_position = self.__calculate_2nd_rack_position()
+        self.rack_2 = Rack(beam_types, upright_type, pallet, max_shelfs,
+                           self.second_rack_position)
 
-        Returns:
-            int: number of sections in height
-        """
-        return self.sections_in_height
+        self.contour = None
+        self.__update_contour()
+        self.orientation = 0  # 0 - horizontal, 1 - vertical
 
-    def get_shelfs_length_unit_quantity(self) -> List[int]:
-        """Get the shelfs length unit quantity.
+    def add_frame(self) -> None:
+        """Adds a frame to both racks."""
+        self.rack_1.add_frame()
+        self.rack_2.add_frame()
+        self.__update_contour()
 
-        Returns:
-            List: shelfs length unit quantity
-        """
-        shelfs_length_unit_quantity = [
-            self.shelfs_length_unit_quantity
-            for _ in range(self.sections_in_width)
-        ]
+    def made_frame_bridge(self, frame_idx: int) -> None:
+        """Makes the frame at the given index a bridge in both racks."""
+        self.rack_1.made_frame_bridge(frame_idx)
+        self.rack_2.made_frame_bridge(frame_idx)
 
-        return shelfs_length_unit_quantity
+    def rotate(self, angle: float,
+               rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
+        """Rotates the double rack around a point."""
+        self.contour = shapely.affinity.rotate(self.contour, angle,
+                                               origin=rot_point)
+        self.rack_1.rotate(angle, rot_point)
+        self.rack_2.rotate(angle, rot_point)
+        self.orientation = abs(self.orientation - 1)
 
-    def get_shelfs_special(self) -> List[int]:
-        """Get the special shelfs.
-        Returns:
-            List: special shelfs
-        """
+    def is_possible_set_next_beam_type(self) -> bool:
+        """Checks if the next beam type can be set for both racks."""
+        return (self.rack_1.is_possible_set_next_beam_type() and
+                self.rack_2.is_possible_set_next_beam_type())
 
-        return self.shelfs_special
+    def set_next_beam_type(self) -> None:
+        """Sets the next beam type for both racks."""
+        if self.is_possible_set_next_beam_type():
+            self.rack_1.set_next_beam_type()
+            self.rack_2.set_next_beam_type()
+        else:
+            raise IndexError("No more beam types "
+                             "available for one of the racks.")
+
+    def set_zero_beam_type(self) -> None:
+        """Sets the beam type index to zero for both racks."""
+        self.rack_1.set_zero_beam_type()
+        self.rack_2.set_zero_beam_type()
+
+    def delete_last_frame(self) -> None:
+        """Deletes the last frame from both racks."""
+        self.rack_1.delete_last_frame()
+        self.rack_2.delete_last_frame()
+        self.__update_contour()
+
+    def get_current_shelf_length(self) -> float:
+        """Returns the length of the current shelf for both racks."""
+        return min(self.rack_1.get_current_shelf_length(),
+                   self.rack_2.get_current_shelf_length())
+
+    def translate(self, xoff: float, yoff: float) -> None:
+        """Translates the double rack by a given offset."""
+        self.contour = shapely.affinity.translate(self.contour, xoff, yoff)
+        self.rack_1.translate(xoff, yoff)
+        self.rack_2.translate(xoff, yoff)
+
+    def calculate_pallet_capacity(self) -> int:
+        """Calculates the total number of pallets
+            that can be stored in both racks."""
+        return (self.rack_1.calculate_pallet_capacity() +
+                self.rack_2.calculate_pallet_capacity())
+
+    def __len__(self) -> int:
+        """Returns the frame length of the double rack."""
+        return max(len(self.rack_1), len(self.rack_2))
+
+    @property
+    def bounds(self) -> tuple[float, float, float, float]:
+        return self.contour.bounds
+
+    def __calculate_2nd_rack_position(self) -> tuple[float, float]:
+        """Calculates the position of the second rack in a double rack."""
+        rack_1_bounds = self.rack_1.bounds
+        x, y = rack_1_bounds[0], rack_1_bounds[3]
+        return (x, y + self.rack_distance)
+
+    def __update_contour(self) -> None:
+        """Updates the contour of the double rack."""
+        min_x = min(self.rack_1.bounds[0], self.rack_2.bounds[0])
+        min_y = min(self.rack_1.bounds[1], self.rack_2.bounds[1])
+        max_x = max(self.rack_1.bounds[2], self.rack_2.bounds[2])
+        max_y = max(self.rack_1.bounds[3], self.rack_2.bounds[3])
+        self.contour = Polygon([(min_x, min_y), (max_x, min_y),
+                                (max_x, max_y), (min_x, max_y)])
+
+
+class RackGroup():
+    def __init__(self, position: tuple[float, float],
+                 roads_width: float,
+                 beam_types: list[BeamType],
+                 upright_type: UprightType,
+                 pallet: Pallet,
+                 max_shelfs: int):
+        self.beam_types = beam_types
+        self.upright_type = upright_type
+        self.pallet = pallet
+        self.max_shelfs = max_shelfs
+
+        self.position = position
+        self.roads_width = roads_width
+        self.next_rack_placement = list(self.position)
+
+        self.current_rack: Rack | DoubleRack | None = None
+        self.place_single_rack()
+
+        self.racks: list[Rack | DoubleRack] = []
+
+    def get_current_rack(self) -> Rack | DoubleRack:
+        """Returns the current rack in the group."""
+        if self.current_rack is None:
+            raise ValueError("No current rack set.")
+        return self.current_rack
+
+    def commit_current_rack(self) -> None:
+        """Commits the current rack to the group."""
+        if self.current_rack is None:
+            raise ValueError("No current rack to commit.")
+        self.racks.append(self.current_rack)
+
+    def place_single_rack(self) -> None:
+        """Places the first rack in the group."""
+        self.current_rack = Rack(self.beam_types, self.upright_type,
+                                 self.pallet, self.max_shelfs,
+                                 self.next_rack_placement)
+
+    def place_double_rack(self) -> None:
+        """Places a double rack in the group."""
+        self.current_rack = DoubleRack(self.beam_types, self.upright_type,
+                                       self.pallet, self.max_shelfs,
+                                       self.next_rack_placement)
+
+    def rotate(self, angle: float,
+               rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
+        """Rotates the rack group around a point."""
+        for rack in self.racks:
+            rack.rotate(angle, rot_point)
+
+    # def _get_first_rack(self) -> Rack:
+    #     smallest_beam_type = solution.beam_types[-1]
+    #     upright_type = solution.upright_type
+    #     pallet = solution.pallets[solution.pallet_idx]
+
+    #     minimal_rack_length = (upright_type.upright_section[0] * 2
+    #                        + smallest_beam_type.length
+    #                        + reference_book.roads_width * 2)
+    #     minimal_rack_width = pallet.length + reference_book.roads_width * 2
+
+    #     minimal_rack_contour = shapely.geometry.Polygon(
+    #         [
+    #             (0, 0),
+    #             (minimal_rack_length, 0),
+    #             (minimal_rack_length, minimal_rack_width),
+    #             (0, minimal_rack_width),
+    #         ])
+    #     minimal_rack_contour = shapely.affinity.translate(
+    #         minimal_rack_contour,
+    #         xoff=available_zone.contour.bounds[0],
+    #         yoff=available_zone.contour.bounds[1]
+    # )
