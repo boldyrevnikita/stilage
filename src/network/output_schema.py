@@ -59,7 +59,7 @@ class RackOutput(BaseModel):
 
 class ModelOutput(BaseModel):
     task_id: str = Field(description="Unique identifier for the task")
-    racks: dict[str, RackOutput] = Field(
+    racks: dict[str, list[RackOutput]] = Field(
         description="""Dictionary mapping cargo IDs
         to their respective rack outputs""",
     )

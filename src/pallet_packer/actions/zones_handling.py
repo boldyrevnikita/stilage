@@ -1,5 +1,6 @@
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
+from src.zone import SpecialRoadZone
 import shapely
 
 
@@ -17,7 +18,7 @@ def rotate_everything_90_clockwise(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     solution.rot_point = available_zone.bounds[:2]
-    angle = 90
+    angle = -90
 
     available_zone.rotate(solution.rot_point, angle)
     for occupied_zone in solution.current_occupied_zones:
@@ -42,7 +43,7 @@ def rotate_evetything_90_counterclockwise(
     """
     if solution.is_rotated:
         available_zone = solution.available_zones[solution.available_zone_idx]
-        angle = -90
+        angle = 90
 
         available_zone.rotate(solution.rot_point, angle)
         for occupied_zone in solution.current_occupied_zones:
@@ -352,3 +353,28 @@ def sort_available_zones_by_area_and_height(
         solution (Solution): The current solution containing available zones.
     """
     solution.available_zones.sort(key=lambda x: (-x.height, -x.area))
+
+
+def place_road_zone_on_right_size(
+    reference_book: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Places the road zone on the right size.
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    x_0, y_0, x_1, y_1 = available_zone.bounds
+    x_0 = x_1 - reference_book.roads_width / 2
+    x_1 = x_0
+
+    new_road_zone = SpecialRoadZone(
+        [(x_0, y_0), (x_1, y_1)],
+        reference_book.roads_width,
+    )
+
+    solution.current_road_zones.append(new_road_zone)

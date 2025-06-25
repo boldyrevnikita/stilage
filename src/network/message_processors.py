@@ -2,12 +2,16 @@ import traceback
 from typing import Any
 
 from src.cargo_packer import CargoPacker
-from src.network import Sender, generate_output, get_dxf_doc_from_s3
+from src.network.network import Sender
+from src.network.output_generation import generate_output
+from src.network.utils import get_dxf_doc_from_s3
 from src.occupied_zone_scan import scan_for_occupied_zones
 from src.pallet import CargoType
 from src.pallet_packer.pallet_packer import PalletPacker
 from src.reference_book import ReferenceBook
 from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
+from src.utils import check_if_debugger_is_active
+from src.visualize import visualize_solution
 
 
 def process_message_ml(message: Any, sender: Sender):
@@ -37,7 +41,7 @@ def process_message_ml(message: Any, sender: Sender):
             occupied_zones.append(OccupiedZone(zone['boundary'],
                                                zone['clearance']))
 
-        for rack_section in message['rack_types']:
+        for rack_section in message['cargos']:
             cargos.append(CargoType(
                 cargo_type_id=rack_section['id'],
                 weight=rack_section['weight'],
@@ -77,6 +81,9 @@ def process_message_ml(message: Any, sender: Sender):
             special_road_zones=road_zones,
             reference_book=reference_book
         )
+
+        if check_if_debugger_is_active():
+            visualize_solution(solution)
 
         response = generate_output(
             solution=solution,

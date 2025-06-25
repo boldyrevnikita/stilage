@@ -241,7 +241,7 @@ class Rack:
         self.pillar_status.append(PillarStatus.ENABLED)
 
         self.next_element_position = (
-            self.next_element_position[0] + self.pillars[-1].bounds[2],
+            self.pillars[-1].bounds[2],
             self.next_element_position[1])
 
     def __append_deck(self) -> None:
@@ -252,7 +252,7 @@ class Rack:
         self.beams.append(self.beam_type)
 
         self.next_element_position = (
-            self.next_element_position[0] + self.decks[-1].bounds[2],
+            self.decks[-1].bounds[2],
             self.next_element_position[1])
 
     def __create_pillar(self, position: tuple[float, float]) -> Polygon:
@@ -287,6 +287,11 @@ class DoubleRack():
                  pallet: Pallet, max_shelfs: int,
                  position: tuple[float, float] = (0.0, 0.0),
                  rack_distance: float = 200.0):
+        self.beam_type = beam_types[0]
+        self.upright_type = upright_type
+        self.pallet = pallet
+        self.max_shelfs = max_shelfs
+
         self.rack_distance = rack_distance
 
         self.first_rack_position = position
@@ -296,7 +301,9 @@ class DoubleRack():
         self.second_rack_position = self.__calculate_2nd_rack_position()
         self.rack_2 = Rack(beam_types, upright_type, pallet, max_shelfs,
                            self.second_rack_position)
-        self.contour: Polygon = self.__update_contour()
+
+        self.contour = None
+        self.__update_contour()
 
     def add_frame(self) -> None:
         """Adds a frame to both racks."""

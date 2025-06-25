@@ -151,7 +151,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
 
     for zone in available_zones:
         geometries = []
-        zone_bbox = zone.geometry.bounds
+        zone_bbox = zone.contour.bounds
         window = ezdxf.select.Window(
             (zone_bbox[0], zone_bbox[1]),
             (zone_bbox[2], zone_bbox[3]),

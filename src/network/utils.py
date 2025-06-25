@@ -3,7 +3,7 @@ import base64
 import ezdxf
 from minio import Minio
 
-from src.network import Settings
+from src.network.settings import Settings
 
 
 def get_dxf_doc_from_s3(key: str) -> ezdxf.document.Drawing:

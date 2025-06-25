@@ -39,14 +39,17 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         f'{Block.MAIN}-CBaU': State(
             actions.find_suitable_beams_and_upright,
-            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PHG'],
+            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PRZ-RS'],
             [f'{Block.MAIN}-SNZ']),
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
-            [f'{Block.MAIN}-PHG'], ['GFS']),
+            [f'{Block.MAIN}-PRZ-RS'], ['GFS']),
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_evetything_90_counterclockwise,
             [f'{Block.MAIN}-SpZ'], ['GFS']),
+        f'{Block.MAIN}-PRZ-RS': State(
+            actions.place_road_zone_on_right_size,
+            [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
             [f'{Block.MAIN}-CES-HG'], ['GFS']),
@@ -198,11 +201,11 @@ def get_dsfx_states() -> dict[str, State]:
             [f'{Block.DSFX}-IFRI', f'{Block.DSFX}-ISRI']),
         f'{Block.DSFX}-DFS-R': State(
             actions.decrease_current_frame_length,
-            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
+            [f'{Block.DSFX}-CTNOZ-DFS'],
             ['TS-DEL']),
         f'{Block.DSFX}-DFS-RB': State(
             actions.decrease_current_frame_length,
-            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
+            [f'{Block.DSFX}-CTNOZ-DFS'],
             ['TS-DEL']),
         f'{Block.DSFX}-IFRI': State(
             actions.assert_first_rack_intersecting_occupied_zone,
@@ -214,12 +217,17 @@ def get_dsfx_states() -> dict[str, State]:
             ['TS-DEL']),
         f'{Block.DSFX}-DFS-R1': State(
             actions.decrease_first_rack_frame_length,
-            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
+            [f'{Block.DSFX}-CTNOZ-DFS'],
             ['TS-DEL']),
         f'{Block.DSFX}-DFS-R2': State(
             actions.decrease_second_rack_frame_length,
-            [f'{Block.RACK_PLACEMENT}-CTNOZ'],
-            ['TS-DEL'])
+            [f'{Block.DSFX}-CTNOZ-DFS'],
+            ['TS-DEL']),
+        f'{Block.DSFX}-CTNOZ-DFS': State(
+            actions.assert_current_rack_intersecting_occupied_zones,
+            [f'{Block.DSFX}-IDR'],
+            [f'{Block.RACK_PLACEMENT}-CNTRZ']
+        )
     }
 
 

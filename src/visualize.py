@@ -19,7 +19,7 @@ def visualize_solution_decorator(func: callable) -> callable:
 def visualize_solution(solution: Solution):
     fig = go.Figure()
 
-    plot_available_zones(fig, solution.available_zones)
+    plot_available_zones(fig, solution.initial_available_zones)
     plot_occupied_zones(fig, solution.occupied_zones)
     plot_special_road_zones(fig, solution.road_zones)
 

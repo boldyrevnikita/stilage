@@ -1,4 +1,4 @@
-from src.network import ModelOutput, RackOutput
+from src.network.output_schema import ModelOutput, RackOutput
 from src.pallet_packer.solution import Solution
 from src.rack import DoubleRack
 from collections import defaultdict
@@ -10,8 +10,9 @@ def generate_output(solution: Solution, task_id: str,
     racks = defaultdict(list)
     for rack_group in solution.saved_rack_groups:
         for rack in rack_group.racks:
-            cargo_id = rack.pallet.cargo.cargo_type_id
-            boundary = list(zip(*rack.contour.exterior.xy))
+            cargo_id = str(rack.pallet.cargo.cargo_type_id)
+            boundary = [(int(x), int(y))
+                        for x, y in zip(*rack.contour.exterior.xy)]
             sections_in_length = len(rack)
             sections_in_width = 1 if not isinstance(rack, DoubleRack) else 2
             sections_in_height = rack.max_shelfs
