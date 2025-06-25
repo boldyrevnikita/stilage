@@ -1,6 +1,6 @@
 import warnings
 from queue import Queue
-from typing import List, Tuple
+from typing import List
 
 import ezdxf
 import ezdxf.document
@@ -8,61 +8,7 @@ import ezdxf.select
 import numpy as np
 import shapely
 
-from src.available_zone import AvailableZone
-from src.forbidden_zone import ForbiddenZone
-from src.rack import RackSection
-
-
-def preprocess(available_zones: List[AvailableZone],
-               forbidden_zones: List[ForbiddenZone],
-               rack_infos: List[RackSection],
-               roads_width: float,
-               doc: ezdxf.document.Drawing = None,
-               forbiden_zone_clearance: float = None
-               ) -> Tuple[List[AvailableZone], List[ForbiddenZone],
-                          List[RackSection]]:
-    if doc is not None and forbiden_zone_clearance is not None:
-        forbidden_zones += scan_for_forbidden_zones(doc, available_zones,
-                                                    forbiden_zone_clearance)
-    forbidden_zones, rack_infos = update_clearance(forbidden_zones,
-                                                   rack_infos, roads_width)
-    rack_infos = update_racks_quantity(available_zones, rack_infos)
-
-    return available_zones, forbidden_zones, rack_infos
-
-
-def update_racks_quantity(available_zones: List[AvailableZone],
-                          rack_infos: List[RackSection]) -> List[RackSection]:
-    sum_area = np.sum(zone.available_area_size for zone in available_zones)
-
-    for rack_section in rack_infos:
-        if (rack_section.abs_quantity is None
-            and rack_section.rel_quantity is None
-            and rack_section.max_quantity is None
-                and rack_section.min_quantity is None):
-            rack_section.update_abs_quantity(int(
-                sum_area / (rack_section.unit_length * rack_section.width)))
-
-    return rack_infos
-
-
-def update_clearance(forbidden_zones: List[ForbiddenZone],
-                     rack_infos: List[RackSection],
-                     roads_width: float) -> Tuple[List[ForbiddenZone],
-                                                  List[RackSection]]:
-    for zone in forbidden_zones:
-        new_clearance = max(zone.distance_from_zone, roads_width)
-        zone.update_clearance(new_clearance)
-
-    for rack_section in rack_infos:
-        rack_section.side_distance = max(rack_section.side_distance,
-                                         roads_width)
-        rack_section.back_distance = max(rack_section.back_distance,
-                                         roads_width)
-        rack_section.front_distance = max(rack_section.front_distance,
-                                          roads_width)
-
-    return forbidden_zones, rack_infos
+from src.zone import AvailableZone, OccupiedZone
 
 
 def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
@@ -194,17 +140,18 @@ def get_polygons_from_primitives(
     return polygons
 
 
-def scan_for_forbidden_zones(doc: ezdxf.document.Drawing,
-                             available_zones: List[AvailableZone],
-                             forbiden_zone_clearance: float
-                             ) -> List[ForbiddenZone]:
-    forbidden_zones = []
+def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
+                            available_zones: List[AvailableZone],
+                            occupied_zone_clearance: float,
+                            roads_width: float,
+                            ) -> List[OccupiedZone]:
+    occupied_zones = []
 
     msp = doc.modelspace()
 
     for zone in available_zones:
         geometries = []
-        zone_bbox = zone.geometry.bounds
+        zone_bbox = zone.contour.bounds
         window = ezdxf.select.Window(
             (zone_bbox[0], zone_bbox[1]),
             (zone_bbox[2], zone_bbox[3]),
@@ -219,9 +166,10 @@ def scan_for_forbidden_zones(doc: ezdxf.document.Drawing,
 
         polygones = get_polygons_from_primitives(geometries)
         for polygon in polygones:
-            forbidden_zones.append(ForbiddenZone(
+            occupied_zones.append(OccupiedZone(
                 list(polygon.exterior.coords),
-                forbiden_zone_clearance)
-            )
+                occupied_zone_clearance,
+                roads_width
+            ))
 
-    return forbidden_zones
+    return occupied_zones
