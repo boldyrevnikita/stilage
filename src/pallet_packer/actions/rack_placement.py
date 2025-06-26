@@ -1,6 +1,7 @@
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import RackGroup, DoubleRack, Rack
+from src.zone import OccupiedZone, SpecialRoadZone
 
 
 def place_horizontal_rack_group(
@@ -145,7 +146,10 @@ def set_next_rack_position_righter(
     forbidden_zone = solution.intersected_special_zone
 
     nr_position = solution.current_rack_group.next_rack_placement
-    nr_position[0] = forbidden_zone.contour_with_clearance.bounds[2]
+    if isinstance(forbidden_zone, OccupiedZone):
+        nr_position[0] = forbidden_zone.contour_with_clearance.bounds[2] + 1
+    elif isinstance(forbidden_zone, SpecialRoadZone):
+        nr_position[0] = forbidden_zone.contour.bounds[2] + 1
 
     current_rack_group.next_rack_placement = nr_position
 

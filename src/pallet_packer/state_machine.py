@@ -73,7 +73,7 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-GCOZARZ'], ['TS']),
         f'{Block.MAIN}-SpZ': State(
             actions.split_available_zone,
-            [f'{Block.MAIN}-SoZ'], ['GFS'])
+            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ'])
     }
 
 

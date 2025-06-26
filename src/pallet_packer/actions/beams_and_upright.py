@@ -93,8 +93,11 @@ def _find_suitable_upright_type(
 
     shelf_height = pallet.height + pallet_extra_space + beam_type.height
     max_shelfs = available_zone.height // shelf_height
+
     max_shelfs_bridge = ((available_zone.height - reference_book.roads_height)
                          // shelf_height)
+    max_shelfs_bridge = max(0, max_shelfs_bridge)
+
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
 

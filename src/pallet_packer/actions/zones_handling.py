@@ -121,6 +121,9 @@ def split_available_zone(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
+    if len(solution.current_rack_group.racks) == 0:
+        raise ActionFailure("No racks are placed.")
+
     current_rack = solution.current_rack_group.racks[-1]
     available_zone = solution.available_zones[solution.available_zone_idx]
     split_point = list(current_rack.bounds[2:])
