@@ -183,16 +183,25 @@ class Rack:
         """Calculates the total number of pallets
             that can be stored in the rack."""
         total_pallets = 0
-        for beam_type, status in zip(self.beams, self.deck_status):
-            if status == DeckStatus.ENABLED:
-                total_pallets += (
-                    self.beam_type.max_shelf_load_capacity_pallets
-                    * self.max_shelfs)
-            elif status == DeckStatus.RACK_BRIDGE:
-                total_pallets += (
-                    self.beam_type.max_shelf_load_capacity_pallets
-                    * self.max_shelfs_bridge)
+        for frame_idx in range(len(self.decks)):
+            frame_capacity = self.calculate_pallet_capacity_in_ith_frame(
+                frame_idx)
+            total_pallets += frame_capacity
         return total_pallets
+
+    def calculate_pallet_capacity_in_ith_frame(self, frame_idx: int) -> int:
+        if frame_idx < 0 or frame_idx >= len(self.decks):
+            raise IndexError("Frame index out of range.")
+
+        beam_type = self.beams[frame_idx]
+        frame_status = self.deck_status[frame_idx]
+        if frame_status == DeckStatus.ENABLED:
+            return beam_type.max_shelf_load_capacity_pallets * self.max_shelfs
+        elif frame_status == DeckStatus.RACK_BRIDGE:
+            return (beam_type.max_shelf_load_capacity_pallets
+                    * self.max_shelfs_bridge)
+        else:
+            return 0
 
     def __len__(self) -> int:
         return len(self.decks)
@@ -379,6 +388,14 @@ class DoubleRack():
             that can be stored in both racks."""
         return (self.rack_1.calculate_pallet_capacity() +
                 self.rack_2.calculate_pallet_capacity())
+
+    def calculate_pallet_capacity_in_ith_frame(self, frame_idx: int) -> int:
+        """Calculates the pallet capacity in the ith frame of both racks."""
+        if frame_idx < 0 or frame_idx >= len(self.rack_1) or \
+                frame_idx >= len(self.rack_2):
+            raise IndexError("Frame index out of range.")
+        return (self.rack_1.calculate_pallet_capacity_in_ith_frame(frame_idx) +
+                self.rack_2.calculate_pallet_capacity_in_ith_frame(frame_idx))
 
     def __len__(self) -> int:
         """Returns the frame length of the double rack."""

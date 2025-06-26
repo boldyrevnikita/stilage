@@ -3,6 +3,7 @@ from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
 from src.pallet import Pallet
 from src.rack import RackGroup
 from copy import deepcopy
+from collections import defaultdict
 
 
 class ActionFailure(Exception):
@@ -38,7 +39,7 @@ class Solution:
                  current_rack_group: RackGroup = None,
                  action_status: ActionStatus = (
                      ActionStatus.NOT_STARTED),
-                 pallet_count: dict[int, int] = {}):
+                 pallet_count: dict[int, int] = defaultdict(int)):
         self.initial_available_zones = deepcopy(available_zones)
 
         self.available_zones = deepcopy(available_zones)

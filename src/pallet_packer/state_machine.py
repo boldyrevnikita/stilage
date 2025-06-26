@@ -87,7 +87,27 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
             [f'{Block.RACK_PLACEMENT}-CIRH'],
-            [f'{Block.RACK_PLACEMENT}-SNF']),
+            [f'{Block.RACK_PLACEMENT}-IPC']),
+        f'{Block.RACK_PLACEMENT}-IPC': State(
+            actions.increase_pallet_counter,
+            [f'{Block.RACK_PLACEMENT}-CIEP'],
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-CIEP': State(
+            actions.assert_current_pallets_are_enough,
+            [f'{Block.RACK_PLACEMENT}-SNF'],
+            [f'{Block.RACK_PLACEMENT}-SR-CC']),
+        f'{Block.RACK_PLACEMENT}-GNC': State(
+            actions.set_next_pallet,
+            [f'{Block.MAIN}-SpZ'],
+            ['TS']),
+        f'{Block.RACK_PLACEMENT}-SR-CC': State(
+            actions.save_rack,
+            [f'{Block.RACK_PLACEMENT}-SRG-CC'],
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-SRG-CC': State(
+            actions.save_rack_group,
+            [f'{Block.MAIN}-GNC'],
+            [f'{Block.MAIN}-GNC']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
