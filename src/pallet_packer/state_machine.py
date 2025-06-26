@@ -134,6 +134,10 @@ def get_rack_placement_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-IFLEFR': State(
             actions.assert_current_shelf_length_enough_for_road,
+            [f'{Block.RACK_PLACEMENT}-ICZHEFRB'],
+            [f'{Block.JOOZ}-DLF']),
+        f'{Block.RACK_PLACEMENT}-ICZHEFRB': State(
+            actions.assert_current_zone_height_enough_for_rack_bridge,
             [f'{Block.RACK_PLACEMENT}-SCFAS'],
             [f'{Block.JOOZ}-DLF']),
         f'{Block.RACK_PLACEMENT}-SCFAS': State(

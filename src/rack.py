@@ -51,6 +51,7 @@ class DeckStatus(Enum):
 class Rack:
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
                  pallet: Pallet, max_shelfs: int,
+                 max_shelfs_bridge: int,
                  position: tuple[float, float] = (0.0, 0.0)):
         self.beam_types = beam_types
         self.beam_types.sort(key=lambda x: -x.length)
@@ -60,6 +61,7 @@ class Rack:
         self.upright_type = upright_type
         self.pallet = pallet
         self.max_shelfs = max_shelfs
+        self.max_shelfs_bridge = max_shelfs_bridge
         self.rack_position = position
         self.next_element_position = position
         self.decks: list[Polygon] = []
@@ -186,6 +188,10 @@ class Rack:
                 total_pallets += (
                     self.beam_type.max_shelf_load_capacity_pallets
                     * self.max_shelfs)
+            elif status == DeckStatus.RACK_BRIDGE:
+                total_pallets += (
+                    self.beam_type.max_shelf_load_capacity_pallets
+                    * self.max_shelfs_bridge)
         return total_pallets
 
     def __len__(self) -> int:
@@ -289,22 +295,24 @@ class Rack:
 class DoubleRack():
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
                  pallet: Pallet, max_shelfs: int,
+                 max_shelfs_bridge: int,
                  position: tuple[float, float] = (0.0, 0.0),
                  rack_distance: float = 200.0):
         self.beam_type = beam_types[0]
         self.upright_type = upright_type
         self.pallet = pallet
         self.max_shelfs = max_shelfs
+        self.max_shelfs_bridge = max_shelfs_bridge
 
         self.rack_distance = rack_distance
 
         self.first_rack_position = position
         self.rack_1 = Rack(beam_types, upright_type, pallet, max_shelfs,
-                           self.first_rack_position)
+                           max_shelfs_bridge, self.first_rack_position)
 
         self.second_rack_position = self.__calculate_2nd_rack_position()
         self.rack_2 = Rack(beam_types, upright_type, pallet, max_shelfs,
-                           self.second_rack_position)
+                           max_shelfs_bridge, self.second_rack_position)
 
         self.contour = None
         self.__update_contour()
@@ -402,11 +410,13 @@ class RackGroup():
                  beam_types: list[BeamType],
                  upright_type: UprightType,
                  pallet: Pallet,
-                 max_shelfs: int):
+                 max_shelfs: int,
+                 max_shelfs_bridge: int):
         self.beam_types = beam_types
         self.upright_type = upright_type
         self.pallet = pallet
         self.max_shelfs = max_shelfs
+        self.max_shelfs_bridge = max_shelfs_bridge
 
         self.position = position
         self.roads_width = roads_width
@@ -433,12 +443,14 @@ class RackGroup():
         """Places the first rack in the group."""
         self.current_rack = Rack(self.beam_types, self.upright_type,
                                  self.pallet, self.max_shelfs,
+                                 self.max_shelfs_bridge,
                                  self.next_rack_placement)
 
     def place_double_rack(self) -> None:
         """Places a double rack in the group."""
         self.current_rack = DoubleRack(self.beam_types, self.upright_type,
                                        self.pallet, self.max_shelfs,
+                                       self.max_shelfs_bridge,
                                        self.next_rack_placement)
 
     def rotate(self, angle: float,

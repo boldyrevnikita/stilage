@@ -199,6 +199,16 @@ def assert_current_shelf_length_enough_for_road(
         )
 
 
+def assert_current_zone_height_enough_for_rack_bridge(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    if solution.max_shelfs_bridge <= 0:
+        raise ActionFailure(
+            "Current available zone is too low for current rack bridge."
+        )
+
+
 def assert_both_racks_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
