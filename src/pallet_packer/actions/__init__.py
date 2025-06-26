@@ -2,6 +2,7 @@ from src.pallet_packer.actions.beams_and_upright import \
     find_suitable_beams_and_upright
 from src.pallet_packer.actions.default_action import default_action
 from src.pallet_packer.actions.pallet_handling import (
+    assert_current_pallets_are_enough, increase_pallet_counter,
     set_next_pallet, sort_pallets_by_weight_height_width)
 from src.pallet_packer.actions.rack_placement import (
     assert_current_rack_is_double, create_new_rack,
@@ -19,6 +20,7 @@ from src.pallet_packer.actions.zones_handling import (
     assert_current_rack_intersecting_occupied_zones,
     assert_current_rack_intersecting_road_zones,
     assert_current_shelf_length_enough_for_road,
+    assert_current_zone_height_enough_for_rack_bridge,
     assert_first_rack_intersecting_occupied_zone,
     assert_intersected_road_horizontal,
     assert_last_rack_shelf_covers_occupied_zone,
@@ -33,6 +35,8 @@ from src.pallet_packer.actions.zones_handling import (
 __all__ = [
     find_suitable_beams_and_upright.__name__,
     default_action.__name__,
+    assert_current_pallets_are_enough.__name__,
+    increase_pallet_counter.__name__,
     set_next_pallet.__name__,
     sort_pallets_by_weight_height_width.__name__,
     assert_current_rack_is_double.__name__,
@@ -61,6 +65,7 @@ __all__ = [
     assert_current_rack_intersecting_occupied_zones.__name__,
     assert_current_rack_intersecting_road_zones.__name__,
     assert_current_shelf_length_enough_for_road.__name__,
+    assert_current_zone_height_enough_for_rack_bridge.__name__,
     assert_first_rack_intersecting_occupied_zone.__name__,
     assert_intersected_road_horizontal.__name__,
     assert_last_rack_shelf_covers_occupied_zone.__name__,
