@@ -16,10 +16,7 @@ def generate_output(solution: Solution, task_id: str,
             sections_in_length = len(rack)
             sections_in_width = 1 if not isinstance(rack, DoubleRack) else 2
             sections_in_height = rack.max_shelfs
-
-            # TODO: Handle special sections in height
-            sections_in_height_special = rack.max_shelfs
-
+            sections_in_height_special = rack.max_shelfs_bridge
             orientation = rack.orientation
 
             upright_section = rack.upright_type.upright_section

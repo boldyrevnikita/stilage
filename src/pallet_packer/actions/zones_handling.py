@@ -121,6 +121,9 @@ def split_available_zone(
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
+    if len(solution.current_rack_group.racks) == 0:
+        raise ActionFailure("No racks are placed.")
+
     current_rack = solution.current_rack_group.racks[-1]
     available_zone = solution.available_zones[solution.available_zone_idx]
     split_point = list(current_rack.bounds[2:])
@@ -196,6 +199,16 @@ def assert_current_shelf_length_enough_for_road(
     if current_rack.get_current_shelf_length() < current_road.width:
         raise ActionFailure(
             "Current shelf length is not enough for the road width."
+        )
+
+
+def assert_current_zone_height_enough_for_rack_bridge(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    if solution.max_shelfs_bridge <= 0:
+        raise ActionFailure(
+            "Current available zone is too low for current rack bridge."
         )
 
 

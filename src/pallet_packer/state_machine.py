@@ -73,7 +73,7 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-GCOZARZ'], ['TS']),
         f'{Block.MAIN}-SpZ': State(
             actions.split_available_zone,
-            [f'{Block.MAIN}-SoZ'], ['GFS'])
+            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ'])
     }
 
 
@@ -87,7 +87,27 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
             [f'{Block.RACK_PLACEMENT}-CIRH'],
-            [f'{Block.RACK_PLACEMENT}-SNF']),
+            [f'{Block.RACK_PLACEMENT}-IPC']),
+        f'{Block.RACK_PLACEMENT}-IPC': State(
+            actions.increase_pallet_counter,
+            [f'{Block.RACK_PLACEMENT}-CIEP'],
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-CIEP': State(
+            actions.assert_current_pallets_are_enough,
+            [f'{Block.RACK_PLACEMENT}-SNF'],
+            [f'{Block.RACK_PLACEMENT}-SR-CC']),
+        f'{Block.RACK_PLACEMENT}-GNC': State(
+            actions.set_next_pallet,
+            [f'{Block.MAIN}-SpZ'],
+            ['TS']),
+        f'{Block.RACK_PLACEMENT}-SR-CC': State(
+            actions.save_rack,
+            [f'{Block.RACK_PLACEMENT}-SRG-CC'],
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-SRG-CC': State(
+            actions.save_rack_group,
+            [f'{Block.MAIN}-GNC'],
+            [f'{Block.MAIN}-GNC']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -134,6 +154,10 @@ def get_rack_placement_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-IFLEFR': State(
             actions.assert_current_shelf_length_enough_for_road,
+            [f'{Block.RACK_PLACEMENT}-ICZHEFRB'],
+            [f'{Block.JOOZ}-DLF']),
+        f'{Block.RACK_PLACEMENT}-ICZHEFRB': State(
+            actions.assert_current_zone_height_enough_for_rack_bridge,
             [f'{Block.RACK_PLACEMENT}-SCFAS'],
             [f'{Block.JOOZ}-DLF']),
         f'{Block.RACK_PLACEMENT}-SCFAS': State(
