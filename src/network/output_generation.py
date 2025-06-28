@@ -50,6 +50,15 @@ def generate_output(solution: Solution, task_id: str,
                     sections_in_width=sections_in_width,
                     sections_in_height=sections_in_height,
                     sections_in_height_special=sections_in_height_special,
+                    pallet_with_cargo_height=rack.pallet.height,
+                    beam_height=rack.beam_type.height,
+                    pallet_with_cargo_extra_height=(
+                        rack_group.pallet_extra_space),
+                    frame_height_eps=rack_group.frame_height_eps,
+                    metric_frame_height=(
+                        rack_group.calculate_max_frame_height()),
+                    metric_special_frame_height=(
+                        rack_group.calculate_max_frame_height()),
                     orientation=orientation,
                     upright_section=upright_section,
                     beam_section=beam_section,
