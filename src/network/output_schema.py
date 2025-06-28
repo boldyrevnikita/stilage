@@ -5,7 +5,7 @@ from typing import Optional
 class RackOutput(BaseModel):
     boundary: list[tuple[int, int]] = Field(
         description="""Boundary coordinates of the rack in
-        the format [(x1, y1), (x2, y2), ...]"""
+        the format [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]"""
     )
     sections_in_length: int = Field(
         description="""Number of sections in the length of the rack"""
@@ -19,6 +19,25 @@ class RackOutput(BaseModel):
     sections_in_height_special: int = Field(
         description="""Number of sections in the height of
         the rack that are special"""
+    )
+    pallet_with_cargo_height: int = Field(
+        description="""Height of the pallet with cargo in the rack"""
+    )
+    pallet_with_cargo_extra_height: int = Field(
+        description="""Extra height of the pallet with cargo in the rack"""
+    )
+    beam_height: int = Field(
+        description="""Height of the beam in the rack"""
+    )
+    frame_height_eps: int = Field(
+        description="""Epsilon value for the frame height"""
+    )
+    metric_frame_height: int = Field(
+        description="""Height of the frame in the rack in metric units"""
+    )
+    metric_special_frame_height: int = Field(
+        description="""Height of the special frame in the rack in
+        metric units"""
     )
     orientation: int = Field(
         description="Orientation of the rack"
@@ -43,15 +62,15 @@ class RackOutput(BaseModel):
     special_units: list[list[int]] = Field(
         description="""List of lists representing special units in the rack,
         where each inner list corresponds to a rack and
-        each integer is a special unit identifier (e.g. 0 for no special unit,
-        1 for a special unit)"""
+        each integer is a special unit identifier (1 for no special unit,
+        2 for a turned off unit, 3 for special unit)"""
     )
     beam_lengths: list[list[int]] = Field(
         description="""List of lists representing the beam lengths:
         each inner list corresponds to a rack,
         and each integer represents the length of the beam in that unit"""
     )
-    rack_distance: Optional[float] = Field(
+    rack_distance: Optional[int] = Field(
         default=None,
         description="""Distance between racks, if applicable"""
     )
