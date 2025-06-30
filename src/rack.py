@@ -428,12 +428,16 @@ class RackGroup():
                  upright_type: UprightType,
                  pallet: Pallet,
                  max_shelfs: int,
-                 max_shelfs_bridge: int):
+                 max_shelfs_bridge: int,
+                 pallet_extra_space: float,
+                 frame_height_eps: float):
         self.beam_types = beam_types
         self.upright_type = upright_type
         self.pallet = pallet
         self.max_shelfs = max_shelfs
         self.max_shelfs_bridge = max_shelfs_bridge
+        self.pallet_extra_space = pallet_extra_space
+        self.frame_height_eps = frame_height_eps
 
         self.position = position
         self.roads_width = roads_width
@@ -476,25 +480,14 @@ class RackGroup():
         for rack in self.racks:
             rack.rotate(angle, rot_point)
 
-    # def _get_first_rack(self) -> Rack:
-    #     smallest_beam_type = solution.beam_types[-1]
-    #     upright_type = solution.upright_type
-    #     pallet = solution.pallets[solution.pallet_idx]
+    def calculate_max_frame_height(self) -> float:
+        """Calculates the maximum height of the frames in the group."""
+        shelf_height = (self.pallet.height + self.pallet_extra_space
+                        + self.beam_types[0].height)
+        return self.max_shelfs * shelf_height + self.frame_height_eps
 
-    #     minimal_rack_length = (upright_type.upright_section[0] * 2
-    #                        + smallest_beam_type.length
-    #                        + reference_book.roads_width * 2)
-    #     minimal_rack_width = pallet.length + reference_book.roads_width * 2
-
-    #     minimal_rack_contour = shapely.geometry.Polygon(
-    #         [
-    #             (0, 0),
-    #             (minimal_rack_length, 0),
-    #             (minimal_rack_length, minimal_rack_width),
-    #             (0, minimal_rack_width),
-    #         ])
-    #     minimal_rack_contour = shapely.affinity.translate(
-    #         minimal_rack_contour,
-    #         xoff=available_zone.contour.bounds[0],
-    #         yoff=available_zone.contour.bounds[1]
-    # )
+    def calculate_max_bridge_height(self) -> float:
+        """Calculates the maximum height of the bridge in the group."""
+        shelf_height = (self.pallet.height + self.pallet_extra_space
+                        + self.beam_types[0].height)
+        return self.max_shelfs_bridge * shelf_height + self.frame_height_eps
