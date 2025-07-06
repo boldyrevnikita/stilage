@@ -124,10 +124,13 @@ def split_available_zone(
     if len(solution.current_rack_group.racks) == 0:
         raise ActionFailure("No racks are placed.")
 
-    current_rack = solution.current_rack_group.racks[-1]
+    current_rack_group = solution.current_rack_group
     available_zone = solution.available_zones[solution.available_zone_idx]
-    split_point = list(current_rack.bounds[2:])
+    split_point = list(current_rack_group.bounds[2:])
+    split_point[0] += reference_book.roads_width
     split_point[1] += reference_book.roads_width
+    split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
+    split_point[1] = min(available_zone.bounds[3], split_point[1]) - 1
 
     if available_zone.contains_point(split_point):
         new_zones = available_zone.split_zone(split_point)
@@ -353,6 +356,12 @@ def set_current_occupied_zones_and_road_zones(
                 road_zone.contour, available_zone.contour):
             solution.current_road_zones.append(road_zone)
 
+    solution.current_occupied_zones.sort(
+        key=lambda x: x.bounds[0])
+
+    solution.current_road_zones.sort(
+        key=lambda x: x.bounds[0])
+
 
 def sort_available_zones_by_area_and_height(
     _: ReferenceBook,
@@ -391,3 +400,37 @@ def place_road_zone_on_right_size(
     )
 
     solution.current_road_zones.append(new_road_zone)
+
+
+def assert_current_rack_not_intersecting_oz_or_rz(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Asserts that the current rack does not intersect with any occupied or road
+    zones.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+    current_rack = solution.current_rack_group.get_current_rack()
+
+    for occupied_zone in solution.current_occupied_zones:
+        if shapely.intersects(
+                occupied_zone.contour_with_roads_width, current_rack.contour
+        ):
+            solution.intersected_special_zone = occupied_zone
+            raise ActionFailure(
+                "Current rack intersects with an occupied zone."
+            )
+
+    for road_zone in solution.current_road_zones:
+        if shapely.intersects(
+                road_zone.contour, current_rack.contour
+        ):
+            solution.intersected_special_zone = road_zone
+            raise ActionFailure(
+                "Current rack intersects with a road zone."
+            )

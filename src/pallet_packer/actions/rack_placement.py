@@ -100,18 +100,28 @@ def swap_double_rack_to_single_rack(
 
 
 def move_current_rack_verticaly(
-    _: ReferenceBook,
+    reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
     road_zone = solution.intersected_special_zone
+    current_rack_group = solution.current_rack_group
     current_rack = solution.current_rack_group.current_rack
 
-    rack_bounds = current_rack.contour.bounds
-    road_bounds = road_zone.bounds
+    special_road_width = road_zone.width
 
-    xoff, yoff = 0, road_bounds[3] - rack_bounds[1] + 1
+    if current_rack_group.racks:
+        usual_roads_width = reference_book.roads_width
+        special_road_width -= usual_roads_width
+        special_road_width = max(0, special_road_width)
 
+    xoff, yoff = 0, special_road_width + 1
     current_rack.translate(xoff, yoff)
+    current_rack_group.next_rack_placement = [
+        current_rack_group.next_rack_placement[0],
+        current_rack_group.next_rack_placement[1] + yoff
+    ]
+
+    solution.current_road_zones.remove(road_zone)
 
 
 def set_current_frame_as_special(
@@ -161,11 +171,10 @@ def create_new_rack(
     solution: Solution
 ) -> None:
     current_rack_group = solution.current_rack_group
-    current_rack = current_rack_group.get_current_rack()
 
-    if type(current_rack) is Rack:
+    if solution.next_rack_type is Rack:
         current_rack_group.place_single_rack()
-    elif type(current_rack) is DoubleRack:
+    elif solution.next_rack_type is DoubleRack:
         current_rack_group.place_double_rack()
     else:
         raise TypeError("Unknown rack type in current rack group")
@@ -259,3 +268,82 @@ def save_rack_group(
     solution.saved_rack_groups.append(
         solution.current_rack_group
     )
+
+
+def set_next_rack_type_single(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    solution.next_rack_type = Rack
+
+
+def set_next_rack_type_double(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    solution.next_rack_type = DoubleRack
+
+
+def fill_with_frames(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    curent_rack = solution.current_rack_group.current_rack
+
+    section_length = (curent_rack.beam_type.length
+                      + curent_rack.upright_type.width)
+    max_available_length = (available_zone.contour.bounds[2]
+                            - curent_rack.contour.bounds[2])
+    frames_count = int(max_available_length // section_length)
+
+    curent_rack.add_multiple_frames(frames_count)
+
+
+def delete_excess_frames_pl(
+    _: ReferenceBook,
+    solution: Solution
+):
+    current_cargo_max_quantity = (
+        solution.pallets[solution.pallet_idx].cargo.quantity)
+    cargo_id = solution.pallets[solution.pallet_idx].cargo.cargo_type_id
+
+    unplaced_cargo_left = (current_cargo_max_quantity
+                           - solution.pallet_count[cargo_id])
+
+    current_rack = solution.current_rack_group.get_current_rack()
+    cargo_capacity = current_rack.calculate_pallet_capacity()
+
+    if unplaced_cargo_left > 0 and len(current_rack) > 0:
+        while unplaced_cargo_left < cargo_capacity:
+            cargo_capacity -= (
+                current_rack.calculate_pallet_capacity_in_ith_frame(
+                    len(current_rack) - 1))
+            current_rack.delete_last_frame()
+            if len(current_rack) == 0:
+                break
+
+
+def delete_excess_frames_oz(
+    reference_book: ReferenceBook,
+    solution: Solution
+):
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    current_occupied_zone = solution.intersected_special_zone
+    current_rack = solution.current_rack_group.get_current_rack()
+
+    section_length = (current_rack.beam_type.length
+                      + current_rack.upright_type.width)
+    occupied_zone_with_roads = current_occupied_zone.contour.buffer(
+        reference_book.roads_width, join_style=2
+    )
+
+    max_available_length = max(0, (
+        occupied_zone_with_roads.bounds[0] -
+        available_zone.contour.bounds[0]
+    ))
+
+    frames_count = int(max_available_length // section_length)
+
+    while len(current_rack) > frames_count:
+        current_rack.delete_last_frame()

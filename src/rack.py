@@ -84,6 +84,12 @@ class Rack:
         self.__append_pillar()
         self.__update_contour()
 
+    def add_multiple_frames(self, count: int) -> None:
+        for _ in range(count):
+            self.__append_deck()
+            self.__append_pillar()
+        self.__update_contour()
+
     def disable_frame(self, frame_idx: int) -> None:
         """Disables the frame at the given index."""
         if frame_idx < 0 or frame_idx >= len(self.decks):
@@ -154,7 +160,7 @@ class Rack:
 
         if self.decks:
             self.next_element_position = (
-                self.decks[-1].bounds[0] + self.decks[-1].bounds[2],
+                self.pillars[-1].bounds[2],
                 self.next_element_position[1])
         else:
             self.pillars.pop()
@@ -171,6 +177,11 @@ class Rack:
 
     def translate(self, xoff: float, yoff: float) -> None:
         """Translates the rack by a given offset."""
+        self.rack_position = (self.rack_position[0] + xoff,
+                              self.rack_position[1] + yoff)
+        self.next_element_position = (self.next_element_position[0] + xoff,
+                                      self.next_element_position[1] + yoff)
+
         self.contour = shapely.affinity.translate(self.contour, xoff, yoff)
         for i in range(len(self.decks)):
             self.decks[i] = shapely.affinity.translate(
@@ -333,6 +344,12 @@ class DoubleRack():
         self.rack_2.add_frame()
         self.__update_contour()
 
+    def add_multiple_frames(self, count: int) -> None:
+        """Adds multiple frames to both racks."""
+        self.rack_1.add_multiple_frames(count)
+        self.rack_2.add_multiple_frames(count)
+        self.__update_contour()
+
     def made_frame_bridge(self, frame_idx: int) -> None:
         """Makes the frame at the given index a bridge in both racks."""
         self.rack_1.made_frame_bridge(frame_idx)
@@ -491,3 +508,17 @@ class RackGroup():
         shelf_height = (self.pallet.height + self.pallet_extra_space
                         + self.beam_types[0].height)
         return self.max_shelfs_bridge * shelf_height + self.frame_height_eps
+
+    @property
+    def bounds(self) -> tuple[float, float, float, float]:
+        if not self.racks:
+            return [self.position[0], self.position[1],
+                    self.position[0], self.position[1]]
+        min_x, min_y, max_x, max_y = self.racks[0].bounds
+        for rack in self.racks:
+            min_x = min(min_x, rack.bounds[0])
+            min_y = min(min_y, rack.bounds[1])
+            max_x = max(max_x, rack.bounds[2])
+            max_y = max(max_y, rack.bounds[3])
+
+        return min_x, min_y, max_x, max_y
