@@ -160,8 +160,7 @@ def assert_current_rack_intersecting_occupied_zones(
     current_rack = solution.current_rack_group.get_current_rack()
 
     for occupied_zone in solution.current_occupied_zones:
-        if (shapely.intersects(
-                occupied_zone.contour, current_rack.contour)):
+        if current_rack.intersects(occupied_zone.contour):
             solution.intersected_special_zone = occupied_zone
             return
 
@@ -447,3 +446,28 @@ def assert_current_rack_not_intersecting_oz_or_rz(
             raise ActionFailure(
                 "Current rack intersects with a road zone."
             )
+
+
+def move_second_rack_higher_over_oz(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Moves the second rack higher over the occupied zone.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+    current_rack = solution.current_rack_group.get_current_rack()
+    current_occupied_zone = solution.intersected_special_zone
+
+    y_shift = (current_occupied_zone.contour.bounds[3] -
+               current_rack.rack_2.contour.bounds[1]) + 1
+
+    tail = y_shift % 50
+    if tail != 0:
+        y_shift += 50 - tail
+
+    current_rack.move_second_rack_higher(y_shift)

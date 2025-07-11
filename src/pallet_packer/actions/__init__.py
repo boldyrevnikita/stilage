@@ -32,8 +32,8 @@ from src.pallet_packer.actions.zones_handling import (
     assert_last_shelf_of_first_rack_covers_occupied_zone,
     assert_last_shelf_of_second_rack_covers_occupied_zone,
     assert_second_rack_intersecting_occupied_zone,
-    place_road_zone_on_right_size, rotate_everything_90_clockwise,
-    rotate_evetything_90_counterclockwise,
+    move_second_rack_higher_over_oz, place_road_zone_on_right_size,
+    rotate_everything_90_clockwise, rotate_evetything_90_counterclockwise,
     set_current_occupied_zones_and_road_zones, set_next_zone, set_zero_zone,
     sort_available_zones_by_area_and_height, split_available_zone)
 
@@ -84,6 +84,7 @@ __all__ = [
     assert_last_shelf_of_first_rack_covers_occupied_zone.__name__,
     assert_last_shelf_of_second_rack_covers_occupied_zone.__name__,
     assert_second_rack_intersecting_occupied_zone.__name__,
+    move_second_rack_higher_over_oz.__name__,
     set_current_occupied_zones_and_road_zones.__name__,
     place_road_zone_on_right_size.__name__,
     rotate_everything_90_clockwise.__name__,

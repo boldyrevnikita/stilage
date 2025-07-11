@@ -58,6 +58,12 @@ def set_next_rack_position_higher_default(
     nr_position[0] = rg_position[0]
     nr_position[1] = current_rack.bounds[3] + reference_book.roads_width
 
+    if solution.current_rack_group.racks:
+        current_rack_group = solution.current_rack_group
+        nr_position[1] = max(nr_position[1],
+                             current_rack_group.bounds[3]
+                             + reference_book.roads_width)
+
     solution.current_rack_group.next_rack_placement = nr_position
 
 

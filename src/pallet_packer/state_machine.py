@@ -16,6 +16,7 @@ class Block(Enum):
     DSFX = 5
     EOZ = 6
     CF = 7
+    MSR = 8
 
 
 def get_general_states() -> dict[str, State]:
@@ -86,7 +87,8 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
             [f'{Block.GOOZ}-DLF', f'{Block.JOOZ}-DLF',
-             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR'],
+             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR',
+             f'{Block.MSR}-IDR'],
             [f'{Block.RACK_PLACEMENT}-CNTRZ']),
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
@@ -363,6 +365,22 @@ def get_coarse_fill_states() -> dict[str, State]:
     }
 
 
+def get_msr_states() -> dict[str, State]:
+    return {
+        f'{Block.MSR}-IDR': State(
+            actions.assert_current_rack_is_double,
+            [f'{Block.MSR}-IFRI'], ['TS-DEL']),
+        f'{Block.MSR}-IFRI': State(
+            actions.assert_first_rack_intersecting_occupied_zone,
+            ['TS-DEL'], [f'{Block.MSR}-MSRH']
+        ),
+        f'{Block.MSR}-MSRH': State(
+            actions.move_second_rack_higher_over_oz,
+            [f'{Block.RACK_PLACEMENT}-CESFFH'],
+            ['GFS']),
+    }
+
+
 class StateMachine:
     def __init__(self, reference_book):
         self.states = self.__compile_states()
@@ -378,6 +396,7 @@ class StateMachine:
         states.update(get_dsfx_states())
         states.update(get_eoz_states())
         states.update(get_coarse_fill_states())
+        states.update(get_msr_states())
         return states
 
     def get_initial_state(self) -> State:

@@ -214,6 +214,12 @@ class Rack:
         else:
             return 0
 
+    def intersects(self, geometry: Polygon) -> bool:
+        """Checks if the rack intersects with a given geometry."""
+        if self.contour is None:
+            return False
+        return self.contour.intersects(geometry)
+
     def __len__(self) -> int:
         return len(self.decks)
 
@@ -413,6 +419,20 @@ class DoubleRack():
             raise IndexError("Frame index out of range.")
         return (self.rack_1.calculate_pallet_capacity_in_ith_frame(frame_idx) +
                 self.rack_2.calculate_pallet_capacity_in_ith_frame(frame_idx))
+
+    def intersects(self, geometry: Polygon) -> bool:
+        """Checks if the double rack intersects with a given geometry."""
+        return self.rack_1.intersects(geometry) \
+            or self.rack_2.intersects(geometry)
+
+    def move_second_rack_higher(self, height: float) -> None:
+        """Moves the second rack higher by a given height."""
+        self.second_rack_position = (
+            self.second_rack_position[0],
+            self.second_rack_position[1] + height)
+        self.rack_distance += height
+        self.rack_2.translate(0, height)
+        self.__update_contour()
 
     def __len__(self) -> int:
         """Returns the frame length of the double rack."""
