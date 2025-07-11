@@ -2,6 +2,7 @@ from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.zone import SpecialRoadZone
 import shapely
+from copy import deepcopy
 
 
 def rotate_everything_90_clockwise(
@@ -28,6 +29,12 @@ def rotate_everything_90_clockwise(
 
     solution.is_rotated = True
 
+    solution.current_occupied_zones.sort(
+        key=lambda x: x.bounds[0])
+
+    solution.current_road_zones.sort(
+        key=lambda x: x.bounds[0])
+
 
 def rotate_evetything_90_counterclockwise(
     _: ReferenceBook,
@@ -53,6 +60,12 @@ def rotate_evetything_90_counterclockwise(
         solution.current_rack_group.rotate(angle, solution.rot_point)
 
         solution.is_rotated = False
+
+        solution.current_occupied_zones.sort(
+            key=lambda x: (x.bounds[0], x.bounds[2]))
+
+        solution.current_road_zones.sort(
+            key=lambda x: (x.bounds[0], x.bounds[2]))
 
 
 def set_next_zone(
@@ -341,26 +354,26 @@ def set_current_occupied_zones_and_road_zones(
     for occupied_zone in solution.occupied_zones:
         intersects_with_clearance = (
             shapely.intersects(
-                occupied_zone.contour_with_clearance, available_zone.contour))
+                available_zone.contour, occupied_zone.contour_with_clearance))
         intersects_with_roads_width = (
             shapely.intersects(
-                occupied_zone.contour_with_roads_width, available_zone.contour)
+                available_zone.contour, occupied_zone.contour_with_roads_width)
             )
 
         if (intersects_with_clearance or
                 intersects_with_roads_width):
-            solution.current_occupied_zones.append(occupied_zone)
+            solution.current_occupied_zones.append(deepcopy(occupied_zone))
 
     for road_zone in solution.road_zones:
         if shapely.intersects(
                 road_zone.contour, available_zone.contour):
-            solution.current_road_zones.append(road_zone)
+            solution.current_road_zones.append(deepcopy(road_zone))
 
     solution.current_occupied_zones.sort(
-        key=lambda x: x.bounds[0])
+        key=lambda x: (x.bounds[0], x.bounds[2]))
 
     solution.current_road_zones.sort(
-        key=lambda x: x.bounds[0])
+        key=lambda x: (x.bounds[0], x.bounds[2]))
 
 
 def sort_available_zones_by_area_and_height(

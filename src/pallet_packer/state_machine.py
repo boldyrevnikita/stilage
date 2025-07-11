@@ -59,7 +59,7 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.CF}-SNRTS'], [f'{Block.MAIN}-DFS']),
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
-            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-SNZ']),
+            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-RZCC-90-2']),
         f'{Block.MAIN}-SNZ': State(
             actions.set_next_zone,
             [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
@@ -74,7 +74,10 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-GCOZARZ'], ['TS']),
         f'{Block.MAIN}-SpZ': State(
             actions.split_available_zone,
-            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ'])
+            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ']),
+        f'{Block.MAIN}-RZCC-90-2': State(
+            actions.rotate_evetything_90_counterclockwise,
+            [f'{Block.MAIN}-SNZ'], ['GFS']),
     }
 
 
@@ -99,16 +102,16 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-SR-CC']),
         f'{Block.RACK_PLACEMENT}-GNC': State(
             actions.set_next_pallet,
-            [f'{Block.MAIN}-SpZ'],
-            ['TS']),
+            [f'{Block.MAIN}-RZCC-90'],
+            [f'{Block.RACK_PLACEMENT}-RZCC-90-3']),
         f'{Block.RACK_PLACEMENT}-SR-CC': State(
             actions.save_rack,
             [f'{Block.RACK_PLACEMENT}-SRG-CC'],
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-SRG-CC': State(
             actions.save_rack_group,
-            [f'{Block.MAIN}-GNC'],
-            [f'{Block.MAIN}-GNC']),
+            [f'{Block.RACK_PLACEMENT}-GNC'],
+            [f'{Block.RACK_PLACEMENT}-GNC']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -168,7 +171,10 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-SDFS': State(
             actions.set_default_frame_size,
             [f'{Block.RACK_PLACEMENT}-IPC'],
-            ['GFS'])
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-RZCC-90-3': State(
+            actions.rotate_evetything_90_counterclockwise,
+            ['TS'], ['GFS']),
     }
 
 
@@ -201,7 +207,7 @@ def get_jooz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.JOOZ}-SNLR': State(
             actions.set_next_rack_position_righter,
-            [f'{Block.CF}-CNR'],
+            [f'{Block.CF}-CNR-2'],
             ['GFS']),
     }
 
@@ -345,7 +351,15 @@ def get_coarse_fill_states() -> dict[str, State]:
         f'{Block.CF}-IPC-2': State(
             actions.increase_pallet_counter_for_rack,
             [f'{Block.RACK_PLACEMENT}-SNF'],
-            ['GFS'])
+            ['GFS']),
+        f'{Block.CF}-CNR-2': State(
+            actions.create_new_rack,
+            [f'{Block.CF}-CESFF-2'],
+            ['GFS']),
+        f'{Block.CF}-CESFF-2': State(
+            actions.assert_current_rack_fits_available_zone,
+            [f'{Block.CF}-FwF'],
+            [f'{Block.CF}-SNLH-DEF']),
     }
 
 
@@ -405,9 +419,6 @@ class StateMachine:
             return [solution]
         else:
             raise ValueError("Unknown action status")
-
-        if len(next_states) > 1:
-            print('hey')
 
         new_solutions = []
 

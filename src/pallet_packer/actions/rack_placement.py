@@ -328,7 +328,6 @@ def delete_excess_frames_oz(
     reference_book: ReferenceBook,
     solution: Solution
 ):
-    available_zone = solution.available_zones[solution.available_zone_idx]
     current_occupied_zone = solution.intersected_special_zone
     current_rack = solution.current_rack_group.get_current_rack()
 
@@ -340,7 +339,7 @@ def delete_excess_frames_oz(
 
     max_available_length = max(0, (
         occupied_zone_with_roads.bounds[0] -
-        available_zone.contour.bounds[0]
+        current_rack.contour.bounds[0]
     ))
 
     frames_count = int(max_available_length // section_length)

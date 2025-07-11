@@ -522,3 +522,9 @@ class RackGroup():
             max_y = max(max_y, rack.bounds[3])
 
         return min_x, min_y, max_x, max_y
+
+    @property
+    def area(self) -> float:
+        bounds = self.bounds
+        return abs((bounds[0] - bounds[2])
+                   * (bounds[1] - bounds[3]))

@@ -15,7 +15,11 @@ class PalletPacker:
                      available_zones: list[AvailableZone],
                      occupied_zones: list[OccupiedZone],
                      special_road_zones: list[SpecialRoadZone],
-                     reference_book: ReferenceBook = ReferenceBook()
+                     reference_book: ReferenceBook = ReferenceBook(),
+                     prune_steps: int = 300,
+                     prune_beams_keep: int = 10
+                     #  prune_steps: int = 1,
+                     #  prune_beams_keep: int = 1
                      ) -> Solution | None:
         solutions_queue: deque[Solution] = deque()
         ready_solutions: list[Solution] = []
@@ -35,6 +39,7 @@ class PalletPacker:
             state=state_machine.get_initial_state())
         )
 
+        step = 1
         while solutions_queue:
             current_solution = solutions_queue.popleft()
             state_machine.apply_action(current_solution)
@@ -47,7 +52,12 @@ class PalletPacker:
             ready_solutions.extend(end_solutions)
             solutions_queue.extend(transitional_solutions)
 
-            solutions_queue = cls.__prune_solutions(solutions_queue)
+            if step % prune_steps == 0:
+                solutions_queue = cls.__prune_solutions(solutions_queue,
+                                                        prune_beams_keep)
+
+            step += 1
+
             if check_if_debugger_is_active():
                 print(f"Queue size: {len(solutions_queue)}")
                 print(f"Ready solutions: {len(ready_solutions)}")
@@ -58,9 +68,16 @@ class PalletPacker:
         return cls.__get_best_solution(ready_solutions)
 
     @staticmethod
-    def __prune_solutions(solutions: deque[Solution]
+    def __prune_solutions(solutions: deque[Solution],
+                          prune_beams_keep: int
                           ) -> deque[Solution]:
-        # TODO: Implement pruning logic
+        solutions = list(solutions)
+        solutions.sort(
+            key=PalletPacker.__calculate_intermediate_solution_score,
+            reverse=True
+        )
+        solutions = solutions[:prune_beams_keep]
+        solutions = deque(solutions)
         return solutions
 
     @classmethod
@@ -83,4 +100,28 @@ class PalletPacker:
         for rack_group in solution.saved_rack_groups:
             for rack in rack_group.racks:
                 score += rack.calculate_pallet_capacity()
+        return score
+
+    @staticmethod
+    def __calculate_intermediate_solution_score(solution: Solution) -> int:
+        score = 0
+        start_area = 0
+        current_area = 0
+        max_cargo_quantity = 0
+        current_cargo_quantity = 0
+
+        for available_zone in solution.initial_available_zones:
+            start_area += available_zone.area
+        for available_zone in solution.available_zones:
+            current_area += available_zone.area
+        current_area -= solution.current_rack_group.area
+
+        for pallet in solution.pallets:
+            max_cargo_quantity += pallet.cargo.quantity
+            current_cargo_quantity += solution.pallet_count[
+                pallet.cargo.cargo_type_id]
+
+        score = (current_area / start_area + current_cargo_quantity
+                 / max_cargo_quantity)
+
         return score
