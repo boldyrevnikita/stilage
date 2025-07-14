@@ -1,7 +1,7 @@
 from enum import Enum
 from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
 from src.pallet import Pallet
-from src.rack import RackGroup
+from src.rack import RackGroup, Rack, DoubleRack
 from copy import deepcopy
 from collections import defaultdict
 
@@ -71,3 +71,4 @@ class Solution:
 
         self.state_history = []
         self.is_rotated = False
+        self.next_rack_type: Rack | DoubleRack = None

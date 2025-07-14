@@ -2,6 +2,7 @@ from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.zone import SpecialRoadZone
 import shapely
+from copy import deepcopy
 
 
 def rotate_everything_90_clockwise(
@@ -28,6 +29,12 @@ def rotate_everything_90_clockwise(
 
     solution.is_rotated = True
 
+    solution.current_occupied_zones.sort(
+        key=lambda x: x.bounds[0])
+
+    solution.current_road_zones.sort(
+        key=lambda x: x.bounds[0])
+
 
 def rotate_evetything_90_counterclockwise(
     _: ReferenceBook,
@@ -53,6 +60,12 @@ def rotate_evetything_90_counterclockwise(
         solution.current_rack_group.rotate(angle, solution.rot_point)
 
         solution.is_rotated = False
+
+        solution.current_occupied_zones.sort(
+            key=lambda x: (x.bounds[0], x.bounds[2]))
+
+        solution.current_road_zones.sort(
+            key=lambda x: (x.bounds[0], x.bounds[2]))
 
 
 def set_next_zone(
@@ -124,10 +137,13 @@ def split_available_zone(
     if len(solution.current_rack_group.racks) == 0:
         raise ActionFailure("No racks are placed.")
 
-    current_rack = solution.current_rack_group.racks[-1]
+    current_rack_group = solution.current_rack_group
     available_zone = solution.available_zones[solution.available_zone_idx]
-    split_point = list(current_rack.bounds[2:])
+    split_point = list(current_rack_group.bounds[2:])
+    split_point[0] += reference_book.roads_width
     split_point[1] += reference_book.roads_width
+    split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
+    split_point[1] = min(available_zone.bounds[3], split_point[1]) - 1
 
     if available_zone.contains_point(split_point):
         new_zones = available_zone.split_zone(split_point)
@@ -144,8 +160,7 @@ def assert_current_rack_intersecting_occupied_zones(
     current_rack = solution.current_rack_group.get_current_rack()
 
     for occupied_zone in solution.current_occupied_zones:
-        if (shapely.intersects(
-                occupied_zone.contour, current_rack.contour)):
+        if current_rack.intersects(occupied_zone.contour):
             solution.intersected_special_zone = occupied_zone
             return
 
@@ -338,20 +353,26 @@ def set_current_occupied_zones_and_road_zones(
     for occupied_zone in solution.occupied_zones:
         intersects_with_clearance = (
             shapely.intersects(
-                occupied_zone.contour_with_clearance, available_zone.contour))
+                available_zone.contour, occupied_zone.contour_with_clearance))
         intersects_with_roads_width = (
             shapely.intersects(
-                occupied_zone.contour_with_roads_width, available_zone.contour)
+                available_zone.contour, occupied_zone.contour_with_roads_width)
             )
 
         if (intersects_with_clearance or
                 intersects_with_roads_width):
-            solution.current_occupied_zones.append(occupied_zone)
+            solution.current_occupied_zones.append(deepcopy(occupied_zone))
 
     for road_zone in solution.road_zones:
         if shapely.intersects(
                 road_zone.contour, available_zone.contour):
-            solution.current_road_zones.append(road_zone)
+            solution.current_road_zones.append(deepcopy(road_zone))
+
+    solution.current_occupied_zones.sort(
+        key=lambda x: (x.bounds[0], x.bounds[2]))
+
+    solution.current_road_zones.sort(
+        key=lambda x: (x.bounds[0], x.bounds[2]))
 
 
 def sort_available_zones_by_area_and_height(
@@ -391,3 +412,62 @@ def place_road_zone_on_right_size(
     )
 
     solution.current_road_zones.append(new_road_zone)
+
+
+def assert_current_rack_not_intersecting_oz_or_rz(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Asserts that the current rack does not intersect with any occupied or road
+    zones.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+    current_rack = solution.current_rack_group.get_current_rack()
+
+    for occupied_zone in solution.current_occupied_zones:
+        if shapely.intersects(
+                occupied_zone.contour_with_roads_width, current_rack.contour
+        ):
+            solution.intersected_special_zone = occupied_zone
+            raise ActionFailure(
+                "Current rack intersects with an occupied zone."
+            )
+
+    for road_zone in solution.current_road_zones:
+        if shapely.intersects(
+                road_zone.contour, current_rack.contour
+        ):
+            solution.intersected_special_zone = road_zone
+            raise ActionFailure(
+                "Current rack intersects with a road zone."
+            )
+
+
+def move_second_rack_higher_over_oz(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Moves the second rack higher over the occupied zone.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+    current_rack = solution.current_rack_group.get_current_rack()
+    current_occupied_zone = solution.intersected_special_zone
+
+    y_shift = (current_occupied_zone.contour.bounds[3] -
+               current_rack.rack_2.contour.bounds[1]) + 1
+
+    tail = y_shift % 50
+    if tail != 0:
+        y_shift += 50 - tail
+
+    current_rack.move_second_rack_higher(y_shift)

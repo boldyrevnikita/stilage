@@ -15,6 +15,8 @@ class Block(Enum):
     JOOZ = 4
     DSFX = 5
     EOZ = 6
+    CF = 7
+    MSR = 8
 
 
 def get_general_states() -> dict[str, State]:
@@ -55,10 +57,10 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-CES-HG'], ['GFS']),
         f'{Block.MAIN}-CES-HG': State(
             actions.assert_current_rack_fits_available_zone,
-            [f'{Block.RACK_PLACEMENT}-CTNOZ'], [f'{Block.MAIN}-DFS']),
+            [f'{Block.CF}-SNRTS'], [f'{Block.MAIN}-DFS']),
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
-            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-SNZ']),
+            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-RZCC-90-2']),
         f'{Block.MAIN}-SNZ': State(
             actions.set_next_zone,
             [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
@@ -73,7 +75,10 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-GCOZARZ'], ['TS']),
         f'{Block.MAIN}-SpZ': State(
             actions.split_available_zone,
-            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ'])
+            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ']),
+        f'{Block.MAIN}-RZCC-90-2': State(
+            actions.rotate_evetything_90_counterclockwise,
+            [f'{Block.MAIN}-SNZ'], ['GFS']),
     }
 
 
@@ -82,7 +87,8 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
             [f'{Block.GOOZ}-DLF', f'{Block.JOOZ}-DLF',
-             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR'],
+             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR',
+             f'{Block.MSR}-IDR'],
             [f'{Block.RACK_PLACEMENT}-CNTRZ']),
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
@@ -98,16 +104,16 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-SR-CC']),
         f'{Block.RACK_PLACEMENT}-GNC': State(
             actions.set_next_pallet,
-            [f'{Block.MAIN}-SpZ'],
-            ['TS']),
+            [f'{Block.MAIN}-RZCC-90'],
+            [f'{Block.RACK_PLACEMENT}-RZCC-90-3']),
         f'{Block.RACK_PLACEMENT}-SR-CC': State(
             actions.save_rack,
             [f'{Block.RACK_PLACEMENT}-SRG-CC'],
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-SRG-CC': State(
             actions.save_rack_group,
-            [f'{Block.MAIN}-GNC'],
-            [f'{Block.MAIN}-GNC']),
+            [f'{Block.RACK_PLACEMENT}-GNC'],
+            [f'{Block.RACK_PLACEMENT}-GNC']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -126,7 +132,7 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-SNLH-DEF']),
         f'{Block.RACK_PLACEMENT}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
-            [f'{Block.RACK_PLACEMENT}-CDR'],
+            [f'{Block.CF}-SNRTD'],
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-CDR': State(
             actions.place_new_double_rack,
@@ -166,8 +172,11 @@ def get_rack_placement_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-SDFS': State(
             actions.set_default_frame_size,
-            [f'{Block.RACK_PLACEMENT}-SNF'],
-            ['GFS'])
+            [f'{Block.RACK_PLACEMENT}-IPC'],
+            ['GFS']),
+        f'{Block.RACK_PLACEMENT}-RZCC-90-3': State(
+            actions.rotate_evetything_90_counterclockwise,
+            ['TS'], ['GFS']),
     }
 
 
@@ -183,11 +192,7 @@ def get_gooz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.GOOZ}-SNLH-OZ': State(
             actions.set_next_rack_position_higher_oz,
-            [f'{Block.GOOZ}-CDR'],
-            ['GFS']),
-        f'{Block.GOOZ}-CDR': State(
-            actions.place_new_double_rack,
-            [f'{Block.RACK_PLACEMENT}-CESFFH'],
+            [f'{Block.CF}-SNRTD'],
             ['GFS']),
     }
 
@@ -200,16 +205,12 @@ def get_jooz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.JOOZ}-SR': State(
             actions.save_rack,
-            [f'{Block.JOOZ}-SNLH'],
+            [f'{Block.JOOZ}-SNLR'],
             ['GFS']),
-        f'{Block.JOOZ}-SNLH': State(
+        f'{Block.JOOZ}-SNLR': State(
             actions.set_next_rack_position_righter,
-            [f'{Block.JOOZ}-CNR'],
+            [f'{Block.CF}-CNR-2'],
             ['GFS']),
-        f'{Block.JOOZ}-CNR': State(
-            actions.create_new_rack,
-            [f'{Block.RACK_PLACEMENT}-CESFFR'],
-            ['GFS'])
     }
 
 
@@ -295,6 +296,91 @@ def get_eoz_states() -> dict[str, State]:
     }
 
 
+def get_coarse_fill_states() -> dict[str, State]:
+    return {
+        f'{Block.CF}-SNRTS': State(
+            actions.set_next_rack_type_single,
+            [f'{Block.CF}-FwF'],
+            ['GFS']),
+        f'{Block.CF}-FwF': State(
+            actions.fill_with_frames,
+            [f'{Block.CF}-CTNOZpCNTRZ'],
+            ['GFS']),
+        f'{Block.CF}-CTNOZpCNTRZ': State(
+            actions.assert_current_rack_not_intersecting_oz_or_rz,
+            [f'{Block.CF}-CIEP-1'],
+            [f'{Block.CF}-DEF-1']),
+        f'{Block.CF}-CIEP-1': State(
+            actions.assert_current_pallets_are_enough_for_rack,
+            [f'{Block.CF}-IPC-1'],
+            [f'{Block.CF}-DEF-2']),
+        f'{Block.CF}-IPC-1': State(
+            actions.increase_pallet_counter_for_rack,
+            [f'{Block.CF}-SR'],
+            ['GFS']),
+        f'{Block.CF}-SR': State(
+            actions.save_rack,
+            [f'{Block.CF}-SNLH-DEF'],
+            ['GFS']),
+        f'{Block.CF}-SNLH-DEF': State(
+            actions.set_next_rack_position_higher_default,
+            [f'{Block.CF}-SNRTD'],
+            ['GFS']),
+        f'{Block.CF}-SNRTD': State(
+            actions.set_next_rack_type_double,
+            [f'{Block.CF}-CNR'],
+            ['GFS']),
+        f'{Block.CF}-CNR': State(
+            actions.create_new_rack,
+            [f'{Block.CF}-CESFF'],
+            ['GFS']),
+        f'{Block.CF}-CESFF': State(
+            actions.assert_current_rack_fits_available_zone,
+            [f'{Block.CF}-FwF'],
+            [f'{Block.RACK_PLACEMENT}-CESFFH']),
+        f'{Block.CF}-DEF-1': State(
+            actions.delete_excess_frames_oz,
+            [f'{Block.CF}-CIEP-2'],
+            ['GFS']),
+        f'{Block.CF}-DEF-2': State(
+            actions.delete_excess_frames_pl,
+            [f'{Block.CF}-IPC-2'],
+            ['GFS']),
+        f'{Block.CF}-CIEP-2': State(
+            actions.assert_current_pallets_are_enough_for_rack,
+            [f'{Block.CF}-IPC-2'],
+            [f'{Block.CF}-DEF-2']),
+        f'{Block.CF}-IPC-2': State(
+            actions.increase_pallet_counter_for_rack,
+            [f'{Block.RACK_PLACEMENT}-SNF'],
+            ['GFS']),
+        f'{Block.CF}-CNR-2': State(
+            actions.create_new_rack,
+            [f'{Block.CF}-CESFF-2'],
+            ['GFS']),
+        f'{Block.CF}-CESFF-2': State(
+            actions.assert_current_rack_fits_available_zone,
+            [f'{Block.CF}-FwF'],
+            [f'{Block.CF}-SNLH-DEF']),
+    }
+
+
+def get_msr_states() -> dict[str, State]:
+    return {
+        f'{Block.MSR}-IDR': State(
+            actions.assert_current_rack_is_double,
+            [f'{Block.MSR}-IFRI'], ['TS-DEL']),
+        f'{Block.MSR}-IFRI': State(
+            actions.assert_first_rack_intersecting_occupied_zone,
+            ['TS-DEL'], [f'{Block.MSR}-MSRH']
+        ),
+        f'{Block.MSR}-MSRH': State(
+            actions.move_second_rack_higher_over_oz,
+            [f'{Block.RACK_PLACEMENT}-CESFFH'],
+            ['GFS']),
+    }
+
+
 class StateMachine:
     def __init__(self, reference_book):
         self.states = self.__compile_states()
@@ -309,6 +395,8 @@ class StateMachine:
         states.update(get_jooz_states())
         states.update(get_dsfx_states())
         states.update(get_eoz_states())
+        states.update(get_coarse_fill_states())
+        states.update(get_msr_states())
         return states
 
     def get_initial_state(self) -> State:
