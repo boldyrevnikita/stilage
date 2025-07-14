@@ -124,9 +124,6 @@ def filter_primitives(
     for prim in primitives:
         for zone in available_zones:
             if zone.contour.contains(prim):
-                if isinstance(prim, shapely.Polygon):
-                    if prim.area >= 1580238805:
-                        print('hey')
                 filtered_primitives.append(prim)
                 break
     return filtered_primitives
@@ -145,7 +142,6 @@ def get_polygons_from_primitives(
             + abs(polygon.centroid.y - convex_hull.centroid.y))
 
         if centroid_distance < centroid_threshold:
-            print(centroid_distance)
             result = convex_hull.buffer(-eps, join_style=2, cap_style=2)
         else:
             result = polygon.buffer(-eps, join_style=2, cap_style=2)
@@ -181,8 +177,6 @@ def filter_empty_polygons(
 ):
     filtered_polygons = []
     for polygon in polygons:
-        if polygon.area >= 1580238805:
-            print('hey')
         if not polygon.is_empty:
             filtered_polygons.append(polygon)
 

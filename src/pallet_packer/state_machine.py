@@ -419,7 +419,7 @@ class StateMachine:
             action_function(self.reference_book, solution)
             solution.action_status = ActionStatus.SUCCESS
         except ActionFailure as e:
-            print(f"Regular action fail: {e.message}")
+            # print(f"Regular action fail: {e.message}")
             solution.action_status = ActionStatus.FAILED
         except Exception as e:
             print(f"Critical action fail: {e}")
