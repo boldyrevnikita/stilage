@@ -17,7 +17,7 @@ class PalletPacker:
                      special_road_zones: list[SpecialRoadZone],
                      reference_book: ReferenceBook = ReferenceBook(),
                      prune_steps: int = 300,
-                     prune_beams_keep: int = 10
+                     prune_beams_keep: int = 2
                      #  prune_steps: int = 1,
                      #  prune_beams_keep: int = 1
                      ) -> Solution | None:
