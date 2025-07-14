@@ -77,8 +77,13 @@ def set_next_rack_position_higher_oz(
     current_rack = solution.current_rack_group.current_rack
 
     nr_position[0] = rg_position[0]
-    nr_position[1] = max(ocupied_zone.contour_with_clearance.bounds[3],
-                         current_rack.bounds[3] + reference_book.roads_width)
+    if len(solution.current_rack_group.racks) > 0:
+        nr_position[1] = max(ocupied_zone.contour_with_clearance.bounds[3]
+                             + reference_book.roads_width,
+                             current_rack.bounds[3]
+                             + reference_book.roads_width)
+    else:
+        nr_position[1] = ocupied_zone.contour_with_clearance.bounds[3]
 
     solution.current_rack_group.next_rack_placement = nr_position
 
