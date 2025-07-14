@@ -27,6 +27,8 @@ def process_message_ml(message: Any, sender: Sender):
     cargos: list[CargoType] = []
 
     print('Message received')
+    print()
+    print(message)
 
     try:
         for zone in message['available_zones']:
@@ -105,6 +107,8 @@ def process_message_ml(message: Any, sender: Sender):
 
     sender.send(response.model_dump(mode='json'))
     print('Results sent')
+    print()
+    print(response.model_dump())
 
 
 def process_message_print(message: Any, sender: Sender):
