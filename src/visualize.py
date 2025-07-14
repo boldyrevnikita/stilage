@@ -71,25 +71,25 @@ def plot_occupied_zones(fig: go.Figure,
             name='Occupied Zone'
         ))
 
-        fig.add_trace(go.Scatter(
-            x=np.array(polygon_clearence[0]),
-            y=np.array(polygon_clearence[1]),
-            mode='lines',
-            fill='toself',
-            fillcolor='rgba(255, 165, 0, 0.5)',
-            line=dict(color='orange'),
-            name='Occupied Zone \' Clearance'
-        ))
+        # fig.add_trace(go.Scatter(
+        #     x=np.array(polygon_clearence[0]),
+        #     y=np.array(polygon_clearence[1]),
+        #     mode='lines',
+        #     fill='toself',
+        #     fillcolor='rgba(255, 165, 0, 0.5)',
+        #     line=dict(color='orange'),
+        #     name='Occupied Zone \' Clearance'
+        # ))
 
-        fig.add_trace(go.Scatter(
-            x=np.array(polygon_roads_width[0]),
-            y=np.array(polygon_roads_width[1]),
-            mode='lines',
-            fill='toself',
-            fillcolor='rgba(255, 215, 0, 0.5)',
-            line=dict(color='gold'),
-            name='Occupied Zone with Roads Width'
-        ))
+        # fig.add_trace(go.Scatter(
+        #     x=np.array(polygon_roads_width[0]),
+        #     y=np.array(polygon_roads_width[1]),
+        #     mode='lines',
+        #     fill='toself',
+        #     fillcolor='rgba(255, 215, 0, 0.5)',
+        #     line=dict(color='gold'),
+        #     name='Occupied Zone with Roads Width'
+        # ))
 
 
 def plot_special_road_zones(fig: go.Figure,

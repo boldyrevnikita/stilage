@@ -1,5 +1,6 @@
 import warnings
 from queue import Queue
+from collections import deque
 from typing import List
 
 import ezdxf
@@ -115,9 +116,40 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
     return geometry_list
 
 
+def filter_primitives(
+    primitives: List[shapely.geometry.base.BaseGeometry],
+    available_zones: List[AvailableZone],
+) -> List[shapely.geometry.base.BaseGeometry]:
+    filtered_primitives = []
+    for prim in primitives:
+        for zone in available_zones:
+            if zone.contour.contains(prim):
+                if isinstance(prim, shapely.Polygon):
+                    if prim.area >= 1580238805:
+                        print('hey')
+                filtered_primitives.append(prim)
+                break
+    return filtered_primitives
+
+
 def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
+
+    def process_polygon(polygon: shapely.Polygon,
+                        centroid_threshold: float = 300
+                        ) -> shapely.Polygon:
+        convex_hull = polygon.convex_hull
+        centroid_distance = (
+            abs(polygon.centroid.x - convex_hull.centroid.x)
+            + abs(polygon.centroid.y - convex_hull.centroid.y))
+
+        if centroid_distance < centroid_threshold:
+            print(centroid_distance)
+            result = convex_hull.buffer(-eps, join_style=2, cap_style=2)
+        else:
+            result = polygon.buffer(-eps, join_style=2, cap_style=2)
+        return result
 
     polygons = []
     primitives_processed = []
@@ -125,19 +157,73 @@ def get_polygons_from_primitives(
         primitives_processed.append(prim.buffer(
             eps, join_style=2, cap_style=2))
 
-    gm = shapely.union_all(primitives_processed)
+    gm = shapely.disjoint_subset_union_all(primitives_processed)
 
-    if type(gm) is shapely.geometry.Polygon:
-        convex_hull = gm.convex_hull
-        convex_hull = convex_hull.buffer(-eps, join_style=2, cap_style=2)
-        polygons.append(convex_hull)
-    elif type(gm) is shapely.geometry.MultiPolygon:
-        for polygon in gm.geoms:
-            convex_hull = polygon.convex_hull
-            convex_hull = convex_hull.buffer(-eps, join_style=2, cap_style=2)
-            polygons.append(convex_hull)
+    q = deque()
+    q.append(gm)
+    while q:
+        gm = q.popleft()
+        if type(gm) is shapely.Polygon:
+            entity = process_polygon(gm)
+            if isinstance(entity, shapely.MultiPolygon):
+                q.append(entity)
+            else:
+                polygons.append(entity)
+        elif type(gm) is shapely.MultiPolygon:
+            for entity in gm.geoms:
+                q.append(entity)
 
     return polygons
+
+
+def filter_empty_polygons(
+    polygons: list[shapely.Polygon]
+):
+    filtered_polygons = []
+    for polygon in polygons:
+        if polygon.area >= 1580238805:
+            print('hey')
+        if not polygon.is_empty:
+            filtered_polygons.append(polygon)
+
+    return filtered_polygons
+
+
+def filter_small_polygons(
+    polygons: list[shapely.Polygon],
+    area_threshold: float = 100
+):
+    filtered_polygons = []
+    for polygon in polygons:
+        if polygon.area > area_threshold:
+            filtered_polygons.append(polygon)
+
+    return filtered_polygons
+
+
+def filter_intersecting_polygons(
+    polygons: List[shapely.Polygon],
+        intersection_percentage: float = 0.99) -> List[shapely.Polygon]:
+    is_intersecting = np.zeros(len(polygons), dtype=bool)
+    filtered_polygons = []
+
+    for i in range(len(polygons)):
+        if is_intersecting[i]:
+            continue
+        for j in range(i + 1, len(polygons)):
+            if is_intersecting[j]:
+                continue
+            intersection = polygons[i].intersection(polygons[j])
+            if intersection.is_empty:
+                continue
+            intersection_area = intersection.area
+            if (intersection_area / polygons[i].area > intersection_percentage
+                and intersection_area / polygons[j].area
+                    > intersection_percentage):
+                is_intersecting[j] = True
+        filtered_polygons.append(polygons[i])
+
+    return filtered_polygons
 
 
 def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
@@ -146,30 +232,23 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                             roads_width: float,
                             ) -> List[OccupiedZone]:
     occupied_zones = []
+    geometries = []
 
     msp = doc.modelspace()
+    for entity in msp:
+        geometries.extend(dxf_entity_to_shapely(entity))
 
-    for zone in available_zones:
-        geometries = []
-        zone_bbox = zone.contour.bounds
-        window = ezdxf.select.Window(
-            (zone_bbox[0], zone_bbox[1]),
-            (zone_bbox[2], zone_bbox[3]),
-        )
+    geometries = filter_primitives(geometries, available_zones)
+    polygons = get_polygons_from_primitives(geometries)
+    polygons = filter_empty_polygons(polygons)
+    polygons = filter_small_polygons(polygons)
+    polygons = filter_intersecting_polygons(polygons)
 
-        entities = ezdxf.select.bbox_inside(
-            window, msp
-        )
-
-        for entity in entities:
-            geometries.extend(dxf_entity_to_shapely(entity))
-
-        polygones = get_polygons_from_primitives(geometries)
-        for polygon in polygones:
-            occupied_zones.append(OccupiedZone(
-                list(polygon.exterior.coords),
-                occupied_zone_clearance,
-                roads_width
-            ))
+    for polygon in polygons:
+        occupied_zones.append(OccupiedZone(
+            list(polygon.exterior.coords),
+            occupied_zone_clearance,
+            roads_width
+        ))
 
     return occupied_zones

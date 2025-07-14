@@ -2,23 +2,28 @@ from src.pallet_packer.actions.beams_and_upright import \
     find_suitable_beams_and_upright
 from src.pallet_packer.actions.default_action import default_action
 from src.pallet_packer.actions.pallet_handling import (
-    assert_current_pallets_are_enough, increase_pallet_counter,
-    set_next_pallet, sort_pallets_by_weight_height_width)
+    assert_current_pallets_are_enough,
+    assert_current_pallets_are_enough_for_rack, increase_pallet_counter,
+    increase_pallet_counter_for_rack, set_next_pallet,
+    sort_pallets_by_weight_height_width)
 from src.pallet_packer.actions.rack_placement import (
     assert_current_rack_is_double, create_new_rack,
     decrease_current_frame_length, decrease_first_rack_frame_length,
-    decrease_second_rack_frame_length, delete_last_frame, disable_last_frame,
+    decrease_second_rack_frame_length, delete_excess_frames_oz,
+    delete_excess_frames_pl, delete_last_frame, disable_last_frame,
     disable_last_frame_for_first_rack, disable_last_frame_for_second_rack,
-    move_current_rack_verticaly, place_horizontal_rack_group,
+    fill_with_frames, move_current_rack_verticaly, place_horizontal_rack_group,
     place_new_double_rack, place_new_frame, save_rack, save_rack_group,
     set_current_frame_as_special, set_default_frame_size,
     set_next_rack_position_higher_default, set_next_rack_position_higher_oz,
-    set_next_rack_position_righter, swap_double_rack_to_single_rack)
+    set_next_rack_position_righter, set_next_rack_type_double,
+    set_next_rack_type_single, swap_double_rack_to_single_rack)
 from src.pallet_packer.actions.zones_handling import (
     assert_both_racks_intersecting_occupied_zone,
     assert_current_rack_fits_available_zone,
     assert_current_rack_intersecting_occupied_zones,
     assert_current_rack_intersecting_road_zones,
+    assert_current_rack_not_intersecting_oz_or_rz,
     assert_current_shelf_length_enough_for_road,
     assert_current_zone_height_enough_for_rack_bridge,
     assert_first_rack_intersecting_occupied_zone,
@@ -27,8 +32,8 @@ from src.pallet_packer.actions.zones_handling import (
     assert_last_shelf_of_first_rack_covers_occupied_zone,
     assert_last_shelf_of_second_rack_covers_occupied_zone,
     assert_second_rack_intersecting_occupied_zone,
-    place_road_zone_on_right_size, rotate_everything_90_clockwise,
-    rotate_evetything_90_counterclockwise,
+    move_second_rack_higher_over_oz, place_road_zone_on_right_size,
+    rotate_everything_90_clockwise, rotate_evetything_90_counterclockwise,
     set_current_occupied_zones_and_road_zones, set_next_zone, set_zero_zone,
     sort_available_zones_by_area_and_height, split_available_zone)
 
@@ -36,7 +41,9 @@ __all__ = [
     find_suitable_beams_and_upright.__name__,
     default_action.__name__,
     assert_current_pallets_are_enough.__name__,
+    assert_current_pallets_are_enough_for_rack.__name__,
     increase_pallet_counter.__name__,
+    increase_pallet_counter_for_rack.__name__,
     set_next_pallet.__name__,
     sort_pallets_by_weight_height_width.__name__,
     assert_current_rack_is_double.__name__,
@@ -44,10 +51,13 @@ __all__ = [
     decrease_current_frame_length.__name__,
     decrease_first_rack_frame_length.__name__,
     decrease_second_rack_frame_length.__name__,
+    delete_excess_frames_oz.__name__,
+    delete_excess_frames_pl.__name__,
     delete_last_frame.__name__,
     disable_last_frame.__name__,
     disable_last_frame_for_first_rack.__name__,
     disable_last_frame_for_second_rack.__name__,
+    fill_with_frames.__name__,
     move_current_rack_verticaly.__name__,
     place_horizontal_rack_group.__name__,
     place_new_double_rack.__name__,
@@ -59,6 +69,8 @@ __all__ = [
     set_next_rack_position_higher_default.__name__,
     set_next_rack_position_higher_oz.__name__,
     set_next_rack_position_righter.__name__,
+    set_next_rack_type_double.__name__,
+    set_next_rack_type_single.__name__,
     swap_double_rack_to_single_rack.__name__,
     assert_both_racks_intersecting_occupied_zone.__name__,
     assert_current_rack_fits_available_zone.__name__,
@@ -72,6 +84,7 @@ __all__ = [
     assert_last_shelf_of_first_rack_covers_occupied_zone.__name__,
     assert_last_shelf_of_second_rack_covers_occupied_zone.__name__,
     assert_second_rack_intersecting_occupied_zone.__name__,
+    move_second_rack_higher_over_oz.__name__,
     set_current_occupied_zones_and_road_zones.__name__,
     place_road_zone_on_right_size.__name__,
     rotate_everything_90_clockwise.__name__,
@@ -80,4 +93,5 @@ __all__ = [
     set_zero_zone.__name__,
     sort_available_zones_by_area_and_height.__name__,
     split_available_zone.__name__,
+    assert_current_rack_not_intersecting_oz_or_rz.__name__,
 ]
