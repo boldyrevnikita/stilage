@@ -16,10 +16,8 @@ class PalletPacker:
                      occupied_zones: list[OccupiedZone],
                      special_road_zones: list[SpecialRoadZone],
                      reference_book: ReferenceBook = ReferenceBook(),
-                     prune_steps: int = 500,
-                     prune_beams_keep: int = 2
-                     #  prune_steps: int = 1,
-                     #  prune_beams_keep: int = 1
+                     prune_steps: int = 300,
+                     prune_beams_keep: int = 5
                      ) -> Solution | None:
         solutions_queue: deque[Solution] = deque()
         ready_solutions: list[Solution] = []
