@@ -410,9 +410,24 @@ def place_road_zone_on_right_size(
     """
 
     available_zone = solution.available_zones[solution.available_zone_idx]
+
+    # right road
     x_0, y_0, x_1, y_1 = available_zone.bounds
     x_0 = x_1 - reference_book.roads_width / 2
     x_1 = x_0
+
+    new_road_zone = SpecialRoadZone(
+        [(x_0, y_0), (x_1, y_1)],
+        reference_book.roads_width,
+    )
+
+    solution.current_road_zones.append(new_road_zone)
+
+    # upper road
+    x_0, y_0, x_1, y_1 = available_zone.bounds
+    y_0 = (y_1 - solution.pallets[solution.pallet_idx].length
+           - reference_book.roads_width / 2)
+    y_1 = y_0
 
     new_road_zone = SpecialRoadZone(
         [(x_0, y_0), (x_1, y_1)],
