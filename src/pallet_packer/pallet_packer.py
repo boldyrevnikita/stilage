@@ -16,11 +16,14 @@ class PalletPacker:
                      occupied_zones: list[OccupiedZone],
                      special_road_zones: list[SpecialRoadZone],
                      reference_book: ReferenceBook = ReferenceBook(),
-                     prune_steps: int = 300,
-                     prune_beams_keep: int = 5
+                     prune_steps: int = 100,
+                     prune_beams_keep: int = 2,
+                     min_solutions: int = 5,
+                     cache_size: int = 100
                      ) -> Solution | None:
         solutions_queue: deque[Solution] = deque()
         ready_solutions: list[Solution] = []
+        cache: list[Solution] = []
 
         pallets = deepcopy(pallets)
         available_zones = deepcopy(available_zones)
@@ -51,9 +54,16 @@ class PalletPacker:
             solutions_queue.extend(transitional_solutions)
 
             if step % prune_steps == 0:
-                solutions_queue = cls.__prune_solutions(solutions_queue,
-                                                        prune_beams_keep)
+                solutions_queue, pruned_solutions = cls.__prune_solutions(
+                    solutions_queue,
+                    prune_beams_keep)
 
+                cache.extend(pruned_solutions)
+                cache = cache[-cache_size:]
+
+            if len(ready_solutions) <= min_solutions and not solutions_queue:
+                solutions_queue.extend(cache[-prune_beams_keep:])
+                cache = cache[:-prune_beams_keep]
             step += 1
 
             if check_if_debugger_is_active():
@@ -68,15 +78,16 @@ class PalletPacker:
     @staticmethod
     def __prune_solutions(solutions: deque[Solution],
                           prune_beams_keep: int
-                          ) -> deque[Solution]:
+                          ) -> tuple[deque[Solution], list[Solution]]:
         solutions = list(solutions)
         solutions.sort(
             key=PalletPacker.__calculate_intermediate_solution_score,
             reverse=True
         )
-        solutions = solutions[:prune_beams_keep]
-        solutions = deque(solutions)
-        return solutions
+        kept_solutions = solutions[:prune_beams_keep]
+        pruned_solutions = solutions[prune_beams_keep:]
+        solutions = deque(kept_solutions)
+        return solutions, pruned_solutions
 
     @classmethod
     def __get_best_solution(cls, solutions: list[Solution]
