@@ -13,7 +13,7 @@ variables:
     STACK_NAME: ${CI_PROJECT_NAME}-stage
     COMPOSE_PATH: deployments/stage.yml
   tags:
-    - mlx-dev
+    - sheldon
   only:
     - stage
 
