@@ -72,3 +72,4 @@ class Solution:
         self.state_history = []
         self.is_rotated = False
         self.next_rack_type: Rack | DoubleRack = None
+        self.last_intersected_vertical_road = None

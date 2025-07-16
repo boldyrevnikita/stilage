@@ -220,6 +220,17 @@ class Rack:
             return False
         return self.contour.intersects(geometry)
 
+    def last_frame_intersects(self, geometry: Polygon) -> bool:
+        """Checks if the last frame in the rack
+        intersects with a given geometry."""
+        if not self.decks:
+            return False
+
+        if (shapely.intersects(self.decks[-1], geometry)
+                or shapely.intersects(self.pillars[-1], geometry)):
+            return True
+        return False
+
     def __len__(self) -> int:
         return len(self.decks)
 
@@ -424,6 +435,12 @@ class DoubleRack():
         """Checks if the double rack intersects with a given geometry."""
         return self.rack_1.intersects(geometry) \
             or self.rack_2.intersects(geometry)
+
+    def last_frame_intersects(self, geometry: Polygon) -> bool:
+        """Checks if the last frame in the double rack
+        intersects with a given geometry."""
+        return self.rack_1.last_frame_intersects(geometry) \
+            or self.rack_2.last_frame_intersects(geometry)
 
     def move_second_rack_higher(self, height: float) -> None:
         """Moves the second rack higher by a given height."""
