@@ -36,6 +36,8 @@ def visualize_solution(solution: Solution):
         scaleratio=1,
     )
 
+    remove_duplicate_names(fig)
+
     fig.show()
 
 
@@ -126,3 +128,26 @@ def plot_rack(fig: go.Figure, rack: Rack):
         line=dict(color='purple'),
         name='Rack'
     ))
+
+    colors = ['indigo', 'magenta', 'cyan']
+    for deck_idx, deck in enumerate(rack.decks):
+        deck_polygon = deck.exterior.xy
+        color = colors[rack.deck_status[deck_idx].value - 1]
+
+        fig.add_trace(go.Scatter(
+            x=np.array(deck_polygon[0]),
+            y=np.array(deck_polygon[1]),
+            mode='lines',
+            fill='toself',
+            fillcolor='rgba(75, 0, 130, 0.5)',
+            line=dict(color=color),
+            name=f'Deck {rack.deck_status[deck_idx].name}'
+        ))
+
+
+def remove_duplicate_names(fig: go.Figure):
+    names = set()
+    fig.for_each_trace(
+        lambda trace:
+            trace.update(showlegend=False)
+            if (trace.name in names) else names.add(trace.name))

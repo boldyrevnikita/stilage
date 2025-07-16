@@ -23,6 +23,7 @@ def place_horizontal_rack_group(
     )
 
     solution.current_rack_group = rack_group
+    solution.last_intersected_vertical_road = None
 
 
 def decrease_current_frame_length(
@@ -92,6 +93,8 @@ def place_new_double_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    solution.last_intersected_vertical_road = None
+
     current_rack_group = solution.current_rack_group
     current_rack_group.place_double_rack()
 
@@ -182,6 +185,8 @@ def create_new_rack(
     solution: Solution
 ) -> None:
     current_rack_group = solution.current_rack_group
+
+    solution.last_intersected_vertical_road = None
 
     if solution.next_rack_type is Rack:
         current_rack_group.place_single_rack()

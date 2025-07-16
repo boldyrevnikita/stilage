@@ -181,12 +181,16 @@ def assert_current_rack_intersecting_road_zones(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
-    сurrent_rack = solution.current_rack_group.get_current_rack()
+    current_rack = solution.current_rack_group.get_current_rack()
 
     for road_zone in solution.current_road_zones:
-        if shapely.intersects(
-                road_zone.contour, сurrent_rack.contour):
+        if current_rack.last_frame_intersects(road_zone.contour):
+            if road_zone is solution.last_intersected_vertical_road:
+                continue
+
             solution.intersected_special_zone = road_zone
+            solution.last_intersected_vertical_road = road_zone
+
             return
 
     raise ActionFailure(
