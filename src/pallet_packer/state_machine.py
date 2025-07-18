@@ -449,7 +449,7 @@ class StateMachine:
             new_solution = deepcopy(solution)
             new_solution.state = next_state
             new_solution.action_status = ActionStatus.NOT_STARTED
-            new_solution.state_history.append(next_state_name)
+            # new_solution.state_history.append(next_state_name)
             new_solutions.append(new_solution)
 
         return new_solutions
