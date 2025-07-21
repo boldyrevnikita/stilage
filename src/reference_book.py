@@ -4,6 +4,8 @@ from src.rack import BeamType, UprightType
 
 class ReferenceBook:
     def __init__(self):
+        self.upright_width_eps = 8.0
+
         self.pallet_types = {
             1: PalletType(
                 pallet_type_id=1,
@@ -109,6 +111,11 @@ class ReferenceBook:
             [26700.0, 26100.0, 25400.0, 24600.0, 24000.0, 23200.0],
             [28300.0, 27700.0, 27100.0, 26300.0, 25600.0, 25000.0]
         ]
+
+        # add upright_width_eps to upright_width
+        for us_idx, us in enumerate(upright_sections):
+            upright_sections[us_idx] = (us[0] + self.upright_width_eps,
+                                        us[1], us[2])
 
         upright_types = []
         for i in range(len(upright_max_shelf_height)):
