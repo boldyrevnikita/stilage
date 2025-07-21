@@ -1,10 +1,13 @@
 from src.network.output_schema import ModelOutput, RackOutput
 from src.pallet_packer.solution import Solution
 from src.rack import DoubleRack
+from src.reference_book import ReferenceBook
 from collections import defaultdict
 
 
-def generate_output(solution: Solution, task_id: str,
+def generate_output(solution: Solution,
+                    reference_book: ReferenceBook,
+                    task_id: str,
                     warnings_and_errors: str,
                     success_predict: bool) -> ModelOutput:
     racks = defaultdict(list)
@@ -19,7 +22,12 @@ def generate_output(solution: Solution, task_id: str,
             sections_in_height_special = rack.max_shelfs_bridge
             orientation = rack.orientation
 
+            # substract upright_width_eps from upright_width
             upright_section = rack.upright_type.upright_section
+            upright_section = (upright_section[0]
+                               - reference_book.upright_width_eps,
+                               upright_section[1], upright_section[2])
+
             beam_section = rack.beam_type.beam_section
             pallet_size = (rack.pallet.pallet_type.width,
                            rack.pallet.pallet_type.length)
