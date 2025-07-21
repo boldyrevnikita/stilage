@@ -41,17 +41,17 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         f'{Block.MAIN}-CBaU': State(
             actions.find_suitable_beams_and_upright,
-            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PRZ-RS'],
+            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PHG'],
             [f'{Block.MAIN}-SNZ']),
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
-            [f'{Block.MAIN}-PRZ-RS'], ['GFS']),
+            [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_evetything_90_counterclockwise,
             [f'{Block.MAIN}-SpZ'], ['GFS']),
-        f'{Block.MAIN}-PRZ-RS': State(
-            actions.place_road_zone_on_right_size,
-            [f'{Block.MAIN}-PHG'], ['GFS']),
+        # f'{Block.MAIN}-PRZ-RS': State(
+        #     actions.place_road_zone_on_right_size,
+        #     [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
             [f'{Block.MAIN}-CES-HG'], ['GFS']),
@@ -87,8 +87,7 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
             [f'{Block.GOOZ}-DLF', f'{Block.JOOZ}-DLF',
-             f'{Block.DSFX}-IDR', f'{Block.EOZ}-IDR',
-             f'{Block.MSR}-IDR'],
+             f'{Block.EOZ}-IDR', f'{Block.MSR}-IDR'],
             [f'{Block.RACK_PLACEMENT}-CNTRZ']),
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
@@ -214,46 +213,46 @@ def get_jooz_states() -> dict[str, State]:
     }
 
 
-def get_dsfx_states() -> dict[str, State]:
-    return {
-        f'{Block.DSFX}-IDR': State(
-            actions.assert_current_rack_is_double,
-            [f'{Block.DSFX}-IBRI'],
-            [f'{Block.DSFX}-DFS-R']),
-        f'{Block.DSFX}-IBRI': State(
-            actions.assert_both_racks_intersecting_occupied_zone,
-            [f'{Block.DSFX}-DFS-RB'],
-            [f'{Block.DSFX}-IFRI', f'{Block.DSFX}-ISRI']),
-        f'{Block.DSFX}-DFS-R': State(
-            actions.decrease_current_frame_length,
-            [f'{Block.DSFX}-CTNOZ-DFS'],
-            ['TS-DEL']),
-        f'{Block.DSFX}-DFS-RB': State(
-            actions.decrease_current_frame_length,
-            [f'{Block.DSFX}-CTNOZ-DFS'],
-            ['TS-DEL']),
-        f'{Block.DSFX}-IFRI': State(
-            actions.assert_first_rack_intersecting_occupied_zone,
-            [f'{Block.DSFX}-DFS-R1'],
-            ['TS-DEL']),
-        f'{Block.DSFX}-ISRI': State(
-            actions.assert_second_rack_intersecting_occupied_zone,
-            [f'{Block.DSFX}-DFS-R2'],
-            ['TS-DEL']),
-        f'{Block.DSFX}-DFS-R1': State(
-            actions.decrease_first_rack_frame_length,
-            [f'{Block.DSFX}-CTNOZ-DFS'],
-            ['TS-DEL']),
-        f'{Block.DSFX}-DFS-R2': State(
-            actions.decrease_second_rack_frame_length,
-            [f'{Block.DSFX}-CTNOZ-DFS'],
-            ['TS-DEL']),
-        f'{Block.DSFX}-CTNOZ-DFS': State(
-            actions.assert_current_rack_intersecting_occupied_zones,
-            [f'{Block.DSFX}-IDR'],
-            [f'{Block.RACK_PLACEMENT}-CNTRZ']
-        )
-    }
+# def get_dsfx_states() -> dict[str, State]:
+#     return {
+#         f'{Block.DSFX}-IDR': State(
+#             actions.assert_current_rack_is_double,
+#             [f'{Block.DSFX}-IBRI'],
+#             [f'{Block.DSFX}-DFS-R']),
+#         f'{Block.DSFX}-IBRI': State(
+#             actions.assert_both_racks_intersecting_occupied_zone,
+#             [f'{Block.DSFX}-DFS-RB'],
+#             [f'{Block.DSFX}-IFRI', f'{Block.DSFX}-ISRI']),
+#         f'{Block.DSFX}-DFS-R': State(
+#             actions.decrease_current_frame_length,
+#             [f'{Block.DSFX}-CTNOZ-DFS'],
+#             ['TS-DEL']),
+#         f'{Block.DSFX}-DFS-RB': State(
+#             actions.decrease_current_frame_length,
+#             [f'{Block.DSFX}-CTNOZ-DFS'],
+#             ['TS-DEL']),
+#         f'{Block.DSFX}-IFRI': State(
+#             actions.assert_first_rack_intersecting_occupied_zone,
+#             [f'{Block.DSFX}-DFS-R1'],
+#             ['TS-DEL']),
+#         f'{Block.DSFX}-ISRI': State(
+#             actions.assert_second_rack_intersecting_occupied_zone,
+#             [f'{Block.DSFX}-DFS-R2'],
+#             ['TS-DEL']),
+#         f'{Block.DSFX}-DFS-R1': State(
+#             actions.decrease_first_rack_frame_length,
+#             [f'{Block.DSFX}-CTNOZ-DFS'],
+#             ['TS-DEL']),
+#         f'{Block.DSFX}-DFS-R2': State(
+#             actions.decrease_second_rack_frame_length,
+#             [f'{Block.DSFX}-CTNOZ-DFS'],
+#             ['TS-DEL']),
+#         f'{Block.DSFX}-CTNOZ-DFS': State(
+#             actions.assert_current_rack_intersecting_occupied_zones,
+#             [f'{Block.DSFX}-IDR'],
+#             [f'{Block.RACK_PLACEMENT}-CNTRZ']
+#         )
+#     }
 
 
 def get_eoz_states() -> dict[str, State]:
@@ -393,7 +392,7 @@ class StateMachine:
         states.update(get_rack_placement_states())
         states.update(get_gooz_states())
         states.update(get_jooz_states())
-        states.update(get_dsfx_states())
+        # states.update(get_dsfx_states())
         states.update(get_eoz_states())
         states.update(get_coarse_fill_states())
         states.update(get_msr_states())
