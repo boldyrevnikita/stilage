@@ -41,17 +41,17 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         f'{Block.MAIN}-CBaU': State(
             actions.find_suitable_beams_and_upright,
-            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PRZ-RS'],
+            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PHG'],
             [f'{Block.MAIN}-SNZ']),
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
-            [f'{Block.MAIN}-PRZ-RS'], ['GFS']),
+            [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_evetything_90_counterclockwise,
             [f'{Block.MAIN}-SpZ'], ['GFS']),
-        f'{Block.MAIN}-PRZ-RS': State(
-            actions.place_road_zone_on_right_size,
-            [f'{Block.MAIN}-PHG'], ['GFS']),
+        # f'{Block.MAIN}-PRZ-RS': State(
+        #     actions.place_road_zone_on_right_size,
+        #     [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
             [f'{Block.MAIN}-CES-HG'], ['GFS']),
