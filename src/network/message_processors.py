@@ -89,6 +89,7 @@ def process_message_ml(message: Any, sender: Sender):
 
         response = generate_output(
             solution=solution,
+            reference_book=reference_book,
             task_id=message['task_id'],
             warnings_and_errors='',
             success_predict=True
