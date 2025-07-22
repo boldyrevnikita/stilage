@@ -35,7 +35,8 @@ from src.pallet_packer.actions.zones_handling import (
     move_second_rack_higher_over_oz, place_road_zone_on_right_size,
     rotate_everything_90_clockwise, rotate_evetything_90_counterclockwise,
     set_current_occupied_zones_and_road_zones, set_next_zone, set_zero_zone,
-    sort_available_zones_by_area_and_height, split_available_zone)
+    sort_available_zones_by_area_and_height, split_available_zone,
+    remove_unavailable_rack_parts)
 
 __all__ = [
     find_suitable_beams_and_upright.__name__,
@@ -94,4 +95,5 @@ __all__ = [
     sort_available_zones_by_area_and_height.__name__,
     split_available_zone.__name__,
     assert_current_rack_not_intersecting_oz_or_rz.__name__,
+    remove_unavailable_rack_parts.__name__,
 ]

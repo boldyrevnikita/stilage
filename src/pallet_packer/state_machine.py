@@ -111,8 +111,12 @@ def get_rack_placement_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-SRG-CC': State(
             actions.save_rack_group,
+            [f'{Block.RACK_PLACEMENT}-RURP-2'],
+            [f'{Block.RACK_PLACEMENT}-RURP-2']),
+        f'{Block.RACK_PLACEMENT}-RURP-2': State(
+            actions.save_rack_group,
             [f'{Block.RACK_PLACEMENT}-GNC'],
-            [f'{Block.RACK_PLACEMENT}-GNC']),
+            ['GFS']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -147,8 +151,12 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-SRG']),
         f'{Block.RACK_PLACEMENT}-SRG': State(
             actions.save_rack_group,
+            [f'{Block.RACK_PLACEMENT}-RURP'],
+            [f'{Block.RACK_PLACEMENT}-RURP']),
+        f'{Block.RACK_PLACEMENT}-RURP': State(
+            actions.remove_unavailable_rack_parts,
             [f'{Block.MAIN}-RZCC-90'],
-            [f'{Block.MAIN}-RZCC-90']),
+            ['GFS']),
         f'{Block.RACK_PLACEMENT}-CIRH': State(
             actions.assert_intersected_road_horizontal,
             [f'{Block.RACK_PLACEMENT}-MRV'],
@@ -376,7 +384,7 @@ def get_msr_states() -> dict[str, State]:
         f'{Block.MSR}-MSRH': State(
             actions.move_second_rack_higher_over_oz,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
-            ['GFS']),
+            ['TS-DEL']),
     }
 
 

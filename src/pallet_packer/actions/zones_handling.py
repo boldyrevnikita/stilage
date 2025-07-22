@@ -1,5 +1,6 @@
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
+from src.rack import Rack
 from src.zone import SpecialRoadZone
 import shapely
 from copy import deepcopy
@@ -476,7 +477,7 @@ def assert_current_rack_not_intersecting_oz_or_rz(
 
 
 def move_second_rack_higher_over_oz(
-    _: ReferenceBook,
+    reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
     """
@@ -497,4 +498,34 @@ def move_second_rack_higher_over_oz(
     if tail != 0:
         y_shift += 50 - tail
 
+    final_double_rack_internal_distance = y_shift + current_rack.rack_distance
+    if (final_double_rack_internal_distance >
+            reference_book.max_double_rack_internal_distance):
+        raise ActionFailure("Internal double rack distance is too big.")
+
     current_rack.move_second_rack_higher(y_shift)
+
+
+def remove_unavailable_rack_parts(
+    reference_book: ReferenceBook,
+    solution: Solution
+) -> None:
+    """
+    Remove unavailable rack parts.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
+
+    current_rack_group = solution.current_rack_group
+    available_zone = solution.available_zones[solution.available_zone_idx]
+
+    for i, rack in enumerate(current_rack_group.racks):
+        if isinstance(rack, Rack):
+            continue
+        bounds = rack.bounds
+        upper_point = (bounds[0] + 1, bounds[3] + reference_book.roads_width)
+        if not available_zone.contains_point(upper_point):
+            current_rack_group.racks[i] = rack.rack_2
