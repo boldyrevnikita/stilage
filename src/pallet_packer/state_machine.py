@@ -376,7 +376,7 @@ def get_msr_states() -> dict[str, State]:
         f'{Block.MSR}-MSRH': State(
             actions.move_second_rack_higher_over_oz,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
-            ['GFS']),
+            ['TS-DEL']),
     }
 
 

@@ -476,7 +476,7 @@ def assert_current_rack_not_intersecting_oz_or_rz(
 
 
 def move_second_rack_higher_over_oz(
-    _: ReferenceBook,
+    reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
     """
@@ -496,5 +496,10 @@ def move_second_rack_higher_over_oz(
     tail = y_shift % 50
     if tail != 0:
         y_shift += 50 - tail
+
+    final_double_rack_internal_distance = y_shift + current_rack.rack_distance
+    if (final_double_rack_internal_distance >
+            reference_book.max_double_rack_internal_distance):
+        raise ActionFailure("Internal double rack distance is too big.")
 
     current_rack.move_second_rack_higher(y_shift)
