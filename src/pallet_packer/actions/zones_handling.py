@@ -167,10 +167,17 @@ def assert_current_rack_intersecting_occupied_zones(
             current_rack.intersects(occupied_zone.contour_with_roads_width)
             and current_rack.bounds[3] < occupied_zone.contour.bounds[1]
             and current_rack.bounds[2] > occupied_zone.contour.bounds[0]
+            and occupied_zone.contour.bounds[2] > current_rack.bounds[0]
         )
 
         if first_condition or second_condition:
             solution.intersected_special_zone = occupied_zone
+            if solution.max_intersected_oz_y is None:
+                solution.max_intersected_oz_y = occupied_zone.bounds[3]
+            else:
+                solution.max_intersected_oz_y = max(
+                    occupied_zone.bounds[3],
+                    solution.max_intersected_oz_y)
             return
 
     raise ActionFailure(

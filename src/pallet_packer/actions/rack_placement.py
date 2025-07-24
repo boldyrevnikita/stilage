@@ -65,6 +65,12 @@ def set_next_rack_position_higher_default(
                              current_rack_group.bounds[3]
                              + reference_book.roads_width)
 
+    if solution.max_intersected_oz_y is not None:
+        nr_position[1] = max(nr_position[1],
+                             solution.max_intersected_oz_y
+                             + reference_book.roads_width)
+        solution.max_intersected_oz_y = None
+
     solution.current_rack_group.next_rack_placement = nr_position
 
 
@@ -79,12 +85,12 @@ def set_next_rack_position_higher_oz(
 
     nr_position[0] = rg_position[0]
     if len(solution.current_rack_group.racks) > 0:
-        nr_position[1] = max(ocupied_zone.contour_with_clearance.bounds[3]
-                             + reference_book.roads_width,
+        nr_position[1] = max(ocupied_zone.contour.bounds[3]
+                             + reference_book.roads_width + 1,
                              current_rack.bounds[3]
                              + reference_book.roads_width)
     else:
-        nr_position[1] = ocupied_zone.contour_with_clearance.bounds[3]
+        nr_position[1] = ocupied_zone.contour_with_roads_width.bounds[3] + 1
 
     solution.current_rack_group.next_rack_placement = nr_position
 
@@ -284,6 +290,8 @@ def save_rack_group(
     solution.saved_rack_groups.append(
         solution.current_rack_group
     )
+
+    solution.max_intersected_oz_y = None
 
 
 def set_next_rack_type_single(
