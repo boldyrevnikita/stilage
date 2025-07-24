@@ -73,3 +73,4 @@ class Solution:
         self.is_rotated = False
         self.next_rack_type: Rack | DoubleRack = None
         self.last_intersected_vertical_road = None
+        self.max_intersected_oz_y = None

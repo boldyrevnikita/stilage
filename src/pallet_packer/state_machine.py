@@ -114,9 +114,9 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-RURP-2'],
             [f'{Block.RACK_PLACEMENT}-RURP-2']),
         f'{Block.RACK_PLACEMENT}-RURP-2': State(
-            actions.save_rack_group,
+            actions.remove_unavailable_rack_parts,
             [f'{Block.RACK_PLACEMENT}-GNC'],
-            ['GFS']),
+            [f'{Block.MAIN}-SNZ']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -156,7 +156,7 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-RURP': State(
             actions.remove_unavailable_rack_parts,
             [f'{Block.MAIN}-RZCC-90'],
-            ['GFS']),
+            [f'{Block.MAIN}-SNZ']),
         f'{Block.RACK_PLACEMENT}-CIRH': State(
             actions.assert_intersected_road_horizontal,
             [f'{Block.RACK_PLACEMENT}-MRV'],

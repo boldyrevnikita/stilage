@@ -20,7 +20,9 @@ class PalletPackerProcessor:
                  prune_steps: int,
                  prune_beams_keep: int,
                  min_solutions: int,
-                 cache_size: int):
+                 cache_size: int,
+                 process_idx: int,
+                 processes_idle: list[bool]):
         self.cache = cache
         self.ready_solutions = ready_solutions
         self.reference_book = reference_book
@@ -29,14 +31,20 @@ class PalletPackerProcessor:
         self.prune_beams_keep = prune_beams_keep
         self.min_solutions = min_solutions
         self.cache_size = cache_size
+        self.process_idx = process_idx
+        self.processes_idle = processes_idle
 
     def process(self):
         while True:
             if self.cache.empty():
+                if all(self.processes_idle):
+                    sys.exit(0)
                 time.sleep(5)
                 continue
+            self.processes_idle[self.process_idx] = False
             current_solution = self.cache.get()
             self.run_main_cycle(current_solution)
+            self.processes_idle[self.process_idx] = True
 
             if len(self.ready_solutions) >= self.min_solutions:
                 if check_if_debugger_is_active():
@@ -96,7 +104,7 @@ class PalletPacker:
                      occupied_zones: list[OccupiedZone],
                      special_road_zones: list[SpecialRoadZone],
                      reference_book: ReferenceBook = ReferenceBook(),
-                     prune_steps: int = 200,
+                     prune_steps: int = 100,
                      prune_beams_keep: int = 2,
                      min_solutions: int = 5,
                      cache_size: int = 100
@@ -107,6 +115,7 @@ class PalletPacker:
         with Manager() as manager:
             cache = manager.Queue()
             ready_solutions = manager.list()
+            processes_idle = manager.list([True] * cpu_count())
 
             pallets = deepcopy(pallets)
             available_zones = deepcopy(available_zones)
@@ -130,7 +139,8 @@ class PalletPacker:
                                                  reference_book, prune_steps,
                                                  prune_beams_keep,
                                                  min_solutions,
-                                                 cache_size).process
+                                                 cache_size,
+                                                 i, processes_idle).process
                 )
                 process.start()
                 processes.append(process)
@@ -177,7 +187,9 @@ class PalletPacker:
             start_area += available_zone.area
         for available_zone in solution.available_zones:
             current_area += available_zone.area
-        current_area -= solution.current_rack_group.area
+
+        if solution.current_rack_group is not None:
+            current_area -= solution.current_rack_group.area
 
         for pallet in solution.pallets:
             max_cargo_quantity += pallet.cargo.quantity
