@@ -114,7 +114,7 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-RURP-2'],
             [f'{Block.RACK_PLACEMENT}-RURP-2']),
         f'{Block.RACK_PLACEMENT}-RURP-2': State(
-            actions.save_rack_group,
+            actions.remove_unavailable_rack_parts,
             [f'{Block.RACK_PLACEMENT}-GNC'],
             [f'{Block.MAIN}-SNZ']),
         f'{Block.RACK_PLACEMENT}-SNF': State(
