@@ -104,8 +104,8 @@ class PalletPacker:
                      occupied_zones: list[OccupiedZone],
                      special_road_zones: list[SpecialRoadZone],
                      reference_book: ReferenceBook = ReferenceBook(),
-                     prune_steps: int = 10,
-                     prune_beams_keep: int = 1,
+                     prune_steps: int = 100,
+                     prune_beams_keep: int = 2,
                      min_solutions: int = 5,
                      cache_size: int = 100
                      ) -> Solution | None:
