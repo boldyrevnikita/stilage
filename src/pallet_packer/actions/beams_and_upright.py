@@ -118,6 +118,19 @@ def _find_suitable_upright_type(
         max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
         max_frame_load_kg -= shelf_load_kg
 
+    frame_height = shelf_height * max_shelfs + reference_book.frame_height_eps
+    if frame_height < upright_type.min_rack_height:
+        raise ActionFailure(
+            "No suitable upright type found for the given pallet, "
+            "since frame height less then minumum available rack height"
+        )
+
+    while frame_height > upright_type.max_rack_height:
+        max_shelfs -= 1
+        max_shelfs_bridge -= 1
+        frame_height = (shelf_height * max_shelfs
+                        + reference_book.frame_height_eps)
+
     if upright_type.max_shelf_height < shelf_height:
         raise ActionFailure(
             "No suitable upright type found for the given pallet, "

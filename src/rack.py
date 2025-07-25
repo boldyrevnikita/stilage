@@ -25,11 +25,15 @@ class UprightType:
     def __init__(self, upright_type_id: int,
                  upright_section: tuple[float, float, float],
                  max_shelf_height: float,
-                 max_frame_load_capacity_kg: float):
+                 max_frame_load_capacity_kg: float,
+                 min_rack_height: float,
+                 max_rack_height: float):
         self.upright_type_id = upright_type_id
         self.upright_section = upright_section
         self.max_shelf_height = max_shelf_height
         self.max_frame_load_capacity_kg = max_frame_load_capacity_kg
+        self.min_rack_height = min_rack_height
+        self.max_rack_height = max_rack_height
 
     @property
     def width(self) -> float:
