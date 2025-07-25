@@ -35,7 +35,7 @@ class ReferenceBook:
         self.roads_height = 5000.0
         self.forbidden_zone_clearance = 250.0
         self.frame_height_eps = 100.0
-        self.max_double_rack_internal_distance = 1500.0
+        self.max_double_rack_internal_distance = 1000.0
 
     def __init_beam_types(self) -> dict[int, list[BeamType]]:
         beam_lengths = [1850.0, 2300.0, 2700.0,
@@ -113,6 +113,11 @@ class ReferenceBook:
             [28300.0, 27700.0, 27100.0, 26300.0, 25600.0, 25000.0]
         ]
 
+        min_rack_heights = [2000, 2000, 6000, 6000, 6000,
+                            6000, 6000, 6000, 6000, 6000]
+        max_rack_heights = [10000, 10000, 12000, 12000, 12000,
+                            12000, 12000, 12000, 12000, 12000]
+
         # add upright_width_eps to upright_width
         for us_idx, us in enumerate(upright_sections):
             upright_sections[us_idx] = (us[0] + self.upright_width_eps,
@@ -129,7 +134,9 @@ class ReferenceBook:
                         max_shelf_height=upright_max_shelf_height[i],
                         max_frame_load_capacity_kg=(
                             uprigth_max_frame_load_capacity_kg_table[j][i]
-                        )
+                        ),
+                        min_rack_height=min_rack_heights[j],
+                        max_rack_height=max_rack_heights[j]
                     )
                 )
         upright_types.sort(
