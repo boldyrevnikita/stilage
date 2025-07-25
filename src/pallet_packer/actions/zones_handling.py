@@ -197,7 +197,8 @@ def assert_current_rack_intersecting_road_zones(
                 continue
 
             solution.intersected_special_zone = road_zone
-            solution.last_intersected_vertical_road = road_zone
+            if not road_zone.is_horizontal():
+                solution.last_intersected_vertical_road = road_zone
 
             return
 
@@ -463,24 +464,35 @@ def assert_current_rack_not_intersecting_oz_or_rz(
         solution (Solution): The current solution containing available zones.
     """
     current_rack = solution.current_rack_group.get_current_rack()
+    intersected_special_zone = None
+    min_left_bound = None
 
     for occupied_zone in solution.current_occupied_zones:
         if shapely.intersects(
                 occupied_zone.contour_with_roads_width, current_rack.contour
         ):
-            solution.intersected_special_zone = occupied_zone
-            raise ActionFailure(
-                "Current rack intersects with an occupied zone."
-            )
+            current_left_bound = \
+                occupied_zone.contour_with_roads_width.bounds[0]
+            if (intersected_special_zone is None or
+                    min_left_bound > current_left_bound):
+                intersected_special_zone = occupied_zone
+                min_left_bound = current_left_bound
 
     for road_zone in solution.current_road_zones:
         if shapely.intersects(
                 road_zone.contour, current_rack.contour
         ):
-            solution.intersected_special_zone = road_zone
-            raise ActionFailure(
-                "Current rack intersects with a road zone."
-            )
+            current_left_bound = road_zone.bounds[0]
+            if (intersected_special_zone is None or
+                    min_left_bound > current_left_bound):
+                intersected_special_zone = road_zone
+                min_left_bound = current_left_bound
+
+    if intersected_special_zone is not None:
+        solution.intersected_special_zone = intersected_special_zone
+        raise ActionFailure(
+            "Current rack intersects with an occupied or road zone."
+        )
 
 
 def move_second_rack_higher_over_oz(

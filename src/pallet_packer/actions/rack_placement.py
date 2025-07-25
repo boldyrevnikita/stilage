@@ -23,7 +23,6 @@ def place_horizontal_rack_group(
     )
 
     solution.current_rack_group = rack_group
-    solution.last_intersected_vertical_road = None
 
 
 def decrease_current_frame_length(
