@@ -35,7 +35,7 @@ class ReferenceBook:
         self.roads_height = 5000.0
         self.forbidden_zone_clearance = 250.0
         self.frame_height_eps = 100.0
-        self.max_double_rack_internal_distance = 1500.0
+        self.max_double_rack_internal_distance = 1000.0
 
     def __init_beam_types(self) -> dict[int, list[BeamType]]:
         beam_lengths = [1850.0, 2300.0, 2700.0,
