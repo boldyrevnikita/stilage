@@ -70,8 +70,8 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
             ocs = entity.ocs()
             for path in entity.paths:
                 if type(path) is ezdxf.entities.PolylinePath:
-                    vertices = [(ocs.to_wcs(point[0]),
-                                 ocs.to_wcs(point[1]))
+                    vertices = [(ocs.to_wcs(point).x,
+                                 ocs.to_wcs(point).y)
                                 for point in path.vertices]
                     if path.is_closed:
                         geometry_list.append(shapely.geometry.Polygon(
