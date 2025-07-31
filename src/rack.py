@@ -338,7 +338,8 @@ class DoubleRack():
                  pallet: Pallet, max_shelfs: int,
                  max_shelfs_bridge: int,
                  position: tuple[float, float] = (0.0, 0.0),
-                 rack_distance: float = 200.0):
+                 rack_distance: float = 200.0,
+                 double_rack_distance_eps: float = 144.0):
         self.beam_type = beam_types[0]
         self.upright_type = upright_type
         self.pallet = pallet
@@ -346,6 +347,7 @@ class DoubleRack():
         self.max_shelfs_bridge = max_shelfs_bridge
 
         self.rack_distance = rack_distance
+        self.double_rack_distance_eps = double_rack_distance_eps
 
         self.first_rack_position = position
         self.rack_1 = Rack(beam_types, upright_type, pallet, max_shelfs,
@@ -467,7 +469,7 @@ class DoubleRack():
         """Calculates the position of the second rack in a double rack."""
         rack_1_bounds = self.rack_1.bounds
         x, y = rack_1_bounds[0], rack_1_bounds[3]
-        return (x, y + self.rack_distance)
+        return (x, y + self.rack_distance - self.double_rack_distance_eps)
 
     def __update_contour(self) -> None:
         """Updates the contour of the double rack."""
