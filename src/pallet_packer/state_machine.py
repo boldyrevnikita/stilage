@@ -54,7 +54,7 @@ def get_main_loop_states() -> dict[str, State]:
         #     [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
-            [f'{Block.MAIN}-CES-HG'], ['GFS']),
+            [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),
         f'{Block.MAIN}-CES-HG': State(
             actions.assert_current_rack_fits_available_zone,
             [f'{Block.CF}-SNRTS'], [f'{Block.MAIN}-DFS']),

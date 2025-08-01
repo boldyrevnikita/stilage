@@ -10,6 +10,13 @@ def place_horizontal_rack_group(
 ) -> None:
     available_zone = solution.available_zones[solution.available_zone_idx]
 
+    if available_zone.orientation == 1 and solution.is_rotated:
+        raise ActionFailure("Vertical rack placement is "
+                            "not allowed in this zone.")
+    elif available_zone.orientation == 2 and not solution.is_rotated:
+        raise ActionFailure("Horizontal rack placement is "
+                            "not allowed in this zone.")
+
     rack_group = RackGroup(
         position=available_zone.bounds[:2],
         roads_width=reference_book.roads_width,

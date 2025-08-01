@@ -33,7 +33,8 @@ def process_message_ml(message: Any, sender: Sender):
     try:
         for zone in message['available_zones']:
             available_zones.append(AvailableZone(zone['boundary'],
-                                                 zone['height']))
+                                                 zone['height'],
+                                                 zone['orientation']))
 
         for zone in message['road_zones']:
             road_zones.append(SpecialRoadZone(zone['line'],

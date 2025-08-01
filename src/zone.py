@@ -156,18 +156,22 @@ class SpecialRoadZone(Zone):
 
 
 class AvailableZone(Zone):
-    def __init__(self, contour: list[tuple[float, float]], height: float):
+    def __init__(self, contour: list[tuple[float, float]], height: float,
+                 orientation: int = 0):
         """
         Initializes an AvailableZone with a given contour and height.
 
         Args:
             contour (list[tuple[float, float]]): A list of tuples representing
                 the vertices of the zone's contour.
-            height (float): The height of the available zone.
+            height (float): The height of the available zone
+            orientation (int): Preferable rack placement orientation in
+                the available zone 0 any, 1 horizontal, 2 vertical.
         """
 
         super().__init__(contour)
         self.height = height
+        self.orientation = orientation
         if self.height <= 0:
             raise ValueError("Height must be greater than zero")
 
