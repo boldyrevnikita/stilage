@@ -63,8 +63,8 @@ class Sender:
                 break
             except exceptions.StreamLostError:
                 print("Stream lost")
-            except Exception:
-                print("An error occurred while sending the message")
+            except Exception as e:
+                print(f"An error occurred while sending the message: {e}")
             finally:
                 self.connect()
                 attempts += 1
