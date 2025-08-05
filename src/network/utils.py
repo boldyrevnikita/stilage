@@ -7,6 +7,15 @@ from src.network.settings import Settings
 
 
 def get_dxf_doc_from_s3(key: str) -> ezdxf.document.Drawing:
+    """
+    Retrieves a DXF document from S3 storage.
+
+    Args:
+        key (str): The key of the DXF file in S3.
+
+    Returns:
+        ezdxf.document.Drawing: The retrieved DXF document.
+    """
     settings = Settings()
     key = f'{settings.S3_DXF_FOLDER_NAME}/{key}.dxf'
 

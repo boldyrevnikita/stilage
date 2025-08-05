@@ -5,10 +5,9 @@ import src.pallet_packer.actions as actions
 from src.pallet_packer.solution import (ActionFailure, ActionStatus, Solution,
                                         State)
 
-# from src.visualize import visualize_solution_decorator
-
 
 class Block(Enum):
+    """Enum representing different blocks in the state machine."""
     MAIN = 1
     RACK_PLACEMENT = 2
     GOOZ = 3
@@ -20,6 +19,7 @@ class Block(Enum):
 
 
 def get_general_states() -> dict[str, State]:
+    """Returns a dictionary of general states used in the state machine."""
     return {
         'GFS': State(actions.default_action, ['GFS'], ['GFS']),
         'TS-DEL': State(actions.default_action,
@@ -29,6 +29,7 @@ def get_general_states() -> dict[str, State]:
 
 
 def get_main_loop_states() -> dict[str, State]:
+    """Returns a dictionary of main loop states used in the state machine."""
     return {
         f'{Block.MAIN}-S': State(
             actions.default_action,
@@ -47,11 +48,8 @@ def get_main_loop_states() -> dict[str, State]:
             actions.rotate_everything_90_clockwise,
             [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-RZCC-90': State(
-            actions.rotate_evetything_90_counterclockwise,
+            actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-SpZ'], ['GFS']),
-        # f'{Block.MAIN}-PRZ-RS': State(
-        #     actions.place_road_zone_on_right_size,
-        #     [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
             [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),
@@ -77,12 +75,14 @@ def get_main_loop_states() -> dict[str, State]:
             actions.split_available_zone,
             [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ']),
         f'{Block.MAIN}-RZCC-90-2': State(
-            actions.rotate_evetything_90_counterclockwise,
+            actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-SNZ'], ['GFS']),
     }
 
 
 def get_rack_placement_states() -> dict[str, State]:
+    """Returns a dictionary of states related to rack placement in the
+    state machine."""
     return {
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
@@ -182,12 +182,14 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-IPC'],
             ['GFS']),
         f'{Block.RACK_PLACEMENT}-RZCC-90-3': State(
-            actions.rotate_evetything_90_counterclockwise,
+            actions.rotate_everything_90_counterclockwise,
             ['TS'], ['GFS']),
     }
 
 
 def get_gooz_states() -> dict[str, State]:
+    """Returns a dictionary of states related to the GOOZ block in the
+    state machine."""
     return {
         f'{Block.GOOZ}-DLF': State(
             actions.delete_last_frame,
@@ -205,6 +207,8 @@ def get_gooz_states() -> dict[str, State]:
 
 
 def get_jooz_states() -> dict[str, State]:
+    """Returns a dictionary of states related to the JOOZ block in the
+    state machine."""
     return {
         f'{Block.JOOZ}-DLF': State(
             actions.delete_last_frame,
@@ -221,49 +225,9 @@ def get_jooz_states() -> dict[str, State]:
     }
 
 
-# def get_dsfx_states() -> dict[str, State]:
-#     return {
-#         f'{Block.DSFX}-IDR': State(
-#             actions.assert_current_rack_is_double,
-#             [f'{Block.DSFX}-IBRI'],
-#             [f'{Block.DSFX}-DFS-R']),
-#         f'{Block.DSFX}-IBRI': State(
-#             actions.assert_both_racks_intersecting_occupied_zone,
-#             [f'{Block.DSFX}-DFS-RB'],
-#             [f'{Block.DSFX}-IFRI', f'{Block.DSFX}-ISRI']),
-#         f'{Block.DSFX}-DFS-R': State(
-#             actions.decrease_current_frame_length,
-#             [f'{Block.DSFX}-CTNOZ-DFS'],
-#             ['TS-DEL']),
-#         f'{Block.DSFX}-DFS-RB': State(
-#             actions.decrease_current_frame_length,
-#             [f'{Block.DSFX}-CTNOZ-DFS'],
-#             ['TS-DEL']),
-#         f'{Block.DSFX}-IFRI': State(
-#             actions.assert_first_rack_intersecting_occupied_zone,
-#             [f'{Block.DSFX}-DFS-R1'],
-#             ['TS-DEL']),
-#         f'{Block.DSFX}-ISRI': State(
-#             actions.assert_second_rack_intersecting_occupied_zone,
-#             [f'{Block.DSFX}-DFS-R2'],
-#             ['TS-DEL']),
-#         f'{Block.DSFX}-DFS-R1': State(
-#             actions.decrease_first_rack_frame_length,
-#             [f'{Block.DSFX}-CTNOZ-DFS'],
-#             ['TS-DEL']),
-#         f'{Block.DSFX}-DFS-R2': State(
-#             actions.decrease_second_rack_frame_length,
-#             [f'{Block.DSFX}-CTNOZ-DFS'],
-#             ['TS-DEL']),
-#         f'{Block.DSFX}-CTNOZ-DFS': State(
-#             actions.assert_current_rack_intersecting_occupied_zones,
-#             [f'{Block.DSFX}-IDR'],
-#             [f'{Block.RACK_PLACEMENT}-CNTRZ']
-#         )
-#     }
-
-
 def get_eoz_states() -> dict[str, State]:
+    """Returns a dictionary of states related to the EOZ block in the
+    state machine."""
     return {
         f'{Block.EOZ}-IDR': State(
             actions.assert_current_rack_is_double,
@@ -304,6 +268,8 @@ def get_eoz_states() -> dict[str, State]:
 
 
 def get_coarse_fill_states() -> dict[str, State]:
+    """Returns a dictionary of states related to the coarse fill block in the
+    state machine."""
     return {
         f'{Block.CF}-SNRTS': State(
             actions.set_next_rack_type_single,
@@ -373,6 +339,8 @@ def get_coarse_fill_states() -> dict[str, State]:
 
 
 def get_msr_states() -> dict[str, State]:
+    """Returns a dictionary of states related to the MSR block in the
+    state machine."""
     return {
         f'{Block.MSR}-IDR': State(
             actions.assert_current_rack_is_double,
@@ -394,45 +362,63 @@ class StateMachine:
         self.reference_book = reference_book
 
     def __compile_states(self) -> dict[str, State]:
+        """Compiles all states into a single dictionary.
+        Returns:
+            dict[str, State]: A dictionary containing all states in the state
+                machine."""
         states = {}
         states.update(get_general_states())
         states.update(get_main_loop_states())
         states.update(get_rack_placement_states())
         states.update(get_gooz_states())
         states.update(get_jooz_states())
-        # states.update(get_dsfx_states())
         states.update(get_eoz_states())
         states.update(get_coarse_fill_states())
         states.update(get_msr_states())
         return states
 
     def get_initial_state(self) -> State:
+        """Returns the initial state of the state machine."""
         return self.states[f'{Block.MAIN}-S']
 
     def get_end_normal_state(self) -> State:
+        """Returns the end normal state of the state machine."""
         return self.states['TS']
 
     def get_end_failure_state(self) -> State:
+        """Returns the end failure state of the state machine."""
         return self.states['GFS']
 
     def get_end_delete_state(self) -> State:
+        """Returns the end delete state of the state machine."""
         return self.states['TS-DEL']
 
-    # @visualize_solution_decorator
     def apply_action(self, solution: Solution) -> Solution:
+        """Applies the current state's action to the solution
+        Args:
+            solution (Solution): The current solution to apply the action to.
+        Returns:
+            Solution: The updated solution after applying the action.
+        """
         try:
             current_state = solution.state
             action_function = current_state.process_function
             action_function(self.reference_book, solution)
             solution.action_status = ActionStatus.SUCCESS
-        except ActionFailure as e:
-            # print(f"Regular action fail: {e.message}")
+        except ActionFailure:
             solution.action_status = ActionStatus.FAILED
         except Exception as e:
             print(f"Critical action fail: {e}")
         return solution
 
     def choose_next_action(self, solution: Solution) -> list[Solution]:
+        """Chooses the next action based on the current solution's state.
+        Args:
+            solution (Solution): The current solution to choose the next action
+                for.
+        Returns:
+            list[Solution]: A list of new solutions with the next state set.
+        """
         current_state = solution.state
         next_success_states = current_state.next_success_state_name_list
         next_failure_states = current_state.next_failure_state_name_list
@@ -463,6 +449,12 @@ class StateMachine:
 
     def remove_invalid_solutions(self, solutions: list[Solution]
                                  ) -> list[Solution]:
+        """Removes invalid solutions from the list of solutions.
+        Args:
+            solutions (list[Solution]): The list of solutions to filter.
+        Returns:
+            list[Solution]: A list of valid solutions after filtering.
+        """
         valid_solutions = []
 
         for solution in solutions:
@@ -476,6 +468,13 @@ class StateMachine:
 
     def extract_end_solutions(self, solutions: list[Solution]
                               ) -> list[Solution]:
+        """Extracts end solutions from the list of solutions.
+        Args:
+            solutions (list[Solution]): The list of solutions to extract from.
+        Returns:
+            tuple[list[Solution], list[Solution]]: A tuple containing
+                two lists:transitional_solutions and end_solutions.
+        """
         transitional_solutions = []
         end_solutions = []
 
