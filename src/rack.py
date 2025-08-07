@@ -2,6 +2,7 @@ import shapely
 from shapely import Polygon
 from src.pallet import Pallet
 from enum import Enum
+import src.geometry_operators as gops
 
 
 class BeamType:
@@ -281,7 +282,7 @@ class Rack:
         """
         if self.contour is None:
             return False
-        return self.contour.intersects(geometry)
+        return gops.intersects(self.contour, geometry)
 
     def last_frame_intersects(self, geometry: Polygon) -> bool:
         """Checks if the last frame in the rack
@@ -296,8 +297,8 @@ class Rack:
         if not self.decks:
             return False
 
-        if (shapely.intersects(self.decks[-1], geometry)
-                or shapely.intersects(self.pillars[-1], geometry)):
+        if (gops.intersects(self.decks[-1], geometry)
+                or gops.intersects(self.pillars[-1], geometry)):
             return True
         return False
 

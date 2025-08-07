@@ -10,6 +10,7 @@ import numpy as np
 import shapely
 
 from src.zone import AvailableZone, OccupiedZone
+import src.geometry_operators as gops
 
 
 def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
@@ -143,7 +144,7 @@ def filter_primitives(
     filtered_primitives = []
     for prim in primitives:
         for zone in available_zones:
-            if zone.contour.contains(prim):
+            if gops.contains(zone.contour, prim):
                 filtered_primitives.append(prim)
                 break
     return filtered_primitives

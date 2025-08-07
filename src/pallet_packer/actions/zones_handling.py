@@ -1,9 +1,10 @@
-from src.reference_book import ReferenceBook
-from src.pallet_packer.solution import Solution, ActionFailure
-from src.rack import Rack
-from src.zone import SpecialRoadZone
-import shapely
 from copy import deepcopy
+
+import src.geometry_operators as gops
+from src.pallet_packer.solution import ActionFailure, Solution
+from src.rack import Rack
+from src.reference_book import ReferenceBook
+from src.zone import SpecialRoadZone
 
 
 def rotate_everything_90_clockwise(
@@ -97,7 +98,7 @@ def assert_current_rack_fits_available_zone(
     available_zone = solution.available_zones[solution.available_zone_idx]
     current_rack = solution.current_rack_group.get_current_rack()
 
-    if not shapely.contains(
+    if not gops.contains(
             available_zone.contour, current_rack.contour):
         raise ActionFailure(
             "Current rack does not fit into the available zone."
@@ -239,11 +240,11 @@ def assert_both_racks_intersecting_occupied_zone(
     current_occupied_zone = solution.intersected_special_zone
 
     is_first_rack_intersecting = (
-        shapely.intersects(
+        gops.intersects(
             current_occupied_zone.contour,
             current_rack.rack_1.contour))
     is_second_rack_intersecting = (
-        shapely.intersects(
+        gops.intersects(
             current_occupied_zone.contour,
             current_rack.rack_2.contour))
 
@@ -265,7 +266,7 @@ def assert_first_rack_intersecting_occupied_zone(
     occupied zone.
     """
     is_first_rack_intersecting = (
-        shapely.intersects(
+        gops.intersects(
             solution.intersected_special_zone.contour,
             solution.current_rack_group.get_current_rack().rack_1.contour))
     if not is_first_rack_intersecting:
@@ -282,7 +283,7 @@ def assert_second_rack_intersecting_occupied_zone(
     occupied zone.
     """
     is_second_rack_intersecting = (
-        shapely.intersects(
+        gops.intersects(
             solution.intersected_special_zone.contour,
             solution.current_rack_group.get_current_rack().rack_2.contour))
     if not is_second_rack_intersecting:
@@ -302,7 +303,7 @@ def assert_last_rack_shelf_covers_occupied_zone(
     current_occupied_zone = solution.intersected_special_zone
 
     is_last_shelf_covers = (
-        shapely.covers(
+        gops.contains(
             current_rack.last_shelf_contour,
             current_occupied_zone.contour))
 
@@ -323,7 +324,7 @@ def assert_last_shelf_of_first_rack_covers_occupied_zone(
     current_occupied_zone = solution.intersected_special_zone
 
     is_last_shelf_covers = (
-        shapely.covers(
+        gops.contains(
             current_rack.rack_1.last_shelf_contour,
             current_occupied_zone.contour))
 
@@ -344,7 +345,7 @@ def assert_last_shelf_of_second_rack_covers_occupied_zone(
     current_occupied_zone = solution.intersected_special_zone
 
     is_last_shelf_covers = (
-        shapely.covers(
+        gops.contains(
             current_rack.rack_2.last_shelf_contour,
             current_occupied_zone.contour))
 
@@ -366,10 +367,10 @@ def set_current_occupied_zones_and_road_zones(
 
     for occupied_zone in solution.occupied_zones:
         intersects_with_clearance = (
-            shapely.intersects(
+            gops.intersects(
                 available_zone.contour, occupied_zone.contour_with_clearance))
         intersects_with_roads_width = (
-            shapely.intersects(
+            gops.intersects(
                 available_zone.contour, occupied_zone.contour_with_roads_width)
             )
 
@@ -378,7 +379,7 @@ def set_current_occupied_zones_and_road_zones(
             solution.current_occupied_zones.append(deepcopy(occupied_zone))
 
     for road_zone in solution.road_zones:
-        if shapely.intersects(
+        if gops.intersects(
                 road_zone.contour, available_zone.contour):
             solution.current_road_zones.append(deepcopy(road_zone))
 
@@ -448,7 +449,7 @@ def assert_current_rack_not_intersecting_oz_or_rz(
     min_left_bound = None
 
     for occupied_zone in solution.current_occupied_zones:
-        if shapely.intersects(
+        if gops.intersects(
                 occupied_zone.contour_with_roads_width, current_rack.contour
         ):
             current_left_bound = \
@@ -459,7 +460,7 @@ def assert_current_rack_not_intersecting_oz_or_rz(
                 min_left_bound = current_left_bound
 
     for road_zone in solution.current_road_zones:
-        if shapely.intersects(
+        if gops.intersects(
                 road_zone.contour, current_rack.contour
         ):
             current_left_bound = road_zone.bounds[0]

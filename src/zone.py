@@ -1,6 +1,7 @@
 from shapely import Polygon
 from copy import deepcopy
 import shapely
+import src.geometry_operators as gops
 
 
 class Zone:
@@ -199,9 +200,9 @@ class AvailableZone(Zone):
 
         intersecting_occupied_zones = []
         for zone in occupied_zones:
-            if (shapely.intersects(self.contour, zone.contour_with_clearance)
-                    or shapely.intersects(self.contour,
-                                          zone.contour_with_roads_width)):
+            if (gops.intersects(self.contour, zone.contour_with_clearance)
+                    or gops.intersects(self.contour,
+                                       zone.contour_with_roads_width)):
                 intersecting_occupied_zones.append(deepcopy(zone))
         return intersecting_occupied_zones
 
@@ -210,7 +211,7 @@ class AvailableZone(Zone):
                                     ) -> list[SpecialRoadZone]:
         intersecting_special_road_zones = []
         for zone in special_road_zones:
-            if zone.intersects(self.contour):
+            if gops.intersects(zone.contour, self.contour):
                 intersecting_special_road_zones.append(deepcopy(zone))
         return intersecting_special_road_zones
 
@@ -223,7 +224,7 @@ class AvailableZone(Zone):
         Returns:
             bool: True if the point is inside the zone, False otherwise
         """
-        return shapely.contains(self.contour, shapely.geometry.Point(point))
+        return gops.contains(self.contour, shapely.geometry.Point(point))
 
     def split_zone(self, point: tuple[float, float]) -> tuple['AvailableZone',
                                                               'AvailableZone']:
