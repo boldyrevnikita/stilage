@@ -10,6 +10,19 @@ def generate_output(solution: Solution,
                     task_id: str,
                     warnings_and_errors: str,
                     success_predict: bool) -> ModelOutput:
+    """Generates the output for the pallet packing solution.
+    Args:
+        solution (Solution): The solution containing the pallet packing state.
+        reference_book (ReferenceBook): The reference book containing
+            business logic related information.
+        task_id (str): The task ID for the output.
+        warnings_and_errors (str): Warnings and errors encountered during
+            the solution generation.
+        success_predict (bool): Whether the prediction was successful.
+    Returns:
+        ModelOutput: Output of the pallet packing model.
+    """
+
     racks = defaultdict(list)
     for rack_group in solution.saved_rack_groups:
         for rack in rack_group.racks:

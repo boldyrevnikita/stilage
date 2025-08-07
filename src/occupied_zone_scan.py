@@ -14,6 +14,15 @@ from src.zone import AvailableZone, OccupiedZone
 
 def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                           ) -> List[shapely.geometry.base.BaseGeometry]:
+    """Converts a DXF entity to a Shapely geometry object.
+    Args:
+        entity (ezdxf.entities.Entity): The DXF entity to convert.
+        approx_point_quantity (int): The number of points to
+            approximate curves.
+    Returns:
+        List[shapely.geometry.base.BaseGeometry]: A list of Shapely geometry
+            objects representing the DXF entity.
+    """
     skip_entities = [
         ezdxf.entities.Text, ezdxf.entities.MText, ezdxf.entities.Dimension,
         ezdxf.entities.leader.Leader, ezdxf.entities.mleader.MultiLeader]
@@ -120,6 +129,17 @@ def filter_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
     available_zones: List[AvailableZone],
 ) -> List[shapely.geometry.base.BaseGeometry]:
+    """Filters the primitives to only include those that are within the
+    available zones.
+
+    Args:
+        primitives (List[shapely.geometry.base.BaseGeometry]): The list of
+            primitives to filter.
+        available_zones (List[AvailableZone]): The list of available zones.
+    Returns:
+        List[shapely.geometry.base.BaseGeometry]: The filtered list of
+            primitives that are within the available zones.
+    """
     filtered_primitives = []
     for prim in primitives:
         for zone in available_zones:
@@ -132,10 +152,26 @@ def filter_primitives(
 def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
+    """Converts a list of Shapely primitives to polygons.
+    Args:
+        primitives (List[shapely.geometry.base.BaseGeometry]): The list of
+            Shapely primitives to convert.
+        eps (float): The epsilon value for buffering.
+    Returns:
+        List[shapely.Polygon]: The list of converted Shapely polygons.
+    """
 
     def process_polygon(polygon: shapely.Polygon,
                         centroid_threshold: float = 300
                         ) -> shapely.Polygon:
+        """Processes a polygon to ensure it is valid and returns a
+        processed polygon.
+        Args:
+            polygon (shapely.Polygon): The polygon to process.
+            centroid_threshold (float): The threshold for centroid distance.
+        Returns:
+            shapely.Polygon: The processed polygon.
+        """
         convex_hull = polygon.convex_hull
         centroid_distance = (
             abs(polygon.centroid.x - convex_hull.centroid.x)
@@ -175,6 +211,13 @@ def get_polygons_from_primitives(
 def filter_empty_polygons(
     polygons: list[shapely.Polygon]
 ):
+    """Filters out empty polygons from the list of polygons.
+    Args:
+        polygons (list[shapely.Polygon]): The list of polygons to filter.
+    Returns:
+        list[shapely.Polygon]: The filtered list of polygons without
+            empty ones.
+    """
     filtered_polygons = []
     for polygon in polygons:
         if not polygon.is_empty:
@@ -187,6 +230,15 @@ def filter_small_polygons(
     polygons: list[shapely.Polygon],
     area_threshold: float = 100
 ):
+    """Filters out polygons that are smaller than a given area threshold.
+    Args:
+        polygons (list[shapely.Polygon]): The list of polygons to filter.
+        area_threshold (float): The area threshold below which polygons are
+            filtered out.
+    Returns:
+        list[shapely.Polygon]: The filtered list of polygons that are larger
+            than the area threshold.
+    """
     filtered_polygons = []
     for polygon in polygons:
         if polygon.area > area_threshold:
@@ -198,6 +250,16 @@ def filter_small_polygons(
 def filter_intersecting_polygons(
     polygons: List[shapely.Polygon],
         intersection_percentage: float = 0.99) -> List[shapely.Polygon]:
+    """Filters out polygons that intersect with others based on a given
+    intersection percentage.
+    Args:
+        polygons (List[shapely.Polygon]): The list of polygons to filter.
+        intersection_percentage (float): The percentage of intersection
+            required to consider polygons as intersecting.
+    Returns:
+        List[shapely.Polygon]: The filtered list of polygons that do not
+            intersect with others based on the intersection percentage.
+    """
     is_intersecting = np.zeros(len(polygons), dtype=bool)
     filtered_polygons = []
 
@@ -225,6 +287,17 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                             occupied_zone_clearance: float,
                             roads_width: float,
                             ) -> List[OccupiedZone]:
+    """Scans the DXF document for occupied zones based on the available zones
+    and returns a list of occupied zones.
+    Args:
+        doc (ezdxf.document.Drawing): The DXF document to scan.
+        available_zones (List[AvailableZone]): The list of available zones.
+        occupied_zone_clearance (float): The clearance for occupied zones.
+        roads_width (float): The width of the roads around the occupied zones.
+    Returns:
+        List[OccupiedZone]: The list of occupied zones found in the DXF
+            document.
+    """
     occupied_zones = []
     geometries = []
 

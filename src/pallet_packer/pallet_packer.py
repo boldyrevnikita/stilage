@@ -14,6 +14,7 @@ import time
 
 
 class PalletPackerProcessor:
+    """Processes pallet packing solutions."""
     def __init__(self, cache: Queue[Solution],
                  ready_solutions: list[Solution],
                  reference_book: ReferenceBook,
@@ -35,6 +36,7 @@ class PalletPackerProcessor:
         self.processes_idle = processes_idle
 
     def process(self):
+        """Main processing loop for pallet packing solutions."""
         while True:
             if self.cache.empty():
                 if all(self.processes_idle):
@@ -52,6 +54,10 @@ class PalletPackerProcessor:
                 sys.exit(0)
 
     def run_main_cycle(self, current_solution: Solution):
+        """Runs the main cycle of the pallet packing process
+        Args:
+            current_solution (Solution): The current solution to process.
+        """
         solutions_queue: deque[Solution] = deque()
 
         solutions_queue.append(current_solution)
@@ -86,6 +92,14 @@ class PalletPackerProcessor:
     def __prune_solutions(self, solutions: deque[Solution],
                           prune_beams_keep: int
                           ) -> tuple[deque[Solution], list[Solution]]:
+        """Prunes the solutions based on their scores.
+        Args:
+            solutions (deque[Solution]): The deque of solutions to prune.
+            prune_beams_keep (int): The number of top solutions to keep.
+        Returns:
+            tuple[deque[Solution], list[Solution]]: A tuple containing the
+            pruned solutions and the kept solutions.
+        """
         solutions = list(solutions)
         solutions.sort(
             key=PalletPacker.calculate_intermediate_solution_score,
@@ -98,6 +112,7 @@ class PalletPackerProcessor:
 
 
 class PalletPacker:
+    """Class for packing pallets into racks (placing racks)."""
     @classmethod
     def pack_pallets(cls, pallets: list[Pallet],
                      available_zones: list[AvailableZone],
@@ -109,6 +124,24 @@ class PalletPacker:
                      min_solutions: int = 5,
                      cache_size: int = 100
                      ) -> Solution | None:
+        """Packs pallets into racks using multiprocessing.
+        Args:
+            pallets (list[Pallet]): List of pallets to pack.
+            available_zones (list[AvailableZone]): List of available zones.
+            occupied_zones (list[OccupiedZone]): List of occupied zones.
+            special_road_zones (list[SpecialRoadZone]): List of special
+                road zones.
+            reference_book (ReferenceBook): Reference book for pallet packing.
+            prune_steps (int): Number of steps after which to prune solutions.
+            prune_beams_keep (int): Number of top solutions to keep
+                after pruning.
+            min_solutions (int): Minimum number of solutions to find
+                before stopping.
+            cache_size (int): Maximum size of the solution cache.
+        Returns:
+            Solution | None: The best solution found or
+                None if no solution is found.
+        """
         set_start_method('spawn', force=True)
         processes: list[Process] = []
 
@@ -156,6 +189,15 @@ class PalletPacker:
     @classmethod
     def __get_best_solution(cls, solutions: list[Solution]
                             ) -> Solution | None:
+        """
+        Retrieves the best solution from the list of solutions based on
+        the calculated score.
+        Args:
+            solutions (list[Solution]): The list of solutions to extract from.
+        Returns:
+            Solution | None: The best solution found or None if no solutions
+            are available.
+        """
         max_score = -1
         best_solution = None
 
@@ -169,6 +211,13 @@ class PalletPacker:
 
     @staticmethod
     def __calculate_solution_score(solution: Solution) -> int:
+        """Calculates the score of a solution based on the number of pallets
+        packed and the area used.
+        Args:
+            solution (Solution): The solution to calculate the score for.
+        Returns:
+            int: The score of the solution.
+        """
         score = 0
         for rack_group in solution.saved_rack_groups:
             for rack in rack_group.racks:
@@ -177,6 +226,13 @@ class PalletPacker:
 
     @staticmethod
     def calculate_intermediate_solution_score(solution: Solution) -> int:
+        """Calculates the score of an intermediate solution based on the area
+        used and the number of pallets packed.
+        Args:
+            solution (Solution): The solution to calculate the score for.
+        Returns:
+            int: The score of the intermediate solution.
+        """
         score = 0
         start_area = 0
         current_area = 0

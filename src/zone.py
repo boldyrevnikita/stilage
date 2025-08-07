@@ -48,12 +48,14 @@ class OccupiedZone(Zone):
                  roads_width: float, should_be_available: bool = False):
         """
         Initializes an OccupiedZone with a given contour, clearance,
-            and availability status.
+        and availability status.
 
         Args:
             contour (list[tuple[float, float]]): A list of tuples representing
                 the vertices of the zone's contour.
             clearance (float): The clearance distance from the occupied zone.
+            roads_width (float): The width of the roads around the occupied
+                zone.
             should_be_available (bool, optional): Indicates if the zone should
                 be available. Defaults to False.
         """
@@ -71,7 +73,13 @@ class OccupiedZone(Zone):
         self.contour_with_roads_width: Polygon = self.contour.buffer(
             self.roads_width, join_style=2)
 
-    def rotate(self, rot_point: tuple[float, float], angle: float):
+    def rotate(self, rot_point: tuple[float, float], angle: float) -> None:
+        """Rotates the occupied zone and its buffers.
+
+        Args:
+            rot_point (tuple[float, float]): The point around which to rotate.
+            angle (float): The angle (in degrees) to rotate the zone.
+        """
         super().rotate(rot_point, angle)
         self.contour_with_clearance = shapely.affinity.rotate(
             self.contour_with_clearance, angle=angle, origin=rot_point)
@@ -142,12 +150,12 @@ class SpecialRoadZone(Zone):
 
         return polygon
 
-    def is_horizontal(self) -> int:
+    def is_horizontal(self) -> bool:
         """
         Returns the orientation of the road zone.
 
         Returns:
-            int: True if the road is horizontal, False if vertical.
+            bool: True if the road is horizontal, False if vertical.
         """
         bounds = self.contour.bounds
         orientation = (True if abs(bounds[0] - bounds[2])
@@ -178,6 +186,17 @@ class AvailableZone(Zone):
     def get_intersecting_occupied_zones(self,
                                         occupied_zones: list[OccupiedZone]
                                         ) -> list[OccupiedZone]:
+        """Get the occupied zones that intersect with the current available
+        zone.
+
+        Args:
+            occupied_zones (list[OccupiedZone]): A list of occupied zones to
+                check for intersection.
+        Returns:
+            list[OccupiedZone]: A list of occupied zones that intersect with
+                the current available zone.
+        """
+
         intersecting_occupied_zones = []
         for zone in occupied_zones:
             if (shapely.intersects(self.contour, zone.contour_with_clearance)

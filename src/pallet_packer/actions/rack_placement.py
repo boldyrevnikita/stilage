@@ -8,6 +8,13 @@ def place_horizontal_rack_group(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Places a horizontal rack group in the available zone.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing business
+            logic related information.
+        solution (Solution): The current solution containing available zones.
+    """
     available_zone = solution.available_zones[solution.available_zone_idx]
 
     if available_zone.orientation == 1 and solution.is_rotated:
@@ -36,6 +43,8 @@ def decrease_current_frame_length(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Decreases the length of the current frame in the current rack.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
 
     if current_rack.is_possible_set_next_beam_type():
@@ -50,6 +59,8 @@ def place_new_frame(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Places a new frame in the current rack.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.add_frame()
 
@@ -58,6 +69,9 @@ def set_next_rack_position_higher_default(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Sets the next rack position higher than the
+    current rack position.
+    """
     rg_position = solution.current_rack_group.position
     nr_position = solution.current_rack_group.next_rack_placement
     current_rack = solution.current_rack_group.current_rack
@@ -84,19 +98,22 @@ def set_next_rack_position_higher_oz(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
+    """
+    Sets the next rack position higher than the intersected occupied zone.
+    """
     rg_position = solution.current_rack_group.position
     nr_position = solution.current_rack_group.next_rack_placement
-    ocupied_zone = solution.intersected_special_zone
+    occupied_zone = solution.intersected_special_zone
     current_rack = solution.current_rack_group.current_rack
 
     nr_position[0] = rg_position[0]
     if len(solution.current_rack_group.racks) > 0:
-        nr_position[1] = max(ocupied_zone.contour.bounds[3]
+        nr_position[1] = max(occupied_zone.contour.bounds[3]
                              + reference_book.roads_width + 1,
                              current_rack.bounds[3]
                              + reference_book.roads_width)
     else:
-        nr_position[1] = ocupied_zone.contour_with_roads_width.bounds[3] + 1
+        nr_position[1] = occupied_zone.contour_with_roads_width.bounds[3] + 1
 
     solution.current_rack_group.next_rack_placement = nr_position
 
@@ -105,6 +122,8 @@ def place_new_double_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Places a new double rack in the current rack group.
+    """
     solution.last_intersected_vertical_road = None
 
     current_rack_group = solution.current_rack_group
@@ -115,6 +134,8 @@ def swap_double_rack_to_single_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Swaps the current double rack to a single rack.
+    """
     current_rack_group = solution.current_rack_group
 
     if not isinstance(current_rack_group.current_rack, DoubleRack):
@@ -129,6 +150,9 @@ def move_current_rack_verticaly(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Moves the current rack vertically over the intersected
+    special road zone.
+    """
     road_zone = solution.intersected_special_zone
     current_rack_group = solution.current_rack_group
     current_rack = solution.current_rack_group.current_rack
@@ -154,8 +178,9 @@ def set_current_frame_as_special(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Sets the current frame as a special frame in the current rack."""
     current_rack = solution.current_rack_group.current_rack
-    current_rack.made_frame_bridge(
+    current_rack.make_frame_bridge(
         len(current_rack) - 1
     )
 
@@ -164,6 +189,7 @@ def set_default_frame_size(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Sets the default frame size for the current rack."""
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.set_zero_beam_type()
 
@@ -172,6 +198,7 @@ def delete_last_frame(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Deletes the last frame in the current rack."""
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.delete_last_frame()
 
@@ -180,6 +207,8 @@ def set_next_rack_position_righter(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Sets the next rack position to the right of the current rack.
+    """
     current_rack_group = solution.current_rack_group
     forbidden_zone = solution.intersected_special_zone
 
@@ -196,6 +225,8 @@ def create_new_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Creates a new rack in the current rack group.
+    """
     current_rack_group = solution.current_rack_group
 
     solution.last_intersected_vertical_road = None
@@ -212,6 +243,8 @@ def assert_current_rack_is_double(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the current rack is a double rack.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
 
     if not isinstance(current_rack, DoubleRack):
@@ -224,6 +257,8 @@ def decrease_first_rack_frame_length(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Decreases the frame length of the first rack in a double rack.
+    """
     current_rack = solution.current_rack_group.get_current_rack().rack_1
 
     if not current_rack.is_possible_set_next_beam_type():
@@ -240,6 +275,8 @@ def decrease_second_rack_frame_length(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Decreases the frame length of the second rack in a double rack.
+    """
     current_rack = solution.current_rack_group.get_current_rack().rack_2
 
     if not current_rack.is_possible_set_next_beam_type():
@@ -256,6 +293,7 @@ def disable_last_frame(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Disables the last frame in the current rack."""
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.disable_frame(len(current_rack) - 1)
 
@@ -264,6 +302,7 @@ def disable_last_frame_for_first_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Disables the last frame in the first rack of a double rack."""
     current_rack = solution.current_rack_group.get_current_rack().rack_1
     current_rack.disable_frame(len(current_rack) - 1)
 
@@ -272,6 +311,7 @@ def disable_last_frame_for_second_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Disables the last frame in the second rack of a double rack."""
     current_rack = solution.current_rack_group.get_current_rack().rack_2
     current_rack.disable_frame(len(current_rack) - 1)
 
@@ -280,6 +320,7 @@ def save_rack(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Saves the current rack in the current rack group."""
     current_rack = solution.current_rack_group.get_current_rack()
     if len(current_rack) == 0:
         return
@@ -290,6 +331,8 @@ def save_rack_group(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Saves the current rack group in the solution.
+    """
     if len(solution.current_rack_group.racks) == 0:
         raise ActionFailure("Cannot save an empty rack group.")
 
@@ -304,6 +347,8 @@ def set_next_rack_type_single(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Sets the next rack type to a single rack.
+    """
     solution.next_rack_type = Rack
 
 
@@ -311,6 +356,8 @@ def set_next_rack_type_double(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Sets the next rack type to a double rack.
+    """
     solution.next_rack_type = DoubleRack
 
 
@@ -318,22 +365,28 @@ def fill_with_frames(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Fills the current rack with frames until it reaches the maximum
+    number of frames that can fit in the available zone.
+    """
     available_zone = solution.available_zones[solution.available_zone_idx]
-    curent_rack = solution.current_rack_group.current_rack
+    current_rack = solution.current_rack_group.current_rack
 
-    section_length = (curent_rack.beam_type.length
-                      + curent_rack.upright_type.width)
+    section_length = (current_rack.beam_type.length
+                      + current_rack.upright_type.width)
     max_available_length = (available_zone.contour.bounds[2]
-                            - curent_rack.contour.bounds[2])
+                            - current_rack.contour.bounds[2])
     frames_count = int(max_available_length // section_length)
 
-    curent_rack.add_multiple_frames(frames_count)
+    current_rack.add_multiple_frames(frames_count)
 
 
 def delete_excess_frames_pl(
     _: ReferenceBook,
     solution: Solution
 ):
+    """Deletes excess frames in the current rack based on maximum
+    cargo quantity.
+    """
     current_cargo_max_quantity = (
         solution.pallets[solution.pallet_idx].cargo.quantity)
     cargo_id = solution.pallets[solution.pallet_idx].cargo.cargo_type_id
@@ -358,6 +411,9 @@ def delete_excess_frames_oz(
     reference_book: ReferenceBook,
     solution: Solution
 ):
+    """Deletes excess frames in the current rack based on the
+    maximum number of frames that can fit before the occupied zone.
+    """
     current_occupied_zone = solution.intersected_special_zone
     current_rack = solution.current_rack_group.get_current_rack()
 

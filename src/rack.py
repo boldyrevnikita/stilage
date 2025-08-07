@@ -5,6 +5,8 @@ from enum import Enum
 
 
 class BeamType:
+    """Class representing a beam type in a rack system."""
+
     def __init__(self, beam_type_id: int, length: float,
                  beam_section: tuple[float, float],
                  max_shelf_load_capacity_kg: float,
@@ -22,6 +24,8 @@ class BeamType:
 
 
 class UprightType:
+    """Class representing an upright type in a rack system."""
+
     def __init__(self, upright_type_id: int,
                  upright_section: tuple[float, float, float],
                  max_shelf_height: float,
@@ -42,17 +46,20 @@ class UprightType:
 
 
 class PillarStatus(Enum):
+    """Enum representing the status of a pillar in a rack system."""
     ENABLED = 1
     DISABLED = 2
 
 
 class DeckStatus(Enum):
+    """Enum representing the status of a deck in a rack system."""
     ENABLED = 1
     DISABLED = 2
     RACK_BRIDGE = 3
 
 
 class Rack:
+    """Class representing a single rack in a warehouse system."""
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
                  pallet: Pallet, max_shelfs: int,
                  max_shelfs_bridge: int,
@@ -80,6 +87,7 @@ class Rack:
         self.orientation = 0  # 0 - horizontal, 1 - vertical
 
     def add_frame(self) -> None:
+        """Adds a frame to the rack."""
         if not self.decks:
             self.__init_first_frame()
             return
@@ -89,13 +97,22 @@ class Rack:
         self.__update_contour()
 
     def add_multiple_frames(self, count: int) -> None:
+        """Adds multiple frames to the rack
+        Args:
+            count (int): The number of frames to add.
+        """
         for _ in range(count):
             self.__append_deck()
             self.__append_pillar()
         self.__update_contour()
 
     def disable_frame(self, frame_idx: int) -> None:
-        """Disables the frame at the given index."""
+        """Disables the frame at the given index.
+        Args:
+            frame_idx (int): The index of the frame to disable.
+        Raises:
+            IndexError: If the frame index is out of range.
+        """
         if frame_idx < 0 or frame_idx >= len(self.decks):
             raise IndexError("Frame index out of range.")
 
@@ -113,15 +130,24 @@ class Rack:
                 and self.deck_status[frame_idx+1] == DeckStatus.DISABLED):
             self.pillar_status[frame_idx + 1] = PillarStatus.DISABLED
 
-    def made_frame_bridge(self, frame_idx: int) -> None:
-        """Makes the frame at the given index a bridge."""
+    def make_frame_bridge(self, frame_idx: int) -> None:
+        """Makes the frame at the given index a bridge.
+        Args:
+            frame_idx (int): The index of the frame to make a bridge.
+        Raises:
+            IndexError: If the frame index is out of range.
+        """
         if frame_idx < 0 or frame_idx >= len(self.decks):
             raise IndexError("Frame index out of range.")
         self.deck_status[frame_idx] = DeckStatus.RACK_BRIDGE
 
     def rotate(self, angle: float,
                rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
-        """Rotates the rack around a point."""
+        """Rotates the rack around a point.
+        Args:
+            angle (float): The angle to rotate the rack.
+            rot_point (tuple[float, float]): The point to rotate around.
+        """
         self.contour = shapely.affinity.rotate(self.contour, angle,
                                                origin=rot_point)
         for i in range(len(self.decks)):
@@ -134,12 +160,19 @@ class Rack:
         self.orientation = abs(self.orientation - 1)
 
     def is_possible_set_next_beam_type(self) -> bool:
+        """Checks if the next beam type can be set
+        Returns:
+            bool: True if the next beam type can be set, False otherwise.
+        """
         if self.beam_type_idx < len(self.beam_types) - 1:
             return True
         return False
 
     def set_next_beam_type(self) -> None:
-        """Sets the next beam type for the rack."""
+        """Sets the next beam type for the rack
+        Raises:
+            IndexError: If there are no more beam types available.
+        """
         if self.is_possible_set_next_beam_type():
             self.beam_type_idx += 1
             self.beam_type = self.beam_types[self.beam_type_idx]
@@ -152,7 +185,10 @@ class Rack:
         self.beam_type = self.beam_types[self.beam_type_idx]
 
     def delete_last_frame(self) -> None:
-        """Deletes the last frame from the rack."""
+        """Deletes the last frame from the rack
+        Raises:
+            IndexError: If there are no frames to delete.
+        """
         if not self.decks:
             raise IndexError("No frames to delete.")
 
@@ -180,7 +216,11 @@ class Rack:
         return self.beam_type.length
 
     def translate(self, xoff: float, yoff: float) -> None:
-        """Translates the rack by a given offset."""
+        """Translates the rack by a given offset
+        Args:
+            xoff (float): The x offset to translate the rack.
+            yoff (float): The y offset to translate the rack.
+        """
         self.rack_position = (self.rack_position[0] + xoff,
                               self.rack_position[1] + yoff)
         self.next_element_position = (self.next_element_position[0] + xoff,
@@ -196,7 +236,11 @@ class Rack:
 
     def calculate_pallet_capacity(self) -> int:
         """Calculates the total number of pallets
-            that can be stored in the rack."""
+        that can be stored in the rack
+
+        Returns:
+            int: The total number of pallets that can be stored in the rack.
+        """
         total_pallets = 0
         for frame_idx in range(len(self.decks)):
             frame_capacity = self.calculate_pallet_capacity_in_ith_frame(
@@ -205,6 +249,15 @@ class Rack:
         return total_pallets
 
     def calculate_pallet_capacity_in_ith_frame(self, frame_idx: int) -> int:
+        """Calculates the pallet capacity in the ith frame of the rack.
+        Args:
+            frame_idx (int): The index of the frame to calculate the capacity
+                for.
+        Returns:
+            int: The number of pallets that can be stored in the ith frame.
+        Raises:
+            IndexError: If the frame index is out of range.
+        """
         if frame_idx < 0 or frame_idx >= len(self.decks):
             raise IndexError("Frame index out of range.")
 
@@ -219,14 +272,27 @@ class Rack:
             return 0
 
     def intersects(self, geometry: Polygon) -> bool:
-        """Checks if the rack intersects with a given geometry."""
+        """Checks if the rack intersects with a given geometry
+        Args:
+            geometry (Polygon): The geometry to check intersection with.
+        Returns:
+            bool: True if the rack intersects with the geometry,
+                False otherwise.
+        """
         if self.contour is None:
             return False
         return self.contour.intersects(geometry)
 
     def last_frame_intersects(self, geometry: Polygon) -> bool:
         """Checks if the last frame in the rack
-        intersects with a given geometry."""
+        intersects with a given geometry
+
+        Args:
+            geometry (Polygon): The geometry to check intersection with.
+        Returns:
+            bool: True if the last frame intersects with the geometry,
+                False otherwise.
+        """
         if not self.decks:
             return False
 
@@ -236,6 +302,7 @@ class Rack:
         return False
 
     def __len__(self) -> int:
+        """Returns the frame length of the rack."""
         return len(self.decks)
 
     @property
@@ -307,6 +374,13 @@ class Rack:
             self.next_element_position[1])
 
     def __create_pillar(self, position: tuple[float, float]) -> Polygon:
+        """Creates a pillar at the given position.
+        Args:
+            position (tuple[float, float]): The position to create the
+                pillar at.
+        Returns:
+            Polygon: The created pillar as a polygon.
+        """
         length = self.upright_type.width
         depth = self.pallet.length
 
@@ -320,6 +394,13 @@ class Rack:
         return pillar
 
     def __create_deck(self, position: tuple[float, float]) -> Polygon:
+        """Creates a deck at the given position.
+        Args:
+            position (tuple[float, float]): The position to create the
+                deck at.
+        Returns:
+            Polygon: The created deck as a polygon.
+        """
         length = self.beam_type.length
         depth = self.pallet.length
 
@@ -368,19 +449,29 @@ class DoubleRack():
         self.__update_contour()
 
     def add_multiple_frames(self, count: int) -> None:
-        """Adds multiple frames to both racks."""
+        """Adds multiple frames to both racks.
+        Args:
+            count (int): The number of frames to add.
+        """
         self.rack_1.add_multiple_frames(count)
         self.rack_2.add_multiple_frames(count)
         self.__update_contour()
 
-    def made_frame_bridge(self, frame_idx: int) -> None:
-        """Makes the frame at the given index a bridge in both racks."""
-        self.rack_1.made_frame_bridge(frame_idx)
-        self.rack_2.made_frame_bridge(frame_idx)
+    def make_frame_bridge(self, frame_idx: int) -> None:
+        """Makes the frame at the given index a bridge in both racks
+        Args:
+            frame_idx (int): The index of the frame to make a bridge.
+        """
+        self.rack_1.make_frame_bridge(frame_idx)
+        self.rack_2.make_frame_bridge(frame_idx)
 
     def rotate(self, angle: float,
                rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
-        """Rotates the double rack around a point."""
+        """Rotates the double rack around a point.
+        Args:
+            angle (float): The angle to rotate the double rack.
+            rot_point (tuple[float, float]): The point to rotate around.
+        """
         self.contour = shapely.affinity.rotate(self.contour, angle,
                                                origin=rot_point)
         self.rack_1.rotate(angle, rot_point)
@@ -393,7 +484,11 @@ class DoubleRack():
                 self.rack_2.is_possible_set_next_beam_type())
 
     def set_next_beam_type(self) -> None:
-        """Sets the next beam type for both racks."""
+        """Sets the next beam type for both racks
+        Raises:
+            IndexError: If there are no more beam types available
+                for one of the racks.
+        """
         if self.is_possible_set_next_beam_type():
             self.rack_1.set_next_beam_type()
             self.rack_2.set_next_beam_type()
@@ -418,7 +513,11 @@ class DoubleRack():
                    self.rack_2.get_current_shelf_length())
 
     def translate(self, xoff: float, yoff: float) -> None:
-        """Translates the double rack by a given offset."""
+        """Translates the double rack by a given offset
+        Args:
+            xoff (float): The x offset to translate the double rack.
+            yoff (float): The y offset to translate the double rack.
+        """
         self.contour = shapely.affinity.translate(self.contour, xoff, yoff)
         self.rack_1.translate(xoff, yoff)
         self.rack_2.translate(xoff, yoff)
@@ -430,7 +529,15 @@ class DoubleRack():
                 self.rack_2.calculate_pallet_capacity())
 
     def calculate_pallet_capacity_in_ith_frame(self, frame_idx: int) -> int:
-        """Calculates the pallet capacity in the ith frame of both racks."""
+        """Calculates the pallet capacity in the ith frame of both racks
+        Args:
+            frame_idx (int): The index of the frame to calculate the capacity
+                for.
+        Returns:
+            int: The number of pallets that can be stored in the ith frame.
+        Raises:
+            IndexError: If the frame index is out of range.
+        """
         if frame_idx < 0 or frame_idx >= len(self.rack_1) or \
                 frame_idx >= len(self.rack_2):
             raise IndexError("Frame index out of range.")
@@ -438,18 +545,34 @@ class DoubleRack():
                 self.rack_2.calculate_pallet_capacity_in_ith_frame(frame_idx))
 
     def intersects(self, geometry: Polygon) -> bool:
-        """Checks if the double rack intersects with a given geometry."""
+        """Checks if the double rack intersects with a given geometry
+        Args:
+            geometry (Polygon): The geometry to check intersection with.
+        Returns:
+            bool: True if the double rack intersects with the geometry,
+                False otherwise.
+        """
         return self.rack_1.intersects(geometry) \
             or self.rack_2.intersects(geometry)
 
     def last_frame_intersects(self, geometry: Polygon) -> bool:
         """Checks if the last frame in the double rack
-        intersects with a given geometry."""
+        intersects with a given geometry
+
+        Args:
+            geometry (Polygon): The geometry to check intersection with.
+        Returns:
+            bool: True if the last frame in the double rack intersects with
+                the geometry, False otherwise.
+        """
         return self.rack_1.last_frame_intersects(geometry) \
             or self.rack_2.last_frame_intersects(geometry)
 
     def move_second_rack_higher(self, height: float) -> None:
-        """Moves the second rack higher by a given height."""
+        """Moves the second rack higher by a given height
+        Args:
+            height (float): The height to move the second rack higher.
+        """
         self.second_rack_position = (
             self.second_rack_position[0],
             self.second_rack_position[1] + height)
@@ -509,13 +632,19 @@ class RackGroup():
         self.racks: list[Rack | DoubleRack] = []
 
     def get_current_rack(self) -> Rack | DoubleRack:
-        """Returns the current rack in the group."""
+        """Returns the current rack in the group
+        Raises:
+            ValueError: If no current rack is set.
+        """
         if self.current_rack is None:
             raise ValueError("No current rack set.")
         return self.current_rack
 
     def commit_current_rack(self) -> None:
-        """Commits the current rack to the group."""
+        """Commits the current rack to the group
+        Raises:
+            ValueError: If no current rack is set.
+        """
         if self.current_rack is None:
             raise ValueError("No current rack to commit.")
         self.racks.append(self.current_rack)
@@ -536,7 +665,11 @@ class RackGroup():
 
     def rotate(self, angle: float,
                rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
-        """Rotates the rack group around a point."""
+        """Rotates the rack group around a point
+        Args:
+            angle (float): The angle to rotate the rack group.
+            rot_point (tuple[float, float]): The point to rotate around.
+        """
         for rack in self.racks:
             rack.rotate(angle, rot_point)
 

@@ -3,6 +3,9 @@ from src.rack import BeamType, UprightType
 
 
 class ReferenceBook:
+    """Reference book containing business logic related information
+    and constants."""
+
     def __init__(self):
         self.upright_width_eps = 8.0
 
@@ -38,6 +41,13 @@ class ReferenceBook:
         self.max_double_rack_internal_distance = 1000.0
 
     def __init_beam_types(self) -> dict[int, list[BeamType]]:
+        """Initializes the beam types with their properties
+        and returns a dictionary of beam types categorized by rack type
+
+        Returns:
+            dict[int, list[BeamType]]: Dictionary of beam types categorized by
+            rack type.
+        """
         beam_lengths = [1850.0, 2300.0, 2700.0,
                         3300.0, 3600.0]
         beam_sections = [(85.0, 1.5), (100.0, 1.5),
@@ -93,6 +103,11 @@ class ReferenceBook:
         return beam_types
 
     def __init_upright_types(self) -> list[UprightType]:
+        """Initializes the upright types with their properties
+        and returns a list of upright types.
+        Returns:
+            list[UprightType]: List of upright types.
+        """
         upright_max_shelf_height = [750.0, 1000.0, 1250.0,
                                     1500.0, 1750.0, 2000.0]
         upright_sections = [(80.0, 75.0, 2.0), (100.0, 75.0, 2.0),
