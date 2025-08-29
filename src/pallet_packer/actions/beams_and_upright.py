@@ -82,7 +82,7 @@ def _find_suitable_upright_type(
     pallet: Pallet,
     beam_type: BeamType
 ) -> tuple[UprightType, float, float, float]:
-    available_height = available_zone.height - reference_book.frame_height_eps
+    available_height = available_zone.height - max(reference_book.frame_height_eps, available_height % 500)
 
     pallet_extra_space = reference_book.frame_height2pallet_extra_space[-1][1]
     for frame_height, extra_space in \
@@ -111,8 +111,7 @@ def _find_suitable_upright_type(
             if (upright_type.max_shelf_height >= shelf_height and
                 upright_type.max_frame_load_capacity_kg
                     >= max_frame_load_kg):
-                return (upright_type, pallet_extra_space,
-                        max_shelfs, max_shelfs_bridge)
+                break
 
         max_shelfs -= 1
         max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
