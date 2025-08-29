@@ -133,7 +133,7 @@ def _find_suitable_upright_type(
             - float: The maximum number of shelves that can be
                 placed in a bridge.
     """
-    available_height = available_zone.height - reference_book.frame_height_eps
+    available_height = available_zone.height - max(reference_book.frame_height_eps, available_height % 500)
 
     pallet_extra_space = reference_book.frame_height2pallet_extra_space[-1][1]
     for frame_height, extra_space in \
@@ -157,14 +157,16 @@ def _find_suitable_upright_type(
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
 
+
+
     while max_shelfs >= 0:
         for upright_type in reference_book.upright_types:
             if (upright_type.max_shelf_height >= shelf_height and
                 upright_type.max_frame_load_capacity_kg
                     >= max_frame_load_kg):
-                return (upright_type, pallet_extra_space,
-                        max_shelfs, max_shelfs_bridge)
+                break
 
+    
         max_shelfs -= 1
         max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
         max_frame_load_kg -= shelf_load_kg
