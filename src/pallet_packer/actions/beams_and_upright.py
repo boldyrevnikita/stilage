@@ -133,7 +133,7 @@ def _find_suitable_upright_type(
             - float: The maximum number of shelves that can be
                 placed in a bridge.
     """
-    available_height = available_zone.height - max(reference_book.frame_height_eps, available_height % 500)
+    available_height = available_zone.height - max(reference_book.frame_height_eps, available_zone.height % 500)
 
     pallet_extra_space = reference_book.frame_height2pallet_extra_space[-1][1]
     for frame_height, extra_space in \
