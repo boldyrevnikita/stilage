@@ -105,13 +105,17 @@ def _find_suitable_upright_type(
 
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
-
+    suitable_combination_is_found = False
     while max_shelfs >= 0:
         for upright_type in reference_book.upright_types:
             if (upright_type.max_shelf_height >= shelf_height and
                 upright_type.max_frame_load_capacity_kg
                     >= max_frame_load_kg):
+                suitable_combination_is_found = True
                 break
+
+        if suitable_combination_is_found:
+            break
 
         max_shelfs -= 1
         max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
