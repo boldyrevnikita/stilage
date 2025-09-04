@@ -7,18 +7,24 @@ from collections import defaultdict
 
 
 class ActionFailure(Exception):
+    """Exception raised when an action fails during the pallet
+    packing process."""
     def __init__(self, message: str):
         super().__init__(message)
         self.message = message
 
 
 class ActionStatus(Enum):
+    """Enumeration for the status of an action in the pallet packing process.
+    """
     NOT_STARTED = 1
     SUCCESS = 2
     FAILED = 3
 
 
 class State:
+    """Represents a state in the state machine for pallet packing actions.
+    """
     def __init__(self, process_function: callable,
                  next_success_state_name_list: list[str] = [],
                  next_failure_state_name_list: list[str] = []):
@@ -28,6 +34,8 @@ class State:
 
 
 class Solution:
+    """Represents the current state of the pallet packing solution.
+    """
     def __init__(self, available_zones: list[AvailableZone],
                  occupied_zones: list[OccupiedZone],
                  road_zones: list[SpecialRoadZone],

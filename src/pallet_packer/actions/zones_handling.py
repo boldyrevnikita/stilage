@@ -14,7 +14,7 @@ def rotate_everything_90_clockwise(
     Rotates the available zone's contour 90 degrees clockwise.
 
     Args:
-        reference_book (ReferenceBook): The reference book containin business
+        _ (ReferenceBook): The reference book containing business
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
@@ -37,17 +37,12 @@ def rotate_everything_90_clockwise(
         key=lambda x: x.bounds[0])
 
 
-def rotate_evetything_90_counterclockwise(
+def rotate_everything_90_counterclockwise(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
     """
     Rotates the available zone's contour 90 degrees counterclockwise.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     if solution.is_rotated:
         available_zone = solution.available_zones[solution.available_zone_idx]
@@ -75,10 +70,6 @@ def set_next_zone(
 ) -> None:
     """
     Sets the next available zone as the current one.
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     if solution.available_zone_idx >= len(solution.available_zones) - 1:
         raise ActionFailure("No more available zones to process.")
@@ -92,11 +83,6 @@ def set_zero_zone(
 ) -> None:
     """
     Sets the current available zone index to zero and moves to the next pallet.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     solution.available_zone_idx = 0
 
@@ -107,11 +93,6 @@ def assert_current_rack_fits_available_zone(
 ) -> None:
     """
     Checks if the current rack fits into the available zone.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     current_rack = solution.current_rack_group.get_current_rack()
@@ -129,11 +110,6 @@ def split_available_zone(
 ) -> None:
     """
     Splits the available zone into two parts.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     if len(solution.current_rack_group.racks) == 0:
         raise ActionFailure("No racks are placed.")
@@ -158,6 +134,9 @@ def assert_current_rack_intersecting_occupied_zones(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """
+    Asserts that the current rack intersects with at least one occupied zone.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
 
     for occupied_zone in solution.current_occupied_zones:
@@ -189,6 +168,8 @@ def assert_current_rack_intersecting_road_zones(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the current rack intersects with at least one road zone.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
 
     for road_zone in solution.current_road_zones:
@@ -211,6 +192,8 @@ def assert_intersected_road_horizontal(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the intersected road zone is horizontal.
+    """
     if not solution.intersected_special_zone.is_horizontal():
         raise ActionFailure(
             "Intersected road zone is not horizontal."
@@ -223,11 +206,6 @@ def assert_current_shelf_length_enough_for_road(
 ) -> None:
     """
     Checks if the current shelf length is enough for the road width.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     current_rack = solution.current_rack_group.get_current_rack()
     current_road = solution.intersected_special_zone
@@ -242,6 +220,8 @@ def assert_current_zone_height_enough_for_rack_bridge(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the current zone height is enough for the rack bridge.
+    """
     if solution.max_shelfs_bridge <= 0:
         raise ActionFailure(
             "Current available zone is too low for current rack bridge."
@@ -252,6 +232,9 @@ def assert_both_racks_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that both racks of the double rack intersect with the occupied
+    zone.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
 
@@ -278,6 +261,9 @@ def assert_first_rack_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the first rack of the double rack intersects with the
+    occupied zone.
+    """
     is_first_rack_intersecting = (
         shapely.intersects(
             solution.intersected_special_zone.contour,
@@ -292,6 +278,9 @@ def assert_second_rack_intersecting_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the second rack of the double rack intersects with the
+    occupied zone.
+    """
     is_second_rack_intersecting = (
         shapely.intersects(
             solution.intersected_special_zone.contour,
@@ -306,6 +295,9 @@ def assert_last_rack_shelf_covers_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the last shelf of the current rack covers the occupied
+    zone.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
 
@@ -324,6 +316,9 @@ def assert_last_shelf_of_first_rack_covers_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the last shelf of the first rack covers the occupied
+    zone.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
 
@@ -342,6 +337,9 @@ def assert_last_shelf_of_second_rack_covers_occupied_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
+    """Asserts that the last shelf of the second rack covers the occupied
+    zone.
+    """
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
 
@@ -363,11 +361,6 @@ def set_current_occupied_zones_and_road_zones(
     """
     Retrieves the corresponding occupied zones and road zones for the current
     available zone.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
 
@@ -402,10 +395,6 @@ def sort_available_zones_by_area_and_height(
 ) -> None:
     """
     Sorts the current occupied zones and road zones by area and height.
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     solution.available_zones.sort(key=lambda x: (-x.height, -x.area))
 
@@ -416,10 +405,6 @@ def place_road_zone_on_right_size(
 ) -> None:
     """
     Places the road zone on the right size.
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
 
     available_zone = solution.available_zones[solution.available_zone_idx]
@@ -457,11 +442,6 @@ def assert_current_rack_not_intersecting_oz_or_rz(
     """
     Asserts that the current rack does not intersect with any occupied or road
     zones.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     current_rack = solution.current_rack_group.get_current_rack()
     intersected_special_zone = None
@@ -501,11 +481,6 @@ def move_second_rack_higher_over_oz(
 ) -> None:
     """
     Moves the second rack higher over the occupied zone.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
@@ -531,11 +506,6 @@ def remove_unavailable_rack_parts(
 ) -> None:
     """
     Remove unavailable rack parts.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing available zones.
     """
 
     current_rack_group = solution.current_rack_group

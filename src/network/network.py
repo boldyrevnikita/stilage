@@ -7,6 +7,7 @@ from pika import exceptions
 
 
 class Sender:
+    """Class for sending messages to a message queue."""
     def __init__(self, host: str, queue_name: str, routing_key: str,
                  port: Optional[Union[int, str]] = None,
                  vhost: Optional[str] = None,
@@ -63,8 +64,8 @@ class Sender:
                 break
             except exceptions.StreamLostError:
                 print("Stream lost")
-            except Exception:
-                print("An error occurred while sending the message")
+            except Exception as e:
+                print(f"An error occurred while sending the message: {e}")
             finally:
                 self.connect()
                 attempts += 1
@@ -77,6 +78,7 @@ class Sender:
 
 
 class MessageHandler:
+    """Class for handling messages from a message queue."""
     def __init__(self, host: str, queue_name: str,
                  msg_processor: Callable[[Any, Sender], None] =
                  lambda m, s: print(m),

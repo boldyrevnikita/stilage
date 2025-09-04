@@ -8,6 +8,14 @@ from src.zone import AvailableZone, OccupiedZone, SpecialRoadZone
 
 
 def visualize_solution_decorator(func: callable) -> callable:
+    """Decorator to visualize the solution if the debugger is active.
+
+    Args:
+        func (callable): The function to decorate.
+
+    Returns:
+        callable: The decorated function.
+    """
     def wrapper(*args, **kwargs):
         solution = func(*args, **kwargs)
         if check_if_debugger_is_active():
@@ -16,7 +24,11 @@ def visualize_solution_decorator(func: callable) -> callable:
     return wrapper
 
 
-def visualize_solution(solution: Solution):
+def visualize_solution(solution: Solution) -> None:
+    """Visualizes the solution using Plotly.
+    Args:
+        solution (Solution): The solution to visualize.
+    """
     fig = go.Figure()
 
     plot_available_zones(fig, solution.initial_available_zones)
@@ -42,7 +54,13 @@ def visualize_solution(solution: Solution):
 
 
 def plot_available_zones(fig: go.Figure,
-                         available_zones: list[AvailableZone]):
+                         available_zones: list[AvailableZone]) -> None:
+    """Plots the available zones on the figure.
+    Args:
+        fig (go.Figure): The Plotly figure to add the zones to.
+        available_zones (list[AvailableZone]): The list of available zones.
+    """
+
     for zone in available_zones:
         polygon = zone.contour.exterior.xy
         fig.add_trace(go.Scatter(
@@ -57,11 +75,16 @@ def plot_available_zones(fig: go.Figure,
 
 
 def plot_occupied_zones(fig: go.Figure,
-                        occupied_zones: list[OccupiedZone]):
+                        occupied_zones: list[OccupiedZone]) -> None:
+    """Plots the occupied zones on the figure.
+
+    Args:
+        fig (go.Figure): The Plotly figure to add the zones to.
+        occupied_zones (list[OccupiedZone]): The list of occupied zones.
+    """
+
     for zone in occupied_zones:
         polygon_zone = zone.contour.exterior.xy
-        polygon_clearence = zone.contour_with_clearance.exterior.xy
-        polygon_roads_width = zone.contour_with_roads_width.exterior.xy
 
         fig.add_trace(go.Scatter(
             x=np.array(polygon_zone[0]),
@@ -73,29 +96,17 @@ def plot_occupied_zones(fig: go.Figure,
             name='Occupied Zone'
         ))
 
-        # fig.add_trace(go.Scatter(
-        #     x=np.array(polygon_clearence[0]),
-        #     y=np.array(polygon_clearence[1]),
-        #     mode='lines',
-        #     fill='toself',
-        #     fillcolor='rgba(255, 165, 0, 0.5)',
-        #     line=dict(color='orange'),
-        #     name='Occupied Zone \' Clearance'
-        # ))
-
-        # fig.add_trace(go.Scatter(
-        #     x=np.array(polygon_roads_width[0]),
-        #     y=np.array(polygon_roads_width[1]),
-        #     mode='lines',
-        #     fill='toself',
-        #     fillcolor='rgba(255, 215, 0, 0.5)',
-        #     line=dict(color='gold'),
-        #     name='Occupied Zone with Roads Width'
-        # ))
-
 
 def plot_special_road_zones(fig: go.Figure,
-                            special_road_zones: list[SpecialRoadZone]):
+                            special_road_zones: list[SpecialRoadZone]) -> None:
+    """Plots the special road zones on the figure.
+
+    Args:
+        fig (go.Figure): The Plotly figure to add the zones to.
+        special_road_zones (list[SpecialRoadZone]): The list of special
+            road zones.
+    """
+
     for zone in special_road_zones:
         polygon = zone.contour.exterior.xy
         fig.add_trace(go.Scatter(
@@ -109,7 +120,14 @@ def plot_special_road_zones(fig: go.Figure,
         ))
 
 
-def plot_racks(fig: go.Figure, rack: list[Rack | DoubleRack]):
+def plot_racks(fig: go.Figure, rack: list[Rack | DoubleRack]) -> None:
+    """Plots the racks on the figure.
+
+    Args:
+        fig (go.Figure): The Plotly figure to add the racks to.
+        rack (list[Rack  |  DoubleRack]): The list of racks to plot.
+    """
+
     if isinstance(rack, Rack):
         plot_rack(fig, rack)
     elif isinstance(rack, DoubleRack):
@@ -118,6 +136,11 @@ def plot_racks(fig: go.Figure, rack: list[Rack | DoubleRack]):
 
 
 def plot_rack(fig: go.Figure, rack: Rack):
+    """Plots a single rack on the figure.
+    Args:
+        fig (go.Figure): The Plotly figure to add the rack to.
+        rack (Rack): The rack to plot.
+    """
     polygon = rack.contour.exterior.xy
     fig.add_trace(go.Scatter(
         x=np.array(polygon[0]),
@@ -145,7 +168,11 @@ def plot_rack(fig: go.Figure, rack: Rack):
         ))
 
 
-def remove_duplicate_names(fig: go.Figure):
+def remove_duplicate_names(fig: go.Figure) -> None:
+    """Removes duplicate names from the figure traces.
+    Args:
+        fig (go.Figure): The Plotly figure to modify.
+    """
     names = set()
     fig.for_each_trace(
         lambda trace:

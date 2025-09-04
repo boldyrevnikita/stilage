@@ -10,7 +10,7 @@ def set_next_pallet(
     Sets the current available zone index to zero and moves to the next pallet.
 
     Args:
-        reference_book (ReferenceBook): The reference book containing business
+        _ (ReferenceBook): The reference book containing business
             logic related information.
         solution (Solution): The current solution containing available zones.
     """
@@ -27,10 +27,6 @@ def sort_pallets_by_weight_height_width(
 ) -> None:
     """
     Sorts the pallets in the solution by weight, height, and width.
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing pallets.
     """
     solution.pallets.sort(key=lambda x: (x.weight, x.height, x.width))
 
@@ -41,11 +37,6 @@ def increase_pallet_counter(
 ) -> None:
     """
     Increases the pallet count for the current pallet in the solution.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing pallets.
     """
     cargo_id = solution.pallets[solution.pallet_idx].cargo.cargo_type_id
     current_rack = solution.current_rack_group.get_current_rack()
@@ -61,11 +52,6 @@ def increase_pallet_counter_for_rack(
     """
     Increases the pallet count for the current pallet in the solution by the
         number of pallets in the current rack.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing pallets.
     """
     cargo_id = solution.pallets[solution.pallet_idx].cargo.cargo_type_id
     current_rack = solution.current_rack_group.get_current_rack()
@@ -81,11 +67,6 @@ def assert_current_pallets_are_enough(
     """
     Asserts that the current pallets in the solution are enough to fill
         new frames.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing pallets.
     """
     current_cargo_max_quantity = (
         solution.pallets[solution.pallet_idx].cargo.quantity)
@@ -104,11 +85,6 @@ def assert_current_pallets_are_enough_for_rack(
     """
     Asserts that the current pallets in the solution are enough to fill
         new frames for the current rack.
-
-    Args:
-        reference_book (ReferenceBook): The reference book containing business
-            logic related information.
-        solution (Solution): The current solution containing pallets.
     """
     current_cargo_max_quantity = (
         solution.pallets[solution.pallet_idx].cargo.quantity)

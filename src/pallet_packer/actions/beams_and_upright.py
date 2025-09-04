@@ -8,7 +8,15 @@ from src.zone import AvailableZone
 def find_suitable_beams_and_upright(
     reference_book: ReferenceBook,
     solution: Solution
-) -> int:
+) -> None:
+    """Finds suitable beams and upright types for the current pallet
+    based on the available zone and pallet type in the solution.
+    Args:
+        reference_book (ReferenceBook): The reference book containing
+            business logic related information.
+        solution (Solution): The current solution containing available zones
+            and pallets.
+    """
     available_zone = solution.available_zones[
         solution.available_zone_idx
     ]
@@ -34,6 +42,23 @@ def _find_suitable_beams_and_upright(
     available_zone: AvailableZone,
     pallet: Pallet
 ) -> tuple[list[BeamType], UprightType, float, float, float]:
+    """Finds suitable beams and upright types for the given pallet
+    based on the available zone and pallet type.
+    Args:
+        reference_book (ReferenceBook): The reference book containing
+            business logic related information.
+        available_zone (AvailableZone): The available zone to place racks.
+        pallet (Pallet): The pallet to find suitable beams and upright
+            types for.
+    Returns:
+        tuple: A tuple containing:
+            - list[BeamType]: All suitable beam types for the pallet.
+            - UprightType: The chosen upright type for the pallet.
+            - float: The maximum number of shelves that can be placed.
+            - float: The maximum number of shelves that can be
+                placed in a bridge.
+            - float: The extra space required for the pallet.
+    """
     choosed_beam_type = _find_suitable_beam_type(
         reference_book=reference_book,
         pallet=pallet
@@ -60,6 +85,16 @@ def _find_suitable_beam_type(
     reference_book: ReferenceBook,
     pallet: Pallet
 ) -> BeamType:
+    """
+    Finds a suitable beam type for the given pallet.
+
+    Args:
+        reference_book (ReferenceBook): The reference book containing
+            business logic related information.
+        pallet (Pallet): The pallet to find a suitable beam type for.
+    Returns:
+        BeamType: The suitable beam type for the given pallet.
+    """
     available_beam_types = reference_book.beam_types[
         pallet.pallet_type.pallet_type_id
     ]
@@ -82,6 +117,22 @@ def _find_suitable_upright_type(
     pallet: Pallet,
     beam_type: BeamType
 ) -> tuple[UprightType, float, float, float]:
+    """
+    Finds a suitable upright type for the given pallet and available zone.
+    Args:
+        reference_book (ReferenceBook): The reference book containing
+            business logic related information.
+        available_zone (AvailableZone): The available zone to place racks.
+        pallet (Pallet): The pallet to find a suitable upright type for.
+        beam_type (BeamType): The beam type to use.
+    Returns:
+        tuple: A tuple containing:
+            - UprightType: The chosen upright type for the pallet.
+            - float: The extra space required for the pallet.
+            - float: The maximum number of shelves that can be placed.
+            - float: The maximum number of shelves that can be
+                placed in a bridge.
+    """
     available_height = available_zone.height - max(reference_book.frame_height_eps, available_zone.height % 500)
 
     pallet_extra_space = reference_book.frame_height2pallet_extra_space[-1][1]
@@ -117,6 +168,7 @@ def _find_suitable_upright_type(
         if suitable_combination_is_found:
             break
 
+    
         max_shelfs -= 1
         max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
         max_frame_load_kg -= shelf_load_kg
@@ -153,6 +205,16 @@ def _find_all_suitable_beam_types(
     pallet: Pallet,
     beam_type: BeamType
 ) -> list[BeamType]:
+    """ Finds all suitable beam types for the given pallet
+    based on the beam type properties.
+    Args:
+        reference_book (ReferenceBook): The reference book containing
+            business logic related information.
+        pallet (Pallet): The pallet to find suitable beam types for.
+        beam_type (BeamType): The beam type to use.
+    Returns:
+        list[BeamType]: All suitable beam types for the given pallet.
+    """
     available_beam_types = reference_book.beam_types[
         pallet.pallet_type.pallet_type_id
     ]

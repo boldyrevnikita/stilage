@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 
 
 class PalletType(BaseModel):
+    """Represents a type of pallet.
+    """
     pallet_type_id: int = Field(
         frozen=True,
         description="Unique identifier for the pallet type")
@@ -20,6 +22,8 @@ class PalletType(BaseModel):
 
 
 class CargoType(BaseModel):
+    """Represents a type of cargo loaded on a pallet.
+    """
     cargo_type_id: int = Field(
         frozen=True,
         description="Unique identifier for the cargo type")
@@ -41,6 +45,8 @@ class CargoType(BaseModel):
 
 
 class Pallet(BaseModel):
+    """Represents a pallet with a specific type and cargo loaded on it.
+    """
     pallet_type: PalletType = Field(
         description="Pallet type of the pallet")
     cargo: CargoType = Field(
