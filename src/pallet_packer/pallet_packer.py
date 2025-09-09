@@ -219,6 +219,8 @@ class PalletPacker:
             int: The score of the solution.
         """
         score = 0
+        if solution is None or getattr(solution, 'saved_rack_groups', None) in (None, []):
+            return 0
         for rack_group in solution.saved_rack_groups:
             for rack in rack_group.racks:
                 score += rack.calculate_pallet_capacity()

@@ -43,13 +43,12 @@ class Solution:
                  state: State,
                  available_zone_idx: int = -1,
                  pallet_idx: int = 0,
-                 saved_rack_groups: list[RackGroup] = [],
+                 saved_rack_groups: list[RackGroup] | None = None,
                  current_rack_group: RackGroup = None,
                  action_status: ActionStatus = (
                      ActionStatus.NOT_STARTED),
                  pallet_count: dict[int, int] = defaultdict(int)):
         self.initial_available_zones = deepcopy(available_zones)
-
         self.available_zones = deepcopy(available_zones)
         self.available_zone_idx = available_zone_idx
         self.rot_point: tuple[float, float] = (0.0, 0.0)
@@ -63,7 +62,7 @@ class Solution:
         self.current_road_zones: list[SpecialRoadZone] = []
         self.intersected_special_zone: OccupiedZone | SpecialRoadZone = None
 
-        self.saved_rack_groups = saved_rack_groups
+        self.saved_rack_groups = saved_rack_groups or []
         self.current_rack_group = current_rack_group
 
         self.state = state

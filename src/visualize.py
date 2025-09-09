@@ -34,7 +34,9 @@ def visualize_solution(solution: Solution) -> None:
     plot_available_zones(fig, solution.initial_available_zones)
     plot_occupied_zones(fig, solution.occupied_zones)
     plot_special_road_zones(fig, solution.road_zones)
-
+    if solution is None or getattr(solution, 'saved_rack_groups', None) in (None, []):
+        return fig
+        
     for rack_group in solution.saved_rack_groups:
         for rack in rack_group.racks:
             plot_racks(fig, rack)
