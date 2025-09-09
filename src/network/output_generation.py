@@ -3,7 +3,7 @@ from src.pallet_packer.solution import Solution
 from src.rack import DoubleRack
 from src.reference_book import ReferenceBook
 from collections import defaultdict
-
+from typing import Optional
 
 def generate_output(solution: Solution,
                     reference_book: ReferenceBook,
@@ -22,7 +22,8 @@ def generate_output(solution: Solution,
     Returns:
         ModelOutput: Output of the pallet packing model.
     """
-
+    if solution is None or getattr(solution, "saved_rack_groups", None) in (None, []):
+        return ModelOutput(task_id=task_id,racks={},warnings_and_errors=(warnings_and_errors or "No valid solution produced by solver"),success_predict=False)
     racks = defaultdict(list)
     for rack_group in solution.saved_rack_groups:
         for rack in rack_group.racks:
