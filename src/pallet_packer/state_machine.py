@@ -86,7 +86,7 @@ def get_rack_placement_states() -> dict[str, State]:
     return {
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
-            [f'{Block.EOZ}-IDR', f'{Block.MSR}-IDR'],
+            [f'{Block.JOOZ}-DLF',f'{Block.EOZ}-IDR', f'{Block.MSR}-IDR'],
             [f'{Block.RACK_PLACEMENT}-CNTRZ']),
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
