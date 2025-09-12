@@ -143,14 +143,14 @@ def _find_suitable_upright_type(
             break
 
     shelf_height = pallet.height + pallet_extra_space + beam_type.height
-    max_shelfs = available_zone.height // shelf_height
+    max_shelfs = available_height // shelf_height
 
     if max_shelfs == 0:
         raise ActionFailure(
             "Building ceiling is too low."
         )
 
-    max_shelfs_bridge = ((available_zone.height - reference_book.roads_height)
+    max_shelfs_bridge = ((available_height - reference_book.roads_height)
                          // shelf_height)
     max_shelfs_bridge = max(0, max_shelfs_bridge)
 
