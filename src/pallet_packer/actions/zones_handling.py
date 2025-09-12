@@ -479,25 +479,47 @@ def move_second_rack_higher_over_oz(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
-    """
-    Moves the second rack higher over the occupied zone.
-    """
+
     current_rack = solution.current_rack_group.get_current_rack()
-    current_occupied_zone = solution.intersected_special_zone
+    current_oz = solution.intersected_special_zone
 
-    y_shift = (current_occupied_zone.contour.bounds[3] -
-               current_rack.rack_2.contour.bounds[1]) + 1
+    x0, y0, x1, y1 = current_rack.bounds
+    gap_y0 = current_rack.rack_1.bounds[3]      # верхняя грань rack_1
+    gap_y1 = current_rack.rack_2.bounds[1]      # нижняя грань rack_2
+    corridor = box(x0, gap_y0, x1, gap_y1)
 
-    tail = y_shift % 50
+    inter = corridor.intersection(current_oz.contour)
+    obstacle_height = 0.0
+    if not inter.is_empty:
+        _, iy0, _, iy1 = inter.bounds
+        obstacle_height = max(0.0, iy1 - iy0)
+
+    required_gap = obstacle_height + 2.0 * current_rack.double_rack_distance_eps
+    current_gap = current_rack.rack_distance
+
+    y_shift_to_clear_top = (
+        current_oz.contour.bounds[3] - current_rack.rack_2.contour.bounds[1] + 1.0
+    )
+    tail = y_shift_to_clear_top % 50.0
     if tail != 0:
-        y_shift += 50 - tail
+        y_shift_to_clear_top += 50.0 - tail
 
-    final_double_rack_internal_distance = y_shift + current_rack.rack_distance
-    if (final_double_rack_internal_distance >
-            reference_book.max_double_rack_internal_distance):
-        raise ActionFailure("Internal double rack distance is too big.")
+    extra_gap_needed = max(0.0, required_gap - current_gap)
+    tail = extra_gap_needed % 50.0
+    if tail != 0 and extra_gap_needed > 0:
+        extra_gap_needed += 50.0 - tail
+
+    y_shift = max(y_shift_to_clear_top, extra_gap_needed)
+
+    final_gap = current_gap + y_shift
+    if final_gap > reference_book.max_double_rack_internal_distance:
+        y_shift = max(0.0, reference_book.max_double_rack_internal_distance - current_gap)
+        if y_shift <= 0:
+            raise ActionFailure("Internal double rack distance is too big for obstacle width.")
 
     current_rack.move_second_rack_higher(y_shift)
+    if not corridor.buffer(1e-6).disjoint(current_oz.contour):
+        raise ActionFailure("Double rack still intersects obstacle after gap expansion.")
 
 
 def remove_unavailable_rack_parts(
@@ -515,6 +537,11 @@ def remove_unavailable_rack_parts(
         if isinstance(rack, Rack):
             continue
         bounds = rack.bounds
-        upper_point = (bounds[0] + 1, bounds[3] + reference_book.roads_width)
-        if not available_zone.contains_point(upper_point):
+        rack1_inside = shapely.contains(available_zone.contour, rack.rack_1.contour)
+        rack2_inside = shapely.contains(available_zone.contour, rack.rack_2.contour)
+        if rack1_inside and rack2_inside:
+            pass  
+        elif rack1_inside != rack2_inside:
+            current_rack_group.racks[i] = rack.rack_1 if rack1_inside else rack.rack_2
+        else:
             current_rack_group.racks[i] = rack.rack_2
