@@ -13,8 +13,8 @@ async def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--host', default=settings.RABBIT_HOST,
                             help='RabbitMQ host')
-    arg_parser.add_argument('--port', default=settings.RABBIT_PORT,
-                            help='RabbitMQ port')
+    arg_parser.add_argument('--port', type=int, default=settings.RABBIT_PORT,
+                        help='RabbitMQ port')
     arg_parser.add_argument('--vhost', default=settings.RABBIT_VHOST,
                             help='RabbitMQ vhost')
     arg_parser.add_argument('--username', default=settings.RABBIT_USER,
@@ -32,8 +32,8 @@ async def main():
                             help='Input routing key')
     arg_parser.add_argument('--process', default=settings.PROCCESS_FUNC,
                             help='Message processing function')
-    arg_parser.add_argument('--heartbeat', default=settings.RABBIT_HEARTBEAT,
-                            help='RabbitMQ heartbeat')
+    arg_parser.add_argument('--heartbeat', type=int, default=settings.RABBIT_HEARTBEAT,
+                        help='RabbitMQ heartbeat')
     args = arg_parser.parse_args()
 
     # Настройка логирования
