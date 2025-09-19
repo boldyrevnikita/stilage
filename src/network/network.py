@@ -8,7 +8,7 @@ from aio_pika import connect_robust, Message
 from aio_pika.abc import AbstractConnection, AbstractChannel, AbstractQueue
 
 
-class Sender:
+class RobustSender:
     """Async class for sending messages to a message queue."""
     
     def __init__(self, host: str, queue_name: str, routing_key: str,
@@ -61,7 +61,8 @@ class Sender:
         Args:
             message (Any): message to send
         """
-        if not self.connection or self.connection.is_closed:
+        if (not self.connection or self.connection.is_closed or
+            not self.channel or self.channel.is_closed):
             await self.connect()
             
         try:
@@ -155,7 +156,8 @@ class RobustMessageHandler:
 
     async def start_consuming(self):
         """Start consuming messages from the queue."""
-        if not self.connection or self.connection.is_closed:
+        if (not self.connection or self.connection.is_closed or
+            not self.channel or self.channel.is_closed):
             await self.connect()
             
         try:
@@ -171,9 +173,12 @@ class RobustMessageHandler:
             await self.connection.close()
 
 
+# Пример использования
 async def main():
+    # Настройка логирования
     logging.basicConfig(level=logging.INFO)
     
+    # Создание отправителя
     sender = RobustSender(
         host='localhost',
         queue_name='test_queue',
@@ -183,10 +188,13 @@ async def main():
     
     await sender.connect()
     
+    # Отправка сообщения
     await sender.send({'message': 'Hello, World!', 'timestamp': '2024-01-01'})
     
+    # Создание обработчика сообщений
     async def custom_processor(message: dict, sender_instance: RobustSender):
         print(f"Processing: {message}")
+        # Можно отправить ответ через sender_instance если нужно
         
     handler = RobustMessageHandler(
         host='localhost',
@@ -198,10 +206,12 @@ async def main():
     
     await handler.connect()
     
+    # Запуск обработки сообщений
     try:
         print("Starting message consumption...")
         await handler.start_consuming()
         
+        # Держим программу запущенной
         await asyncio.sleep(10)
         
     except KeyboardInterrupt:
