@@ -8,7 +8,7 @@ from aio_pika import connect_robust, Message
 from aio_pika.abc import AbstractConnection, AbstractChannel, AbstractQueue
 
 
-class RobustSender:
+class Sender:
     """Async class for sending messages to a message queue."""
     
     def __init__(self, host: str, queue_name: str, routing_key: str,
