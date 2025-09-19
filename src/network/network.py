@@ -8,7 +8,7 @@ from aio_pika import connect_robust, Message
 from aio_pika.abc import AbstractConnection, AbstractChannel, AbstractQueue
 
 
-class RobustSender:
+class Sender:
     """Async class for sending messages to a message queue."""
     
     def __init__(self, host: str, queue_name: str, routing_key: str,
@@ -85,12 +85,12 @@ class RobustSender:
             await self.connection.close()
 
 
-class RobustMessageHandler:
+class MessageHandler:
     """Async class for handling messages from a message queue."""
     
     def __init__(self, host: str, queue_name: str,
-                 msg_processor: Callable[[Any, Optional[RobustSender]], None] = None,
-                 sender: Optional[RobustSender] = None,
+                 msg_processor: Callable[[Any, Optional[Sender]], None] = None,
+                 sender: Optional[Sender] = None,
                  port: Optional[Union[int, str]] = None,
                  vhost: Optional[str] = None,
                  credentials: Optional[dict] = None,
@@ -136,7 +136,7 @@ class RobustMessageHandler:
             logging.error(f"Failed to connect to RabbitMQ: {e}")
             raise
 
-    async def _default_processor(self, message: Any, sender: Optional[RobustSender]):
+    async def _default_processor(self, message: Any, sender: Optional[Sender]):
         """Default message processor."""
         print(f"Received message: {message}")
 
@@ -179,7 +179,7 @@ async def main():
     logging.basicConfig(level=logging.INFO)
     
     # Создание отправителя
-    sender = RobustSender(
+    sender = Sender(
         host='localhost',
         queue_name='test_queue',
         routing_key='test_queue',
@@ -192,11 +192,11 @@ async def main():
     await sender.send({'message': 'Hello, World!', 'timestamp': '2024-01-01'})
     
     # Создание обработчика сообщений
-    async def custom_processor(message: dict, sender_instance: RobustSender):
+    async def custom_processor(message: dict, sender_instance: Sender):
         print(f"Processing: {message}")
         # Можно отправить ответ через sender_instance если нужно
         
-    handler = RobustMessageHandler(
+    handler = MessageHandler(
         host='localhost',
         queue_name='test_queue',
         msg_processor=custom_processor,
