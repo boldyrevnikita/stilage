@@ -163,9 +163,20 @@ class MessageHandler:
         try:
             await self.queue.consume(self._process_message)
             
+            # Keep consuming forever until interrupted
+            try:
+                # Wait indefinitely 
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                pass
+                
         except Exception as e:
             logging.error(f"Error during message consumption: {e}")
             raise
+
+    async def receive(self):
+        """Alias for start_consuming() for backward compatibility."""
+        await self.start_consuming()
 
     async def close(self):
         """Close the connection."""
