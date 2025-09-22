@@ -156,33 +156,39 @@ def _find_suitable_upright_type(
 
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
-    suitable_combination_is_found = False
-    while max_shelfs >= 0:
-        for upright_type in reference_book.upright_types:
-            if (upright_type.max_shelf_height >= shelf_height and
-                upright_type.max_frame_load_capacity_kg
-                    >= max_frame_load_kg):
-                suitable_combination_is_found = True
-                break
-
-        if suitable_combination_is_found:
-            break
-
     
-        max_shelfs -= 1
-        max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
-        max_frame_load_kg -= shelf_load_kg
+    # Initialize upright_type to avoid 'referenced before assignment' error
+    upright_type: UprightType | None = None
+    
+    while max_shelfs >= 0 and upright_type is None:
+        # Search for suitable upright by shelf height and frame load capacity
+        for ut in reference_book.upright_types:
+            if (ut.max_shelf_height >= shelf_height and
+                ut.max_frame_load_capacity_kg >= max_frame_load_kg):
+                upright_type = ut
+                break
+        
+        if upright_type is None:
+            # Reduce number of shelves and recalculate load
+            max_shelfs -= 1
+            max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
+            max_frame_load_kg -= shelf_load_kg
+
+    if upright_type is None:
+        raise ActionFailure(
+            "No suitable upright type found for the given pallet."
+        )
 
     frame_height = shelf_height * max_shelfs + reference_book.frame_height_eps
     if frame_height < upright_type.min_rack_height:
         raise ActionFailure(
             "No suitable upright type found for the given pallet, "
-            "since frame height less then minumum available rack height"
+            "since frame height is less than minimum available rack height"
         )
 
     while frame_height > upright_type.max_rack_height:
         max_shelfs -= 1
-        max_shelfs_bridge -= 1
+        max_shelfs_bridge = max(0, min(max_shelfs_bridge, max_shelfs))
         frame_height = (shelf_height * max_shelfs
                         + reference_book.frame_height_eps)
 
