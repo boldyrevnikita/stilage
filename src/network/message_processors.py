@@ -15,7 +15,7 @@ from src.visualize import visualize_solution
 from src.network.input_schema import ModelInput
 
 
-def process_message_ml(message: Any, sender: Sender):
+async def process_message_ml(message: Any, sender: Sender):
     """Process message from the queue.
 
     Args:
