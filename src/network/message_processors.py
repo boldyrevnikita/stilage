@@ -105,13 +105,13 @@ async def process_message_ml(message: Any, sender: Sender):
         output_message = {
             'task_id': message['task_id'],
             'racks': {},
-            'warnings_and_errors':  traceback.format_exc(),
+            'warnings_and_errors': traceback.format_exc(),
             'success_predict': False
         }
-        sender.send(output_message)
+        await sender.send(output_message)
         return
 
-    sender.send(response.model_dump(mode='json'))
+    await sender.send(response.model_dump(mode='json'))
     print('Results sent')
     print()
     print(response.model_dump())
