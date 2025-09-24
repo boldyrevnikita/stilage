@@ -383,6 +383,7 @@ def set_next_rack_type_double(
 #     current_rack.add_multiple_frames(frames_count)
 
 def fill_with_frames(_: ReferenceBook, solution: Solution) -> None:
+    logger.info("[FILL] hook active")
     az = solution.available_zones[solution.available_zone_idx]
     rack = solution.current_rack_group.current_rack
 
