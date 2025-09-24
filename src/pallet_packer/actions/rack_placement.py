@@ -2,7 +2,10 @@ from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import RackGroup, DoubleRack, Rack
 from src.zone import OccupiedZone, SpecialRoadZone
+import logging
+import shapely
 
+logger = logging.getLogger(__name__)
 
 def place_horizontal_rack_group(
     reference_book: ReferenceBook,
@@ -361,23 +364,49 @@ def set_next_rack_type_double(
     solution.next_rack_type = DoubleRack
 
 
-def fill_with_frames(
-    _: ReferenceBook,
-    solution: Solution
-) -> None:
-    """Fills the current rack with frames until it reaches the maximum
-    number of frames that can fit in the available zone.
-    """
-    available_zone = solution.available_zones[solution.available_zone_idx]
-    current_rack = solution.current_rack_group.current_rack
+# def fill_with_frames(
+#     _: ReferenceBook,
+#     solution: Solution
+# ) -> None:
+#     """Fills the current rack with frames until it reaches the maximum
+#     number of frames that can fit in the available zone.
+#     """
+#     available_zone = solution.available_zones[solution.available_zone_idx]
+#     current_rack = solution.current_rack_group.current_rack
 
-    section_length = (current_rack.beam_type.length
-                      + current_rack.upright_type.width)
-    max_available_length = (available_zone.contour.bounds[2]
-                            - current_rack.contour.bounds[2])
-    frames_count = int(max_available_length // section_length)
+#     section_length = (current_rack.beam_type.length
+#                       + current_rack.upright_type.width)
+#     max_available_length = (available_zone.contour.bounds[2]
+#                             - current_rack.contour.bounds[2])
+#     frames_count = int(max_available_length // section_length)
 
-    current_rack.add_multiple_frames(frames_count)
+#     current_rack.add_multiple_frames(frames_count)
+
+def fill_with_frames(_: ReferenceBook, solution: Solution) -> None:
+    az = solution.available_zones[solution.available_zone_idx]
+    rack = solution.current_rack_group.current_rack
+
+    section_len = rack.beam_type.length + rack.upright_type.width
+    max_len_bbox = az.contour.bounds[2] - rack.contour.bounds[2]
+    frames_count = max(0, int(max_len_bbox // section_len))
+
+    logger.info(f"[FILL] before: frames={len(rack)} "
+                f"section_len={section_len:.1f} max_len_bbox={max_len_bbox:.1f} "
+                f"add={frames_count}")
+
+    rack.add_multiple_frames(frames_count)
+
+    inside = shapely.covers(az.contour, rack.contour)  # covers вместо contains
+    logger.info(f"[FILL] after: frames={len(rack)} inside_zone={inside}")
+
+    if not inside:
+        over = 0
+        while not shapely.covers(az.contour, rack.contour) and len(rack) > 0:
+            rack.delete_last_frame()
+            over += 1
+        logger.warning(f"[FILL] overflow_detected removed={over}")
+        raise ActionFailure("Rack overflowed zone during fill_with_frames")
+
 
 
 def delete_excess_frames_pl(
