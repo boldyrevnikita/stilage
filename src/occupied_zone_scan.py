@@ -8,9 +8,31 @@ import ezdxf.document
 import ezdxf.select
 import numpy as np
 import shapely
+import logging
 
 from src.zone import AvailableZone, OccupiedZone
 
+logger = logging.getLogger(__name__)
+
+def _safe_polygon(vertices, min_unique=3):
+    """
+    Возвращает shapely.Polygon или None, если контур вырожден.
+    Требуется минимум 3 уникальные точки (=> 4 с замыканием).
+    """
+    cleaned = []
+    for x, y in vertices:
+        if not cleaned or (cleaned[-1][0] != x or cleaned[-1][1] != y):
+            cleaned.append((float(x), float(y)))
+    if cleaned and cleaned[0] != cleaned[-1]:
+        cleaned.append(cleaned[0])
+    uniq = set(cleaned[:-1]) if cleaned else set()
+    if len(uniq) < min_unique:
+        return None
+    try:
+        return shapely.geometry.Polygon(cleaned)
+    except Exception as e:
+        logger.debug(f"_safe_polygon: failed with {e}; vertices={len(cleaned)}")
+        return None
 
 def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                           ) -> List[shapely.geometry.base.BaseGeometry]:
@@ -36,88 +58,96 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
             for v_entity in entity.virtual_entities():
                 q.put(v_entity)
         elif type(entity) is ezdxf.entities.Line:
-            geometry_list.append(shapely.geometry.LineString(
-                [(entity.dxf.start.x, entity.dxf.start.y),
-                 (entity.dxf.end.x, entity.dxf.end.y)]))
+            pts = [(entity.dxf.start.x, entity.dxf.start.y),
+           (entity.dxf.end.x, entity.dxf.end.y)]
+            if len(pts) >= 2:
+                geometry_list.append(shapely.geometry.LineString(pts))
         elif type(entity) is ezdxf.entities.LWPolyline:
-            vertices = [(point[0], point[1])
-                        for point in entity.vertices_in_wcs()]
+            vertices = [(p[0], p[1]) for p in entity.vertices_in_wcs()]
             if entity.is_closed:
-                geometry_list.append(shapely.geometry.Polygon(vertices))
+                poly = _safe_polygon(vertices)
+                if poly is not None:
+                    geometry_list.append(poly)
+                elif len(vertices) >= 2:
+                    geometry_list.append(shapely.geometry.LineString(vertices))
             else:
-                geometry_list.append(shapely.geometry.LineString(vertices))
+                if len(vertices) >= 2:
+                    geometry_list.append(shapely.geometry.LineString(vertices))
         elif type(entity) is ezdxf.entities.Solid:
             vertices = [(point[0], point[1])
                         for point in entity.wcs_vertices()]
-            geometry_list.append(shapely.geometry.Polygon(vertices))
+            poly = _safe_polygon(vertices)
+            if poly is not None:
+                geometry_list.append(poly)
+            # geometry_list.append(shapely.geometry.Polygon(vertices))
         elif type(entity) is ezdxf.entities.Arc:
             center = entity.ocs().to_wcs(entity.dxf.center)
             radius = entity.dxf.radius
-            angles = list(entity.angles(10))
+            angles = list(entity.angles(max(2, approx_point_quantity)))
             radians = np.deg2rad(angles)
-            points = [(center[0] + radius * np.cos(angle),
-                       center[1] + radius * np.sin(angle))
-                      for angle in radians]
-            geometry_list.append(shapely.geometry.LineString(points))
+            points = [(center[0] + radius * np.cos(a),
+                    center[1] + radius * np.sin(a)) for a in radians]
+            if len(points) >= 2:
+                geometry_list.append(shapely.geometry.LineString(points))
         elif type(entity) is ezdxf.entities.Circle:
-            vertices = list(entity.vertices(np.linspace(
-                0, 360.0, approx_point_quantity)))
-            geometry_list.append(shapely.geometry.Polygon(
-                [(point[0], point[1]) for point in vertices]))
+            vertices = list(entity.vertices(np.linspace(0, 360.0, max(4, approx_point_quantity))))
+            poly = _safe_polygon([(p[0], p[1]) for p in vertices])
+            if poly is not None:
+                geometry_list.append(poly)
         elif type(entity) is ezdxf.entities.Ellipse:
-            vertices = list(entity.vertices(np.linspace(0, 2 * np.pi, 10)))
-            geometry_list.append(shapely.geometry.Polygon(
-                [(point[0], point[1]) for point in vertices]))
+            vertices = list(entity.vertices(np.linspace(0, 2 * np.pi, max(4, approx_point_quantity))))
+            poly = _safe_polygon([(p[0], p[1]) for p in vertices])
+            if poly is not None:
+                geometry_list.append(poly)
         elif type(entity) is ezdxf.entities.Polyline:
-            vertices = [(point[0], point[1])
-                        for point in entity.points_in_wcs()]
+            vertices = [(p[0], p[1]) for p in entity.points_in_wcs()]
             if entity.is_closed:
-                geometry_list.append(shapely.geometry.Polygon(vertices))
+                poly = _safe_polygon(vertices)
+                if poly is not None:
+                    geometry_list.append(poly)
             else:
-                geometry_list.append(shapely.geometry.LineString(vertices))
+                if len(vertices) >= 2:
+                    geometry_list.append(shapely.geometry.LineString(vertices))
         elif type(entity) is ezdxf.entities.Hatch:
             ocs = entity.ocs()
             for path in entity.paths:
                 if type(path) is ezdxf.entities.PolylinePath:
-                    vertices = [(ocs.to_wcs(point).x,
-                                 ocs.to_wcs(point).y)
-                                for point in path.vertices]
+                    vertices = [(ocs.to_wcs(p).x, ocs.to_wcs(p).y) for p in path.vertices]
                     if path.is_closed:
-                        geometry_list.append(shapely.geometry.Polygon(
-                            vertices))
+                        poly = _safe_polygon(vertices)
+                        if poly is not None:
+                            geometry_list.append(poly)
+                        elif len(vertices) >= 2:
+                            geometry_list.append(shapely.geometry.LineString(vertices))
                     else:
-                        geometry_list.append(shapely.geometry.LineString(
-                            vertices))
+                        if len(vertices) >= 2:
+                            geometry_list.append(shapely.geometry.LineString(vertices))
                 elif type(path) is ezdxf.entities.EdgePath:
                     for edge in path.edges:
-                        if (type(edge) is
-                                ezdxf.entities.boundary_paths.LineEdge):
-                            geometry_list.append(shapely.geometry.LineString(
-                                [(ocs.to_wcs(edge.start).x,
-                                  ocs.to_wcs(edge.start).y),
-                                 (ocs.to_wcs(edge.end).x,
-                                  ocs.to_wcs(edge.end).y)]))
-                        elif (type(edge) is
-                                ezdxf.entities.boundary_paths.ArcEdge):
+                        if type(edge) is ezdxf.entities.boundary_paths.LineEdge:
+                            pts = [(ocs.to_wcs(edge.start).x, ocs.to_wcs(edge.start).y),
+                                (ocs.to_wcs(edge.end).x,   ocs.to_wcs(edge.end).y)]
+                            if len(pts) >= 2:
+                                geometry_list.append(shapely.geometry.LineString(pts))
+                        elif type(edge) is ezdxf.entities.boundary_paths.ArcEdge:
                             center = ocs.to_wcs(edge.center)
                             radius = edge.radius
-                            angles = np.linspace(edge.start_angle,
-                                                 edge.end_angle,
-                                                 approx_point_quantity)
+                            angles = np.linspace(edge.start_angle, edge.end_angle,
+                                                max(2, approx_point_quantity))
                             radians = np.deg2rad(angles)
-                            points = [(center[0] + radius * np.cos(angle),
-                                       center[1] + radius * np.sin(angle))
-                                      for angle in radians]
-                            geometry_list.append(shapely.geometry.LineString(
-                                points))
+                            pts = [(center[0] + radius * np.cos(a),
+                                    center[1] + radius * np.sin(a)) for a in radians]
+                            if len(pts) >= 2:
+                                geometry_list.append(shapely.geometry.LineString(pts))
+
         elif type(entity) is ezdxf.entities.Insert:
             for v_entity in entity.virtual_entities():
                 q.put(v_entity)
         elif type(entity) is ezdxf.entities.Spline:
             bspline = entity.construction_tool()
             points = [p.xy for p in bspline.approximate(approx_point_quantity)]
-            geometry_list.append(shapely.geometry.LineString(
-                [(point[0], point[1]) for point in points]))
+            if len(points) >= 2:
+                geometry_list.append(shapely.geometry.LineString([(p[0], p[1]) for p in points]))
         elif type(entity) in skip_entities:
             pass
         else:
