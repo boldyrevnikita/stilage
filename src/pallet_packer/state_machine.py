@@ -1,9 +1,12 @@
 from copy import deepcopy
 from enum import Enum
+import logging
 
 import src.pallet_packer.actions as actions
 from src.pallet_packer.solution import (ActionFailure, ActionStatus, Solution,
                                         State)
+
+logger = logging.getLogger(__name__)
 
 
 class Block(Enum):
@@ -430,12 +433,13 @@ class StateMachine:
     def __init__(self, reference_book):
         self.states = self.__compile_states()
         self.reference_book = reference_book
+        logger.info("[STATE_MACHINE] ========================================")
+        logger.info("[STATE_MACHINE] State Machine initialized")
+        logger.info(f"[STATE_MACHINE] Total states: {len(self.states)}")
+        logger.info("[STATE_MACHINE] ========================================")
 
     def __compile_states(self) -> dict[str, State]:
-        """Compiles all states into a single dictionary.
-        Returns:
-            dict[str, State]: A dictionary containing all states in the state
-                machine."""
+        """Compiles all states into a single dictionary."""
         states = {}
         states.update(get_general_states())
         states.update(get_main_loop_states())
@@ -464,48 +468,66 @@ class StateMachine:
         """Returns the end delete state of the state machine."""
         return self.states['TS-DEL']
 
+    def _get_state_name(self, state: State) -> str:
+        """Helper to get state name from state object."""
+        for name, s in self.states.items():
+            if s == state:
+                return name
+        return "UNKNOWN"
+
     def apply_action(self, solution: Solution) -> Solution:
-        """Applies the current state's action to the solution
-        Args:
-            solution (Solution): The current solution to apply the action to.
-        Returns:
-            Solution: The updated solution after applying the action.
-        """
+        """Applies the current state's action to the solution."""
+        current_state = solution.state
+        state_name = self._get_state_name(current_state)
+        action_function = current_state.process_function
+        action_name = action_function.__name__ if hasattr(action_function, '__name__') else str(action_function)
+        
+        logger.info(f"[STATE_MACHINE] ----------------------------------------")
+        logger.info(f"[STATE_MACHINE] Executing state: {state_name}")
+        logger.info(f"[STATE_MACHINE] Action: {action_name}")
+        
         try:
-            current_state = solution.state
-            action_function = current_state.process_function
             action_function(self.reference_book, solution)
             solution.action_status = ActionStatus.SUCCESS
-        except ActionFailure:
+            logger.info(f"[STATE_MACHINE] ✓ Action SUCCESS: {action_name}")
+            
+        except ActionFailure as e:
             solution.action_status = ActionStatus.FAILED
+            logger.info(f"[STATE_MACHINE] ✗ Action FAILED: {action_name}")
+            logger.info(f"[STATE_MACHINE] Failure reason: {str(e)}")
+            
         except Exception as e:
-            print(f"Critical action fail: {e}")
+            logger.error(f"[STATE_MACHINE] ✗✗✗ CRITICAL ERROR in {action_name}: {e}")
+            logger.exception(e)
+            solution.action_status = ActionStatus.FAILED
+            
         return solution
 
     def choose_next_action(self, solution: Solution) -> list[Solution]:
-        """Chooses the next action based on the current solution's state.
-        Args:
-            solution (Solution): The current solution to choose the next action
-                for.
-        Returns:
-            list[Solution]: A list of new solutions with the next state set.
-        """
+        """Chooses the next action based on the current solution's state."""
         current_state = solution.state
+        current_state_name = self._get_state_name(current_state)
         next_success_states = current_state.next_success_state_name_list
         next_failure_states = current_state.next_failure_state_name_list
 
+        logger.info(f"[STATE_MACHINE] Choosing next state from: {current_state_name}")
+        logger.info(f"[STATE_MACHINE] Current action status: {solution.action_status}")
+
         if solution.action_status == ActionStatus.SUCCESS:
             next_states = next_success_states
+            logger.info(f"[STATE_MACHINE] Following SUCCESS path: {next_states}")
         elif solution.action_status == ActionStatus.FAILED:
             next_states = next_failure_states
+            logger.info(f"[STATE_MACHINE] Following FAILURE path: {next_states}")
         elif solution.action_status == ActionStatus.NOT_STARTED:
+            logger.info(f"[STATE_MACHINE] Action not started, returning current solution")
             return [solution]
         else:
             raise ValueError("Unknown action status")
 
         new_solutions = []
 
-        for next_state_name in next_states:
+        for idx, next_state_name in enumerate(next_states):
             next_state = self.states.get(next_state_name)
             if next_state is None:
                 raise ValueError(f"State '{next_state_name}' not found")
@@ -513,46 +535,62 @@ class StateMachine:
             new_solution = deepcopy(solution)
             new_solution.state = next_state
             new_solution.action_status = ActionStatus.NOT_STARTED
-            # new_solution.state_history.append(next_state_name)
             new_solutions.append(new_solution)
+            
+            logger.info(f"[STATE_MACHINE]   Branch {idx+1}/{len(next_states)}: → {next_state_name}")
 
+        logger.info(f"[STATE_MACHINE] Created {len(new_solutions)} new solution(s)")
         return new_solutions
 
-    def remove_invalid_solutions(self, solutions: list[Solution]
-                                 ) -> list[Solution]:
-        """Removes invalid solutions from the list of solutions.
-        Args:
-            solutions (list[Solution]): The list of solutions to filter.
-        Returns:
-            list[Solution]: A list of valid solutions after filtering.
-        """
+    def remove_invalid_solutions(self, solutions: list[Solution]) -> list[Solution]:
+        """Removes invalid solutions from the list of solutions."""
+        logger.info(f"[STATE_MACHINE] ========================================")
+        logger.info(f"[STATE_MACHINE] Filtering solutions: {len(solutions)} candidates")
+        
         valid_solutions = []
+        failure_count = 0
+        delete_count = 0
 
         for solution in solutions:
+            state_name = self._get_state_name(solution.state)
+            
             if solution.state == self.get_end_failure_state():
+                failure_count += 1
+                logger.info(f"[STATE_MACHINE]   ✗ Removed failure: {state_name}")
                 continue
             elif solution.state == self.get_end_delete_state():
+                delete_count += 1
+                logger.info(f"[STATE_MACHINE]   ✗ Removed delete: {state_name}")
                 continue
+            
             valid_solutions.append(solution)
 
+        logger.info(f"[STATE_MACHINE] Filtered out: {failure_count} failures, {delete_count} deletes")
+        logger.info(f"[STATE_MACHINE] Valid solutions: {len(valid_solutions)}")
+        logger.info(f"[STATE_MACHINE] ========================================")
+        
         return valid_solutions
 
-    def extract_end_solutions(self, solutions: list[Solution]
-                              ) -> list[Solution]:
-        """Extracts end solutions from the list of solutions.
-        Args:
-            solutions (list[Solution]): The list of solutions to extract from.
-        Returns:
-            tuple[list[Solution], list[Solution]]: A tuple containing
-                two lists:transitional_solutions and end_solutions.
-        """
+    def extract_end_solutions(self, solutions: list[Solution]) -> tuple[list[Solution], list[Solution]]:
+        """Extracts end solutions from the list of solutions."""
         transitional_solutions = []
         end_solutions = []
 
         for solution in solutions:
+            state_name = self._get_state_name(solution.state)
+            
             if solution.state == self.get_end_normal_state():
                 end_solutions.append(solution)
+                logger.info(f"[STATE_MACHINE]   ✓ End solution found: {state_name}")
             else:
                 transitional_solutions.append(solution)
 
+        if end_solutions:
+            logger.info(f"[STATE_MACHINE] ========================================")
+            logger.info(f"[STATE_MACHINE] FOUND {len(end_solutions)} COMPLETE SOLUTION(S)")
+            logger.info(f"[STATE_MACHINE] ========================================")
+        
+        logger.info(f"[STATE_MACHINE] Transitional: {len(transitional_solutions)}, "
+                   f"Complete: {len(end_solutions)}")
+        
         return transitional_solutions, end_solutions
