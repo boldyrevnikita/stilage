@@ -67,8 +67,8 @@ def get_main_loop_states() -> dict[str, State]:
         # ИСПРАВЛЕНО: Если полос нет - не проблема, продолжаем работу
         f'{Block.MAIN}-SET_FIRST_STRIP': State(
             actions.set_first_free_strip,
-            [f'{Block.MAIN}-RZC-90'],      # success → продолжить
-            [f'{Block.MAIN}-RZC-90']),     # failure (нет полос) → тоже продолжить
+            [f'{Block.MAIN}-PHG'],         
+            [f'{Block.MAIN}-PHG']),       
         
         # === Вращение (если нужно) ===
         f'{Block.MAIN}-RZC-90': State(
