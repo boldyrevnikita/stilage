@@ -184,17 +184,28 @@ def analyze_free_strips(
             'width': strip_width,
             'index': 0
         })
-        logger.info(f"[COLUMN_PROTECTION] No racks - entire zone is free: {strip_width:.1f}mm")
+        logger.warning(f"[COLUMN_PROTECTION] No racks - entire zone is free: {strip_width:.1f}mm")
         return
     
     logger.warning(f"[COLUMN_PROTECTION] ========================================")
     logger.warning(f"[COLUMN_PROTECTION] ALL PROTECTIVE RACKS ({len(solution.protective_racks)})")
     logger.warning(f"[COLUMN_PROTECTION] ========================================")
     
-    # Sort protective racks by Y coordinate
-    sorted_racks = sorted(solution.protective_racks, key=lambda r: r.bounds[1])
+    # УДАЛЯЕМ ДУБЛИКАТЫ по Y-координатам
+    unique_racks = []
+    seen_bounds = set()
+    for rack in solution.protective_racks:
+        bounds_tuple = (round(rack.bounds[1], 1), round(rack.bounds[3], 1))  # (y_min, y_max)
+        if bounds_tuple not in seen_bounds:
+            unique_racks.append(rack)
+            seen_bounds.add(bounds_tuple)
     
-    # Log ALL protective racks
+    logger.warning(f"[COLUMN_PROTECTION] Deduplication: {len(solution.protective_racks)} total → {len(unique_racks)} unique")
+    
+    # Sort unique protective racks by Y coordinate
+    sorted_racks = sorted(unique_racks, key=lambda r: r.bounds[1])
+    
+    # Log ALL unique protective racks
     for idx, rack in enumerate(sorted_racks):
         rack_height = rack.bounds[3] - rack.bounds[1]
         logger.warning(f"[COLUMN_PROTECTION] Rack {idx}: "
@@ -288,7 +299,6 @@ def analyze_free_strips(
         total_free = sum(s['width'] for s in solution.free_strips)
         logger.warning(f"[COLUMN_PROTECTION] Total free: {total_free:.1f}mm of {zone_bounds[3]-zone_bounds[1]:.1f}mm")
     logger.warning(f"[COLUMN_PROTECTION] ========================================")
-
 
 def set_first_free_strip(
     _: ReferenceBook,
