@@ -185,13 +185,7 @@ def split_available_zone(
     current_rack_group = solution.current_rack_group
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    # DEBUG: Зона ДО split
-    logger.info(f"[DEBUG_SPLIT] ========================================")
-    logger.info(f"[DEBUG_SPLIT] SPLITTING ZONE")
-    logger.info(f"[DEBUG_SPLIT] Zone BEFORE split: {available_zone.bounds}")
-    zone_width = available_zone.bounds[2] - available_zone.bounds[0]
-    zone_height = available_zone.bounds[3] - available_zone.bounds[1]
-    logger.info(f"[DEBUG_SPLIT] Size BEFORE: {zone_width:.1f} x {zone_height:.1f} mm")
+    MIN_ZONE_SIZE = 2000.0  # NEW: Минимум 2 метра
     
     split_point = list(current_rack_group.bounds[2:])
     split_point[0] += reference_book.roads_width
@@ -199,27 +193,24 @@ def split_available_zone(
     split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
     split_point[1] = min(available_zone.bounds[3], split_point[1]) - 1
 
-    logger.info(f"[DEBUG_SPLIT] Split point: {split_point}")
-
-    if available_zone.contains_point(split_point):
-        new_zones = available_zone.split_zone(split_point)
-        
-        # DEBUG: Новые зоны ПОСЛЕ split
-        logger.info(f"[DEBUG_SPLIT] Created {len(new_zones)} new zones:")
-        for i, zone in enumerate(new_zones):
-            width = zone.bounds[2] - zone.bounds[0]
-            height = zone.bounds[3] - zone.bounds[1]
-            logger.info(f"[DEBUG_SPLIT]   Zone {i}: {zone.bounds}")
-            logger.info(f"[DEBUG_SPLIT]   Size {i}: {width:.1f} x {height:.1f} mm")
-        
-        solution.available_zones.extend(new_zones)
-        logger.info(f"[DEBUG_SPLIT] Total zones now: {len(solution.available_zones)}")
+    # NEW: Проверка размеров ДО split
+    right_zone_width = available_zone.bounds[2] - split_point[0]
+    top_zone_height = available_zone.bounds[3] - split_point[1]
+    
+    # Только split если хоть одна зона будет достаточно большой
+    if right_zone_width >= MIN_ZONE_SIZE or top_zone_height >= MIN_ZONE_SIZE:
+        if available_zone.contains_point(split_point):
+            new_zones = available_zone.split_zone(split_point)
+            
+            # Фильтр: добавляй только зоны >= 2 метров
+            for zone in new_zones:
+                zone_w = zone.bounds[2] - zone.bounds[0]
+                zone_h = zone.bounds[3] - zone.bounds[1]
+                if zone_w >= MIN_ZONE_SIZE and zone_h >= MIN_ZONE_SIZE:
+                    solution.available_zones.append(zone)
 
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zone_idx -= 1
-    
-    logger.info(f"[DEBUG_SPLIT] ========================================")
-
 
 def sort_available_zones_by_area_and_height(
     _: ReferenceBook,
