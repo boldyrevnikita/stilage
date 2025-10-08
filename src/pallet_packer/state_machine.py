@@ -16,7 +16,7 @@ class Block(Enum):
     EOZ = 6
     CF = 7
     MSR = 8
-    COLUMN_PROTECTION = 9  # НОВЫЙ БЛОК
+    COLUMN_PROTECTION = 9
 
 
 def get_general_states() -> dict[str, State]:
@@ -42,7 +42,7 @@ def get_main_loop_states() -> dict[str, State]:
             actions.sort_available_zones_by_area_and_height,
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         
-        # === НОВАЯ ЛОГИКА: Сначала обрабатываем зону ===
+        # === Обработка зоны ===
         f'{Block.MAIN}-SNZ': State(
             actions.set_next_zone,
             [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
@@ -61,9 +61,11 @@ def get_main_loop_states() -> dict[str, State]:
         f'{Block.MAIN}-ANALYZE_STRIPS': State(
             actions.analyze_free_strips,
             [f'{Block.MAIN}-SET_FIRST_STRIP'], ['GFS']),
+        # ИСПРАВЛЕНО: Если полос нет - не проблема, продолжаем работу
         f'{Block.MAIN}-SET_FIRST_STRIP': State(
             actions.set_first_free_strip,
-            [f'{Block.MAIN}-RZC-90'], [f'{Block.MAIN}-RZC-90']),
+            [f'{Block.MAIN}-RZC-90'],      # success → продолжить
+            [f'{Block.MAIN}-RZC-90']),     # failure (нет полос) → тоже продолжить
         
         # === Вращение (если нужно) ===
         f'{Block.MAIN}-RZC-90': State(
@@ -73,7 +75,7 @@ def get_main_loop_states() -> dict[str, State]:
             actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-CHECK_STRIPS'], ['GFS']),
         
-        # === Размещение группы стеллажей в текущей полосе ===
+        # === Размещение группы стеллажей ===
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
             [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),
@@ -115,8 +117,6 @@ def get_main_loop_states() -> dict[str, State]:
 def get_column_protection_states() -> dict[str, State]:
     """Returns a dictionary of states related to column protection (Phase 1)."""
     return {
-        # Эти состояния уже интегрированы в MAIN блок выше,
-        # но можно добавить дополнительные детальные состояния если нужно
         f'{Block.COLUMN_PROTECTION}-IDENTIFY': State(
             actions.identify_columns_in_zone,
             [f'{Block.COLUMN_PROTECTION}-CREATE'], ['GFS']),
