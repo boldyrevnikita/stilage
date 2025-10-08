@@ -50,12 +50,22 @@ def place_horizontal_rack_group(
         # NEW: Place in current free strip
         current_strip = solution.free_strips[solution.current_strip_idx]
         position = (available_zone.bounds[0], current_strip['y_min'])
-        logger.info(f"[RACK_PLACEMENT] Placing rack group in free strip {solution.current_strip_idx}: "
+        logger.warning(f"[RACK_PLACEMENT] Placing rack group in free strip {solution.current_strip_idx}: "
                    f"y=[{current_strip['y_min']:.1f}, {current_strip['y_max']:.1f}]")
     else:
         # Fallback to original logic (no protective racks)
         position = available_zone.bounds[:2]
-        logger.info(f"[RACK_PLACEMENT] Placing rack group at zone corner: {position}")
+        logger.warning(f"[RACK_PLACEMENT] Placing rack group at zone corner: {position}")
+
+    # DEBUG LOGS BEFORE
+    logger.warning(f"[DEBUG_ZONE] ========================================")
+    logger.warning(f"[DEBUG_ZONE] CREATING RACK GROUP")
+    logger.warning(f"[DEBUG_ZONE] Zone bounds: {available_zone.bounds}")
+    zone_width = available_zone.bounds[2] - available_zone.bounds[0]
+    zone_height = available_zone.bounds[3] - available_zone.bounds[1]
+    logger.warning(f"[DEBUG_ZONE] Zone size: {zone_width:.1f} x {zone_height:.1f} mm")
+    logger.warning(f"[DEBUG_ZONE] Position BEFORE RackGroup creation: {position}")
+    logger.warning(f"[DEBUG_ZONE] roads_width: {reference_book.roads_width}")
 
     rack_group = RackGroup(
         position=position,
@@ -68,6 +78,22 @@ def place_horizontal_rack_group(
         pallet_extra_space=solution.pallet_extra_space,
         frame_height_eps=reference_book.frame_height_eps
     )
+
+    # DEBUG LOGS AFTER
+    logger.warning(f"[DEBUG_ZONE] RackGroup AFTER creation:")
+    logger.warning(f"[DEBUG_ZONE]   RackGroup.position: {rack_group.position}")
+    logger.warning(f"[DEBUG_ZONE]   RackGroup.bounds: {rack_group.bounds}")
+    rack_width = rack_group.bounds[2] - rack_group.bounds[0]
+    rack_height = rack_group.bounds[3] - rack_group.bounds[1]
+    logger.warning(f"[DEBUG_ZONE]   RackGroup size: {rack_width:.1f} x {rack_height:.1f} mm")
+    shift_x = rack_group.bounds[0] - available_zone.bounds[0]
+    logger.warning(f"[DEBUG_ZONE]   X shift from zone start: {shift_x:.1f} mm")
+    overflow_x = rack_group.bounds[2] - available_zone.bounds[2]
+    logger.warning(f"[DEBUG_ZONE]   X overflow from zone end: {overflow_x:.1f} mm")
+    fits_in_zone = (rack_group.bounds[0] >= available_zone.bounds[0] and 
+                    rack_group.bounds[2] <= available_zone.bounds[2])
+    logger.warning(f"[DEBUG_ZONE]   Fits in zone X: {fits_in_zone}")
+    logger.warning(f"[DEBUG_ZONE] ========================================")
 
     solution.current_rack_group = rack_group
 
