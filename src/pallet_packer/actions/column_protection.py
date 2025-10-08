@@ -40,7 +40,71 @@ def identify_and_protect_all_columns(
     # Step 3: Optimize if needed
     optimize_protective_racks(reference_book, solution)
     
+    # NEW: Step 4: Save protective racks as regular rack_groups!
+    _save_protective_racks_as_rack_groups(reference_book, solution)
+    
     logger.warning(f"[COLUMN_PROTECTION] Phase 1 complete. Protected {len(solution.protective_racks)} columns")
+    logger.warning("[COLUMN_PROTECTION] ========================================")
+
+
+# NEW FUNCTION: Save protective racks to solution
+def _save_protective_racks_as_rack_groups(
+    reference_book: ReferenceBook,
+    solution: Solution
+) -> None:
+    """Saves all protective racks as regular rack groups in the solution."""
+    if not solution.protective_racks:
+        logger.warning("[COLUMN_PROTECTION] No protective racks to save")
+        return
+    
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    zone_bounds = available_zone.bounds
+    
+    logger.warning("[COLUMN_PROTECTION] ========================================")
+    logger.warning("[COLUMN_PROTECTION] SAVING PROTECTIVE RACKS AS RACK_GROUPS")
+    logger.warning("[COLUMN_PROTECTION] ========================================")
+    logger.warning(f"[COLUMN_PROTECTION] Initial rack_groups count: {len(solution.rack_groups)}")
+    
+    saved_count = 0
+    for idx, protective_rack in enumerate(solution.protective_racks):
+        try:
+            # Create a RackGroup for this protective rack
+            rack_group = RackGroup(
+                beam_types=solution.beam_types,
+                upright_type=solution.upright_type,
+                pallet=solution.pallets[solution.pallet_idx],
+                max_shelfs=solution.max_shelfs,
+                max_shelfs_bridge=solution.max_shelfs_bridge,
+                position=(zone_bounds[0], protective_rack.bounds[1]),
+                roads_width=reference_book.roads_width
+            )
+            
+            # Add the protective rack to the group
+            rack_group.racks.append(protective_rack)
+            
+            # IMPORTANT: Update RackGroup bounds if method exists
+            if hasattr(rack_group, '_update_bounds'):
+                rack_group._update_bounds()
+            
+            # Save to solution
+            solution.rack_groups.append(rack_group)
+            saved_count += 1
+            
+            rack_bounds = protective_rack.bounds
+            logger.warning(f"[COLUMN_PROTECTION] ✓ Saved rack {idx+1}/{len(solution.protective_racks)}")
+            logger.warning(f"[COLUMN_PROTECTION]   Rack Y: [{rack_bounds[1]:.1f}, {rack_bounds[3]:.1f}]")
+            logger.warning(f"[COLUMN_PROTECTION]   Frames: {len(protective_rack.rack_1)}")
+            logger.warning(f"[COLUMN_PROTECTION]   RackGroup bounds: {rack_group.bounds}")
+            
+        except Exception as e:
+            logger.error(f"[COLUMN_PROTECTION] ✗ Failed to save rack {idx+1}: {e}")
+            continue
+    
+    logger.warning("[COLUMN_PROTECTION] ========================================")
+    logger.warning(f"[COLUMN_PROTECTION] SAVE COMPLETE:")
+    logger.warning(f"[COLUMN_PROTECTION]   Protective racks created: {len(solution.protective_racks)}")
+    logger.warning(f"[COLUMN_PROTECTION]   Successfully saved: {saved_count}")
+    logger.warning(f"[COLUMN_PROTECTION]   Total rack_groups now: {len(solution.rack_groups)}")
     logger.warning("[COLUMN_PROTECTION] ========================================")
 
 
@@ -299,6 +363,7 @@ def analyze_free_strips(
         total_free = sum(s['width'] for s in solution.free_strips)
         logger.warning(f"[COLUMN_PROTECTION] Total free: {total_free:.1f}mm of {zone_bounds[3]-zone_bounds[1]:.1f}mm")
     logger.warning(f"[COLUMN_PROTECTION] ========================================")
+
 
 def set_first_free_strip(
     _: ReferenceBook,
