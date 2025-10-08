@@ -217,10 +217,9 @@ def set_current_occupied_zones_and_road_zones(
     """Retrieves the corresponding occupied zones and road zones for the current
     available zone.
     
-    NEW BEHAVIOR:
-    Separates occupied zones into:
-    - Columns (compact obstacles) → stored in solution.columns_in_zone
-    - Other obstacles → stored in solution.current_occupied_zones
+    Note:
+    Column identification and separation is handled by column_protection module,
+    not here. This function collects ALL occupied zones in the zone.
     
     Args:
         reference_book (ReferenceBook): The reference book.
@@ -228,12 +227,12 @@ def set_current_occupied_zones_and_road_zones(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    # Reset lists
+    # Reset lists - columns_in_zone will be filled by column_protection
     solution.columns_in_zone = []
     solution.current_occupied_zones = []
     solution.current_road_zones = []
 
-    # Process occupied zones
+    # Process occupied zones - add ALL obstacles to current_occupied_zones
     for occupied_zone in solution.occupied_zones:
         intersects_with_clearance = (
             shapely.intersects(
@@ -243,13 +242,8 @@ def set_current_occupied_zones_and_road_zones(
                 available_zone.contour, occupied_zone.contour_with_roads_width))
 
         if intersects_with_clearance or intersects_with_roads_width:
-            # NEW: Determine if this is a column
-            if _is_column(occupied_zone, reference_book):
-                solution.columns_in_zone.append(deepcopy(occupied_zone))
-                logger.debug(f"[ZONES] Found column in zone: bounds={occupied_zone.bounds}")
-            else:
-                solution.current_occupied_zones.append(deepcopy(occupied_zone))
-                logger.debug(f"[ZONES] Found occupied zone in zone: bounds={occupied_zone.bounds}")
+            solution.current_occupied_zones.append(deepcopy(occupied_zone))
+            logger.debug(f"[ZONES] Found occupied zone in zone: bounds={occupied_zone.bounds}")
 
     # Process road zones
     for road_zone in solution.road_zones:
@@ -260,10 +254,8 @@ def set_current_occupied_zones_and_road_zones(
     # Sort for consistent processing order
     solution.current_occupied_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
     solution.current_road_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
-    solution.columns_in_zone.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
     
-    logger.info(f"[ZONES] Zone obstacles: {len(solution.columns_in_zone)} columns, "
-               f"{len(solution.current_occupied_zones)} other obstacles, "
+    logger.info(f"[ZONES] Zone obstacles: {len(solution.current_occupied_zones)} obstacles, "
                f"{len(solution.current_road_zones)} road zones")
 
 
@@ -724,45 +716,3 @@ def remove_unavailable_rack_parts(
     
     if removed_count > 0:
         logger.info(f"[ZONES] Removed {removed_count} unavailable rack parts")
-
-
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
-
-def _is_column(occupied_zone: OccupiedZone, reference_book: ReferenceBook) -> bool:
-    """Determines if an occupied zone is a column.
-    
-    Criteria for a column:
-    1. Compact shape (aspect ratio < max_aspect_ratio)
-    2. Small size (max dimension < max_size)
-    3. Not marked as should_be_available
-    
-    Args:
-        occupied_zone (OccupiedZone): The occupied zone to check.
-        reference_book (ReferenceBook): The reference book with thresholds.
-    
-    Returns:
-        bool: True if the occupied zone is a column, False otherwise.
-    """
-    bounds = occupied_zone.contour.bounds
-    width = bounds[2] - bounds[0]
-    height = bounds[3] - bounds[1]
-    
-    # Avoid division by zero
-    if min(width, height) == 0:
-        return False
-    
-    aspect_ratio = max(width, height) / min(width, height)
-    max_dimension = max(width, height)
-    
-    # Check compactness
-    is_compact = aspect_ratio <= reference_book.column_identification_max_aspect_ratio
-    
-    # Check size
-    is_small = max_dimension <= reference_book.column_identification_max_size
-    
-    # Check if marked as available
-    is_not_available = not occupied_zone.should_be_available
-    
-    return is_compact and is_small and is_not_available
