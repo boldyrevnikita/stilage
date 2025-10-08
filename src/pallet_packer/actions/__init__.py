@@ -37,6 +37,15 @@ from src.pallet_packer.actions.zones_handling import (
     set_current_occupied_zones_and_road_zones, set_next_zone, set_zero_zone,
     sort_available_zones_by_area_and_height, split_available_zone,
     remove_unavailable_rack_parts)
+from src.pallet_packer.actions.column_protection import (
+    identify_and_protect_all_columns,
+    identify_columns_in_zone,
+    create_protective_double_racks_for_all_columns,
+    optimize_protective_racks,
+    analyze_free_strips,
+    set_first_free_strip,
+    check_if_more_strips_available,
+    set_next_free_strip)
 
 __all__ = [
     find_suitable_beams_and_upright.__name__,
@@ -96,4 +105,13 @@ __all__ = [
     split_available_zone.__name__,
     assert_current_rack_not_intersecting_oz_or_rz.__name__,
     remove_unavailable_rack_parts.__name__,
+    # NEW: Column protection functions
+    identify_and_protect_all_columns.__name__,
+    identify_columns_in_zone.__name__,
+    create_protective_double_racks_for_all_columns.__name__,
+    optimize_protective_racks.__name__,
+    analyze_free_strips.__name__,
+    set_first_free_strip.__name__,
+    check_if_more_strips_available.__name__,
+    set_next_free_strip.__name__,
 ]
