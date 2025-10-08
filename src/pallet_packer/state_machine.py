@@ -16,6 +16,7 @@ class Block(Enum):
     EOZ = 6
     CF = 7
     MSR = 8
+    COLUMN_PROTECTION = 9  # НОВЫЙ БЛОК
 
 
 def get_general_states() -> dict[str, State]:
@@ -40,16 +41,39 @@ def get_main_loop_states() -> dict[str, State]:
         f'{Block.MAIN}-SoZ': State(
             actions.sort_available_zones_by_area_and_height,
             [f'{Block.MAIN}-SNZ'], ['GFS']),
+        
+        # === НОВАЯ ЛОГИКА: Сначала обрабатываем зону ===
+        f'{Block.MAIN}-SNZ': State(
+            actions.set_next_zone,
+            [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
+        f'{Block.MAIN}-GCOZARZ': State(
+            actions.set_current_occupied_zones_and_road_zones,
+            [f'{Block.MAIN}-CBaU'], ['GFS']),
         f'{Block.MAIN}-CBaU': State(
             actions.find_suitable_beams_and_upright,
-            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PHG'],
+            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PROTECT_COLUMNS'],
             [f'{Block.MAIN}-SNZ']),
+        
+        # === НОВАЯ ЛОГИКА: Защита колонн (Фаза 1) ===
+        f'{Block.MAIN}-PROTECT_COLUMNS': State(
+            actions.identify_and_protect_all_columns,
+            [f'{Block.MAIN}-ANALYZE_STRIPS'], [f'{Block.MAIN}-RZC-90']),
+        f'{Block.MAIN}-ANALYZE_STRIPS': State(
+            actions.analyze_free_strips,
+            [f'{Block.MAIN}-SET_FIRST_STRIP'], ['GFS']),
+        f'{Block.MAIN}-SET_FIRST_STRIP': State(
+            actions.set_first_free_strip,
+            [f'{Block.MAIN}-RZC-90'], [f'{Block.MAIN}-RZC-90']),
+        
+        # === Вращение (если нужно) ===
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
             [f'{Block.MAIN}-PHG'], ['GFS']),
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_everything_90_counterclockwise,
-            [f'{Block.MAIN}-SpZ'], ['GFS']),
+            [f'{Block.MAIN}-CHECK_STRIPS'], ['GFS']),
+        
+        # === Размещение группы стеллажей в текущей полосе ===
         f'{Block.MAIN}-PHG': State(
             actions.place_horizontal_rack_group,
             [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),
@@ -59,24 +83,52 @@ def get_main_loop_states() -> dict[str, State]:
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
             [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-RZCC-90-2']),
-        f'{Block.MAIN}-SNZ': State(
-            actions.set_next_zone,
-            [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
-        f'{Block.MAIN}-GCOZARZ': State(
-            actions.set_current_occupied_zones_and_road_zones,
-            [f'{Block.MAIN}-CBaU'], ['GFS']),
+        
+        # === После завершения работы с полосой ===
+        f'{Block.MAIN}-CHECK_STRIPS': State(
+            actions.check_if_more_strips_available,
+            [f'{Block.MAIN}-NEXT_STRIP'], [f'{Block.MAIN}-SpZ']),
+        f'{Block.MAIN}-NEXT_STRIP': State(
+            actions.set_next_free_strip,
+            [f'{Block.MAIN}-PHG'], ['GFS']),
+        
+        # === Разделение зоны ===
+        f'{Block.MAIN}-SpZ': State(
+            actions.split_available_zone,
+            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ']),
+        
+        # === Переход к следующей зоне или поддону ===
         f'{Block.MAIN}-SZZ': State(
             actions.set_zero_zone,
             [f'{Block.MAIN}-GNC'], ['GFS']),
         f'{Block.MAIN}-GNC': State(
             actions.set_next_pallet,
             [f'{Block.MAIN}-GCOZARZ'], ['TS']),
-        f'{Block.MAIN}-SpZ': State(
-            actions.split_available_zone,
-            [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ']),
+        
+        # === Откат вращения ===
         f'{Block.MAIN}-RZCC-90-2': State(
             actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-SNZ'], ['GFS']),
+    }
+
+
+def get_column_protection_states() -> dict[str, State]:
+    """Returns a dictionary of states related to column protection (Phase 1)."""
+    return {
+        # Эти состояния уже интегрированы в MAIN блок выше,
+        # но можно добавить дополнительные детальные состояния если нужно
+        f'{Block.COLUMN_PROTECTION}-IDENTIFY': State(
+            actions.identify_columns_in_zone,
+            [f'{Block.COLUMN_PROTECTION}-CREATE'], ['GFS']),
+        f'{Block.COLUMN_PROTECTION}-CREATE': State(
+            actions.create_protective_double_racks_for_all_columns,
+            [f'{Block.COLUMN_PROTECTION}-OPTIMIZE'], ['GFS']),
+        f'{Block.COLUMN_PROTECTION}-OPTIMIZE': State(
+            actions.optimize_protective_racks,
+            [f'{Block.COLUMN_PROTECTION}-DONE'], ['GFS']),
+        f'{Block.COLUMN_PROTECTION}-DONE': State(
+            actions.default_action,
+            [f'{Block.MAIN}-ANALYZE_STRIPS'], ['GFS']),
     }
 
 
@@ -84,14 +136,17 @@ def get_rack_placement_states() -> dict[str, State]:
     """Returns a dictionary of states related to rack placement in the
     state machine."""
     return {
+        # === Проверка пересечений с зонами ===
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
-            [f'{Block.JOOZ}-DLF',f'{Block.EOZ}-IDR', f'{Block.MSR}-IDR'],
+            [f'{Block.JOOZ}-DLF', f'{Block.EOZ}-IDR', f'{Block.MSR}-IDR'],
             [f'{Block.RACK_PLACEMENT}-CNTRZ']),
         f'{Block.RACK_PLACEMENT}-CNTRZ': State(
             actions.assert_current_rack_intersecting_road_zones,
             [f'{Block.RACK_PLACEMENT}-CIRH'],
             [f'{Block.RACK_PLACEMENT}-IPC']),
+        
+        # === Увеличение счетчика поддонов ===
         f'{Block.RACK_PLACEMENT}-IPC': State(
             actions.increase_pallet_counter,
             [f'{Block.RACK_PLACEMENT}-CIEP'],
@@ -100,6 +155,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.assert_current_pallets_are_enough,
             [f'{Block.RACK_PLACEMENT}-SNF'],
             [f'{Block.RACK_PLACEMENT}-SR-CC']),
+        
+        # === Завершение работы с текущим грузом ===
         f'{Block.RACK_PLACEMENT}-GNC': State(
             actions.set_next_pallet,
             [f'{Block.MAIN}-RZCC-90'],
@@ -116,6 +173,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.remove_unavailable_rack_parts,
             [f'{Block.RACK_PLACEMENT}-GNC'],
             [f'{Block.MAIN}-SNZ']),
+        
+        # === Добавление новой секции ===
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -124,6 +183,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.assert_current_rack_fits_available_zone,
             [f'{Block.RACK_PLACEMENT}-CTNOZ'],
             [f'{Block.RACK_PLACEMENT}-DLF']),
+        
+        # === Удаление последней секции и сохранение ===
         f'{Block.RACK_PLACEMENT}-DLF': State(
             actions.delete_last_frame,
             [f'{Block.RACK_PLACEMENT}-SR'],
@@ -136,6 +197,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.set_next_rack_position_higher_default,
             [f'{Block.CF}-SNRTD'],
             ['GFS']),
+        
+        # === Создание двойного стеллажа ===
         f'{Block.RACK_PLACEMENT}-CDR': State(
             actions.place_new_double_rack,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
@@ -148,6 +211,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.swap_double_rack_to_single_rack,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
             [f'{Block.RACK_PLACEMENT}-SRG']),
+        
+        # === Сохранение группы стеллажей ===
         f'{Block.RACK_PLACEMENT}-SRG': State(
             actions.save_rack_group,
             [f'{Block.RACK_PLACEMENT}-RURP'],
@@ -156,6 +221,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.remove_unavailable_rack_parts,
             [f'{Block.MAIN}-RZCC-90'],
             [f'{Block.MAIN}-SNZ']),
+        
+        # === Обработка горизонтального проезда ===
         f'{Block.RACK_PLACEMENT}-CIRH': State(
             actions.assert_intersected_road_horizontal,
             [f'{Block.RACK_PLACEMENT}-MRV'],
@@ -164,6 +231,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.move_current_rack_verticaly,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
             ['GFS']),
+        
+        # === Обработка вертикального проезда (мост) ===
         f'{Block.RACK_PLACEMENT}-IFLEFR': State(
             actions.assert_current_shelf_length_enough_for_road,
             [f'{Block.RACK_PLACEMENT}-ICZHEFRB'],
@@ -180,6 +249,8 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.set_default_frame_size,
             [f'{Block.RACK_PLACEMENT}-IPC'],
             ['GFS']),
+        
+        # === Откат вращения ===
         f'{Block.RACK_PLACEMENT}-RZCC-90-3': State(
             actions.rotate_everything_90_counterclockwise,
             ['TS'], ['GFS']),
@@ -368,6 +439,7 @@ class StateMachine:
         states = {}
         states.update(get_general_states())
         states.update(get_main_loop_states())
+        states.update(get_column_protection_states())
         states.update(get_rack_placement_states())
         states.update(get_gooz_states())
         states.update(get_jooz_states())
