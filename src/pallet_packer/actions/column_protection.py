@@ -501,6 +501,7 @@ def _create_protective_rack_for_column(
     - Starts at the left edge of the zone
     - Has the column positioned between its two halves
     - Extends as far right as possible within the zone
+    - Respects zone boundaries and leaves space for roads
     
     Args:
         column (OccupiedZone): The column to protect.
@@ -519,19 +520,51 @@ def _create_protective_rack_for_column(
     pallet = solution.pallets[solution.pallet_idx]
     
     logger.debug(f"[COLUMN_PROTECTION]   Column bounds: y=[{column_bounds[1]:.1f}, {column_bounds[3]:.1f}]")
+    logger.debug(f"[COLUMN_PROTECTION]   Zone bounds: y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}]")
     
     # Calculate dynamic distance
     rack_distance = _calculate_dynamic_rack_distance_for_column(column, reference_book)
     
-    # Calculate Y position
+    # Calculate total rack height (both racks + distance between them)
+    total_rack_height = 2 * pallet.length + rack_distance
+    
+    logger.debug(f"[COLUMN_PROTECTION]   Pallet length: {pallet.length:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION]   Rack distance: {rack_distance:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION]   Total rack height: {total_rack_height:.1f}mm")
+    
+    # Calculate available space (zone height minus roads on both sides)
+    zone_height = zone_bounds[3] - zone_bounds[1]
+    available_height = zone_height - 2 * reference_book.roads_width
+    
+    logger.debug(f"[COLUMN_PROTECTION]   Zone height: {zone_height:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION]   Available height (with roads): {available_height:.1f}mm")
+    
+    if total_rack_height > available_height:
+        logger.error(f"[COLUMN_PROTECTION]   ✗ Rack too tall! {total_rack_height:.1f} > {available_height:.1f}")
+        raise ValueError(f"Protective rack doesn't fit in zone: {total_rack_height:.1f}mm > {available_height:.1f}mm")
+    
+    # Calculate Y position - try to center on column, but respect zone boundaries
     column_center_y = (column_bounds[1] + column_bounds[3]) / 2
-    first_rack_y = column_center_y - rack_distance / 2 - pallet.length / 2
-    first_rack_y = max(zone_bounds[1], first_rack_y)
+    
+    # Ideal position: center rack on column
+    ideal_first_rack_y = column_center_y - rack_distance / 2 - pallet.length / 2
+    
+    # Minimum position: must leave space for road at bottom
+    min_first_rack_y = zone_bounds[1] + reference_book.roads_width
+    
+    # Maximum position: must fit both racks + road at top
+    max_first_rack_y = zone_bounds[3] - reference_book.roads_width - total_rack_height
+    
+    # Choose position that respects boundaries
+    first_rack_y = max(min_first_rack_y, min(ideal_first_rack_y, max_first_rack_y))
+    
+    logger.debug(f"[COLUMN_PROTECTION]   Column center Y: {column_center_y:.1f}")
+    logger.debug(f"[COLUMN_PROTECTION]   Ideal Y: {ideal_first_rack_y:.1f}")
+    logger.debug(f"[COLUMN_PROTECTION]   Min Y: {min_first_rack_y:.1f}")
+    logger.debug(f"[COLUMN_PROTECTION]   Max Y: {max_first_rack_y:.1f}")
+    logger.debug(f"[COLUMN_PROTECTION]   Final Y: {first_rack_y:.1f}")
     
     position = (zone_bounds[0], first_rack_y)
-    
-    logger.debug(f"[COLUMN_PROTECTION]   Position: ({position[0]:.1f}, {position[1]:.1f})")
-    logger.debug(f"[COLUMN_PROTECTION]   Rack distance: {rack_distance:.1f}mm")
     
     # Create protective double rack
     try:
@@ -548,8 +581,31 @@ def _create_protective_rack_for_column(
             protected_column=column
         )
         
+        # Verify rack fits vertically with roads
+        rack_bounds = protective_rack.bounds
+        
+        expected_rack_top = first_rack_y + total_rack_height
+        logger.debug(f"[COLUMN_PROTECTION]   Expected rack bounds: y=[{first_rack_y:.1f}, {expected_rack_top:.1f}]")
+        logger.debug(f"[COLUMN_PROTECTION]   Actual rack bounds: y=[{rack_bounds[1]:.1f}, {rack_bounds[3]:.1f}]")
+        
+        # Check bottom boundary
+        min_allowed_y = zone_bounds[1] + reference_book.roads_width
+        if rack_bounds[1] < min_allowed_y:
+            logger.error(f"[COLUMN_PROTECTION]   ✗ Rack starts too low: {rack_bounds[1]:.1f} < {min_allowed_y:.1f}")
+            raise ValueError("Rack violates bottom road space")
+        
+        # Check top boundary
+        max_allowed_y = zone_bounds[3] - reference_book.roads_width
+        if rack_bounds[3] > max_allowed_y:
+            logger.error(f"[COLUMN_PROTECTION]   ✗ Rack extends too high: {rack_bounds[3]:.1f} > {max_allowed_y:.1f}")
+            raise ValueError("Rack violates top road space")
+        
+        logger.debug(f"[COLUMN_PROTECTION]   ✓ Rack fits vertically")
+        
         # Fill with frames
         _fill_protective_rack_with_frames(protective_rack, available_zone)
+        
+        logger.debug(f"[COLUMN_PROTECTION]   ✓ Rack created successfully")
         
         return protective_rack
         
@@ -577,18 +633,21 @@ def _fill_protective_rack_with_frames(
     frames_count = max(0, int(max_available_length // section_length))
     
     logger.debug(f"[COLUMN_PROTECTION]   Section length: {section_length:.1f}mm")
-    logger.debug(f"[COLUMN_PROTECTION]   Max available: {max_available_length:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION]   Max available length: {max_available_length:.1f}mm")
     logger.debug(f"[COLUMN_PROTECTION]   Calculated frames: {frames_count}")
     
     if frames_count > 0:
         protective_rack.add_multiple_frames(frames_count)
+        logger.debug(f"[COLUMN_PROTECTION]   Added {frames_count} frames")
     
-    # Verify the rack fits in the zone
+    # Verify the rack fits in the zone horizontally
     if not shapely.contains(available_zone.contour, protective_rack.contour):
-        logger.warning(f"[COLUMN_PROTECTION]   Rack doesn't fit! Trimming...")
+        logger.warning(f"[COLUMN_PROTECTION]   Rack doesn't fit horizontally! Trimming...")
+        original_frames = len(protective_rack.rack_1)
         while not shapely.contains(available_zone.contour, protective_rack.contour) and len(protective_rack.rack_1) > 0:
             protective_rack.delete_last_frame()
-        logger.warning(f"[COLUMN_PROTECTION]   Had to trim protective rack to fit zone. Final frames: {len(protective_rack.rack_1)}")
+        final_frames = len(protective_rack.rack_1)
+        logger.warning(f"[COLUMN_PROTECTION]   Had to trim from {original_frames} to {final_frames} frames")
 
 
 def _merge_close_protective_racks(
