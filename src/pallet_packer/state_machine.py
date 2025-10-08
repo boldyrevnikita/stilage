@@ -433,10 +433,10 @@ class StateMachine:
     def __init__(self, reference_book):
         self.states = self.__compile_states()
         self.reference_book = reference_book
-        logger.info("[STATE_MACHINE] ========================================")
-        logger.info("[STATE_MACHINE] State Machine initialized")
-        logger.info(f"[STATE_MACHINE] Total states: {len(self.states)}")
-        logger.info("[STATE_MACHINE] ========================================")
+        logger.warning("[STATE_MACHINE] ========================================")
+        logger.warning("[STATE_MACHINE] State Machine initialized")
+        logger.warning(f"[STATE_MACHINE] Total states: {len(self.states)}")
+        logger.warning("[STATE_MACHINE] ========================================")
 
     def __compile_states(self) -> dict[str, State]:
         """Compiles all states into a single dictionary."""
@@ -482,9 +482,9 @@ class StateMachine:
         action_function = current_state.process_function
         action_name = action_function.__name__ if hasattr(action_function, '__name__') else str(action_function)
         
-        logger.info(f"[STATE_MACHINE] ----------------------------------------")
-        logger.info(f"[STATE_MACHINE] Executing state: {state_name}")
-        logger.info(f"[STATE_MACHINE] Action: {action_name}")
+        logger.warning(f"[STATE_MACHINE] ----------------------------------------")
+        logger.warning(f"[STATE_MACHINE] Executing state: {state_name}")
+        logger.warning(f"[STATE_MACHINE] Action: {action_name}")
 
         if hasattr(solution, 'current_strip_idx') and hasattr(solution, 'free_strips'):
             logger.warning(f"[STATE_MACHINE] Current strip: {solution.current_strip_idx}/{len(solution.free_strips)}")
@@ -496,12 +496,12 @@ class StateMachine:
         try:
             action_function(self.reference_book, solution)
             solution.action_status = ActionStatus.SUCCESS
-            logger.info(f"[STATE_MACHINE] ✓ Action SUCCESS: {action_name}")
+            logger.warning(f"[STATE_MACHINE] ✓ Action SUCCESS: {action_name}")
             
         except ActionFailure as e:
             solution.action_status = ActionStatus.FAILED
-            logger.info(f"[STATE_MACHINE] ✗ Action FAILED: {action_name}")
-            logger.info(f"[STATE_MACHINE] Failure reason: {str(e)}")
+            logger.warning(f"[STATE_MACHINE] ✗ Action FAILED: {action_name}")
+            logger.inwarningfo(f"[STATE_MACHINE] Failure reason: {str(e)}")
             
         except Exception as e:
             logger.error(f"[STATE_MACHINE] ✗✗✗ CRITICAL ERROR in {action_name}: {e}")
@@ -517,17 +517,17 @@ class StateMachine:
         next_success_states = current_state.next_success_state_name_list
         next_failure_states = current_state.next_failure_state_name_list
 
-        logger.info(f"[STATE_MACHINE] Choosing next state from: {current_state_name}")
-        logger.info(f"[STATE_MACHINE] Current action status: {solution.action_status}")
+        logger.warning(f"[STATE_MACHINE] Choosing next state from: {current_state_name}")
+        logger.warning(f"[STATE_MACHINE] Current action status: {solution.action_status}")
 
         if solution.action_status == ActionStatus.SUCCESS:
             next_states = next_success_states
-            logger.info(f"[STATE_MACHINE] Following SUCCESS path: {next_states}")
+            logger.warning(f"[STATE_MACHINE] Following SUCCESS path: {next_states}")
         elif solution.action_status == ActionStatus.FAILED:
             next_states = next_failure_states
-            logger.info(f"[STATE_MACHINE] Following FAILURE path: {next_states}")
+            logger.warning(f"[STATE_MACHINE] Following FAILURE path: {next_states}")
         elif solution.action_status == ActionStatus.NOT_STARTED:
-            logger.info(f"[STATE_MACHINE] Action not started, returning current solution")
+            logger.warning(f"[STATE_MACHINE] Action not started, returning current solution")
             return [solution]
         else:
             raise ValueError("Unknown action status")
@@ -544,15 +544,15 @@ class StateMachine:
             new_solution.action_status = ActionStatus.NOT_STARTED
             new_solutions.append(new_solution)
             
-            logger.info(f"[STATE_MACHINE]   Branch {idx+1}/{len(next_states)}: → {next_state_name}")
+            logger.warning(f"[STATE_MACHINE]   Branch {idx+1}/{len(next_states)}: → {next_state_name}")
 
-        logger.info(f"[STATE_MACHINE] Created {len(new_solutions)} new solution(s)")
+        logger.warning(f"[STATE_MACHINE] Created {len(new_solutions)} new solution(s)")
         return new_solutions
 
     def remove_invalid_solutions(self, solutions: list[Solution]) -> list[Solution]:
         """Removes invalid solutions from the list of solutions."""
-        logger.info(f"[STATE_MACHINE] ========================================")
-        logger.info(f"[STATE_MACHINE] Filtering solutions: {len(solutions)} candidates")
+        logger.warning(f"[STATE_MACHINE] ========================================")
+        logger.warning(f"[STATE_MACHINE] Filtering solutions: {len(solutions)} candidates")
         
         valid_solutions = []
         failure_count = 0
@@ -563,18 +563,18 @@ class StateMachine:
             
             if solution.state == self.get_end_failure_state():
                 failure_count += 1
-                logger.info(f"[STATE_MACHINE]   ✗ Removed failure: {state_name}")
+                logger.warning(f"[STATE_MACHINE]   ✗ Removed failure: {state_name}")
                 continue
             elif solution.state == self.get_end_delete_state():
                 delete_count += 1
-                logger.info(f"[STATE_MACHINE]   ✗ Removed delete: {state_name}")
+                logger.warning(f"[STATE_MACHINE]   ✗ Removed delete: {state_name}")
                 continue
             
             valid_solutions.append(solution)
 
-        logger.info(f"[STATE_MACHINE] Filtered out: {failure_count} failures, {delete_count} deletes")
-        logger.info(f"[STATE_MACHINE] Valid solutions: {len(valid_solutions)}")
-        logger.info(f"[STATE_MACHINE] ========================================")
+        logger.warning(f"[STATE_MACHINE] Filtered out: {failure_count} failures, {delete_count} deletes")
+        logger.warning(f"[STATE_MACHINE] Valid solutions: {len(valid_solutions)}")
+        logger.warning(f"[STATE_MACHINE] ========================================")
         
         return valid_solutions
 
@@ -588,16 +588,16 @@ class StateMachine:
             
             if solution.state == self.get_end_normal_state():
                 end_solutions.append(solution)
-                logger.info(f"[STATE_MACHINE]   ✓ End solution found: {state_name}")
+                logger.warning(f"[STATE_MACHINE]   ✓ End solution found: {state_name}")
             else:
                 transitional_solutions.append(solution)
 
         if end_solutions:
-            logger.info(f"[STATE_MACHINE] ========================================")
-            logger.info(f"[STATE_MACHINE] FOUND {len(end_solutions)} COMPLETE SOLUTION(S)")
-            logger.info(f"[STATE_MACHINE] ========================================")
+            logger.warning(f"[STATE_MACHINE] ========================================")
+            logger.warning(f"[STATE_MACHINE] FOUND {len(end_solutions)} COMPLETE SOLUTION(S)")
+            logger.warning(f"[STATE_MACHINE] ========================================")
         
-        logger.info(f"[STATE_MACHINE] Transitional: {len(transitional_solutions)}, "
+        logger.warning(f"[STATE_MACHINE] Transitional: {len(transitional_solutions)}, "
                    f"Complete: {len(end_solutions)}")
         
         return transitional_solutions, end_solutions
