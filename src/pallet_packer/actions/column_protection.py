@@ -410,7 +410,7 @@ def _create_protective_rack_for_column(
     available_height = zone_height - 2 * reference_book.roads_width
     
     logger.warning(f"[COLUMN_PROTECTION]   Zone height: {zone_height:.1f}mm")
-    logger.inwarningfo(f"[COLUMN_PROTECTION]   Available (with roads): {zone_height:.1f} - 2×{reference_book.roads_width:.1f} = {available_height:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Available (with roads): {zone_height:.1f} - 2×{reference_book.roads_width:.1f} = {available_height:.1f}mm")
     
     if total_rack_height > available_height:
         logger.error(f"[COLUMN_PROTECTION]   ✗ TOO TALL: {total_rack_height:.1f} > {available_height:.1f}")
