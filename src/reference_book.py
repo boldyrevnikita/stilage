@@ -88,6 +88,8 @@ class ReferenceBook:
         
         # Additional height buffer for frame calculations
         self.frame_height_eps = 100.0
+
+        self.double_rack_distance_eps = 144.0
         
         # Maximum internal distance between two racks in a double rack (standard)
         self.max_double_rack_internal_distance = 1000.0
