@@ -63,7 +63,7 @@ def _save_protective_racks_as_rack_groups(
     logger.warning("[COLUMN_PROTECTION] ========================================")
     logger.warning("[COLUMN_PROTECTION] SAVING PROTECTIVE RACKS AS RACK_GROUPS")
     logger.warning("[COLUMN_PROTECTION] ========================================")
-    logger.warning(f"[COLUMN_PROTECTION] Initial rack_groups count: {len(solution.rack_groups)}")
+    logger.warning(f"[COLUMN_PROTECTION] Initial saved_rack_groups count: {len(solution.saved_rack_groups)}")
     
     saved_count = 0
     for idx, protective_rack in enumerate(solution.protective_racks):
@@ -86,8 +86,8 @@ def _save_protective_racks_as_rack_groups(
             if hasattr(rack_group, '_update_bounds'):
                 rack_group._update_bounds()
             
-            # Save to solution
-            solution.rack_groups.append(rack_group)
+            # Save to solution - ИСПРАВЛЕНО: saved_rack_groups вместо rack_groups!
+            solution.saved_rack_groups.append(rack_group)
             saved_count += 1
             
             rack_bounds = protective_rack.bounds
@@ -104,7 +104,7 @@ def _save_protective_racks_as_rack_groups(
     logger.warning(f"[COLUMN_PROTECTION] SAVE COMPLETE:")
     logger.warning(f"[COLUMN_PROTECTION]   Protective racks created: {len(solution.protective_racks)}")
     logger.warning(f"[COLUMN_PROTECTION]   Successfully saved: {saved_count}")
-    logger.warning(f"[COLUMN_PROTECTION]   Total rack_groups now: {len(solution.rack_groups)}")
+    logger.warning(f"[COLUMN_PROTECTION]   Total saved_rack_groups now: {len(solution.saved_rack_groups)}")
     logger.warning("[COLUMN_PROTECTION] ========================================")
 
 
