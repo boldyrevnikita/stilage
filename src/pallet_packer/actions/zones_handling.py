@@ -100,20 +100,22 @@ def set_next_zone(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Sets the next available zone as the current one.
-    
-    Args:
-        _ (ReferenceBook): The reference book (not used).
-        solution (Solution): The current solution.
-    
-    Raises:
-        ActionFailure: If no more zones available.
-    """
+    """Sets the next available zone as the current one."""
     if solution.available_zone_idx >= len(solution.available_zones) - 1:
         raise ActionFailure("No more available zones to process.")
 
     solution.available_zone_idx += 1
-    logger.info(f"[ZONES] Moving to zone {solution.available_zone_idx + 1}/{len(solution.available_zones)}")
+    
+    # DEBUG: Новая зона
+    new_zone = solution.available_zones[solution.available_zone_idx]
+    logger.info(f"[DEBUG_NEXT_ZONE] ========================================")
+    logger.info(f"[DEBUG_NEXT_ZONE] SWITCHING TO NEXT ZONE")
+    logger.info(f"[DEBUG_NEXT_ZONE] Zone index: {solution.available_zone_idx}/{len(solution.available_zones)}")
+    logger.info(f"[DEBUG_NEXT_ZONE] Zone bounds: {new_zone.bounds}")
+    width = new_zone.bounds[2] - new_zone.bounds[0]
+    height = new_zone.bounds[3] - new_zone.bounds[1]
+    logger.info(f"[DEBUG_NEXT_ZONE] Zone size: {width:.1f} x {height:.1f} mm")
+    logger.info(f"[DEBUG_NEXT_ZONE] ========================================")
 
 
 def set_zero_zone(
@@ -176,34 +178,47 @@ def split_available_zone(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Splits the available zone into two parts.
-    
-    Args:
-        reference_book (ReferenceBook): The reference book.
-        solution (Solution): The current solution.
-    
-    Raises:
-        ActionFailure: If no racks are placed (nothing to split around).
-    """
+    """Splits the available zone into two parts."""
     if len(solution.current_rack_group.racks) == 0:
         raise ActionFailure("No racks are placed.")
 
     current_rack_group = solution.current_rack_group
     available_zone = solution.available_zones[solution.available_zone_idx]
+    
+    # DEBUG: Зона ДО split
+    logger.info(f"[DEBUG_SPLIT] ========================================")
+    logger.info(f"[DEBUG_SPLIT] SPLITTING ZONE")
+    logger.info(f"[DEBUG_SPLIT] Zone BEFORE split: {available_zone.bounds}")
+    zone_width = available_zone.bounds[2] - available_zone.bounds[0]
+    zone_height = available_zone.bounds[3] - available_zone.bounds[1]
+    logger.info(f"[DEBUG_SPLIT] Size BEFORE: {zone_width:.1f} x {zone_height:.1f} mm")
+    
     split_point = list(current_rack_group.bounds[2:])
     split_point[0] += reference_book.roads_width
     split_point[1] += reference_book.roads_width
     split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
     split_point[1] = min(available_zone.bounds[3], split_point[1]) - 1
 
+    logger.info(f"[DEBUG_SPLIT] Split point: {split_point}")
+
     if available_zone.contains_point(split_point):
         new_zones = available_zone.split_zone(split_point)
+        
+        # DEBUG: Новые зоны ПОСЛЕ split
+        logger.info(f"[DEBUG_SPLIT] Created {len(new_zones)} new zones:")
+        for i, zone in enumerate(new_zones):
+            width = zone.bounds[2] - zone.bounds[0]
+            height = zone.bounds[3] - zone.bounds[1]
+            logger.info(f"[DEBUG_SPLIT]   Zone {i}: {zone.bounds}")
+            logger.info(f"[DEBUG_SPLIT]   Size {i}: {width:.1f} x {height:.1f} mm")
+        
         solution.available_zones.extend(new_zones)
-        logger.info(f"[ZONES] Split zone at point {split_point}. Created {len(new_zones)} new zones")
+        logger.info(f"[DEBUG_SPLIT] Total zones now: {len(solution.available_zones)}")
 
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zone_idx -= 1
-    logger.debug(f"[ZONES] Total zones now: {len(solution.available_zones)}")
+    
+    logger.info(f"[DEBUG_SPLIT] ========================================")
 
 
 def sort_available_zones_by_area_and_height(
