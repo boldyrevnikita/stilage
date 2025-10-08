@@ -328,7 +328,7 @@ def get_eoz_states() -> dict[str, State]:
         f'{Block.EOZ}-COZ-R2': State(
             actions.assert_last_shelf_of_second_rack_covers_occupied_zone,
             [f'{Block.EOZ}-DR-R2'],
-            ['GFS']),
+            ['GFS']), 
         f'{Block.EOZ}-DR-R1': State(
             actions.disable_last_frame_for_first_rack,
             [f'{Block.RACK_PLACEMENT}-CNTRZ'],
@@ -485,6 +485,13 @@ class StateMachine:
         logger.info(f"[STATE_MACHINE] ----------------------------------------")
         logger.info(f"[STATE_MACHINE] Executing state: {state_name}")
         logger.info(f"[STATE_MACHINE] Action: {action_name}")
+
+        if hasattr(solution, 'current_strip_idx') and hasattr(solution, 'free_strips'):
+        logger.warning(f"[STATE_MACHINE] Current strip: {solution.current_strip_idx}/{len(solution.free_strips)}")
+        if solution.free_strips:
+            strip = solution.free_strips[solution.current_strip_idx] if solution.current_strip_idx < len(solution.free_strips) else None
+            if strip:
+                logger.warning(f"[STATE_MACHINE] Strip Y: [{strip['y_min']:.1f}, {strip['y_max']:.1f}], width={strip['width']:.1f}")
         
         try:
             action_function(self.reference_book, solution)
