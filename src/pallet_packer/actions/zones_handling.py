@@ -260,6 +260,13 @@ def set_current_occupied_zones_and_road_zones(
     solution.columns_in_zone = []
     solution.current_occupied_zones = []
     solution.current_road_zones = []
+    
+    # NEW: Clear protective racks and strips when switching zones
+    solution.protective_racks = []
+    solution.free_strips = []
+    solution.current_strip_idx = 0
+    
+    logger.warning(f"[ZONES] Cleared protective racks and strips for new zone")
 
     # Process occupied zones - add ALL obstacles to current_occupied_zones
     for occupied_zone in solution.occupied_zones:
@@ -284,7 +291,7 @@ def set_current_occupied_zones_and_road_zones(
     solution.current_occupied_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
     solution.current_road_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
     
-    logger.info(f"[ZONES] Zone obstacles: {len(solution.current_occupied_zones)} obstacles, "
+    logger.warning(f"[ZONES] Zone obstacles: {len(solution.current_occupied_zones)} obstacles, "
                f"{len(solution.current_road_zones)} road zones")
 
 
