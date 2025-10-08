@@ -24,7 +24,7 @@ def identify_and_protect_all_columns(
     solution: Solution
 ) -> None:
     """Main function that executes Phase 1: identify all columns and protect them."""
-    logger.info("[COLUMN_PROTECTION] ========================================")
+    logger.info("[COLUMN_PROTECTION NEW LOGS] ========================================")
     logger.info("[COLUMN_PROTECTION] Starting Phase 1: Protect all columns")
     logger.info("[COLUMN_PROTECTION] ========================================")
     
