@@ -38,7 +38,9 @@ def identify_and_protect_all_columns(
     Raises:
         ActionFailure: If no columns found or if protective racks cannot be created.
     """
+    logger.info("[COLUMN_PROTECTION] ========================================")
     logger.info("[COLUMN_PROTECTION] Starting Phase 1: Protect all columns")
+    logger.info("[COLUMN_PROTECTION] ========================================")
     
     # Step 1: Identify columns
     identify_columns_in_zone(reference_book, solution)
@@ -50,6 +52,7 @@ def identify_and_protect_all_columns(
     optimize_protective_racks(reference_book, solution)
     
     logger.info(f"[COLUMN_PROTECTION] Phase 1 complete. Protected {len(solution.protective_racks)} columns")
+    logger.info("[COLUMN_PROTECTION] ========================================")
 
 
 def identify_columns_in_zone(
@@ -71,22 +74,34 @@ def identify_columns_in_zone(
         solution.current_occupied_zones in place.
     """
     logger.info("[COLUMN_PROTECTION] Identifying columns in zone")
+    logger.info(f"[COLUMN_PROTECTION] Initial obstacles: {len(solution.current_occupied_zones)}")
+    logger.info(f"[COLUMN_PROTECTION] Thresholds: max_size={reference_book.column_identification_max_size:.1f}mm, "
+                f"max_aspect={reference_book.column_identification_max_aspect_ratio:.2f}")
     
     solution.columns_in_zone = []
     remaining_occupied_zones = []
     
-    for occupied_zone in solution.current_occupied_zones:
+    for idx, occupied_zone in enumerate(solution.current_occupied_zones):
+        bounds = occupied_zone.contour.bounds
+        width = bounds[2] - bounds[0]
+        height = bounds[3] - bounds[1]
+        
         if _is_column(occupied_zone, reference_book):
             solution.columns_in_zone.append(occupied_zone)
-            logger.debug(f"[COLUMN_PROTECTION] Found column at {occupied_zone.bounds}")
+            logger.info(f"[COLUMN_PROTECTION] ✓ Column {len(solution.columns_in_zone)}: "
+                       f"bounds={bounds}, width={width:.1f}, height={height:.1f}")
         else:
             remaining_occupied_zones.append(occupied_zone)
+            logger.debug(f"[COLUMN_PROTECTION] ✗ Not a column {idx}: "
+                        f"width={width:.1f}, height={height:.1f}")
     
     # Update current_occupied_zones to exclude columns
     solution.current_occupied_zones = remaining_occupied_zones
     
-    logger.info(f"[COLUMN_PROTECTION] Found {len(solution.columns_in_zone)} columns, "
+    logger.info(f"[COLUMN_PROTECTION] ========================================")
+    logger.info(f"[COLUMN_PROTECTION] RESULT: {len(solution.columns_in_zone)} columns, "
                 f"{len(remaining_occupied_zones)} other obstacles")
+    logger.info(f"[COLUMN_PROTECTION] ========================================")
 
 
 def create_protective_double_racks_for_all_columns(
@@ -108,16 +123,22 @@ def create_protective_double_racks_for_all_columns(
         ActionFailure: If columns_in_zone is empty or if rack creation fails.
     """
     if not solution.columns_in_zone:
-        logger.warning("[COLUMN_PROTECTION] No columns found to protect")
-        # This is not necessarily a failure - zone might have no columns
+        logger.warning("[COLUMN_PROTECTION] No columns found to protect - skipping")
         return
     
     logger.info(f"[COLUMN_PROTECTION] Creating protective racks for {len(solution.columns_in_zone)} columns")
     
     available_zone = solution.available_zones[solution.available_zone_idx]
+    zone_bounds = available_zone.bounds
+    logger.info(f"[COLUMN_PROTECTION] Zone bounds: x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
+                f"y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}]")
+    logger.info(f"[COLUMN_PROTECTION] Zone size: width={zone_bounds[2]-zone_bounds[0]:.1f}, "
+                f"height={zone_bounds[3]-zone_bounds[1]:.1f}")
+    
     solution.protective_racks = []
     
     for idx, column in enumerate(solution.columns_in_zone):
+        logger.info(f"[COLUMN_PROTECTION] --- Creating rack {idx+1}/{len(solution.columns_in_zone)} ---")
         try:
             protective_rack = _create_protective_rack_for_column(
                 column=column,
@@ -127,17 +148,22 @@ def create_protective_double_racks_for_all_columns(
             )
             
             solution.protective_racks.append(protective_rack)
-            logger.debug(f"[COLUMN_PROTECTION] Created protective rack {idx + 1}/{len(solution.columns_in_zone)}")
+            rack_bounds = protective_rack.bounds
+            logger.info(f"[COLUMN_PROTECTION] ✓ Rack {idx+1} created: "
+                       f"y=[{rack_bounds[1]:.1f}, {rack_bounds[3]:.1f}], "
+                       f"height={rack_bounds[3]-rack_bounds[1]:.1f}, "
+                       f"frames={len(protective_rack.rack_1)}")
             
         except Exception as e:
-            logger.error(f"[COLUMN_PROTECTION] Failed to create protective rack for column {idx}: {e}")
-            # Continue with other columns even if one fails
+            logger.error(f"[COLUMN_PROTECTION] ✗ Failed to create protective rack for column {idx}: {e}")
             continue
     
     if not solution.protective_racks:
         raise ActionFailure("Failed to create any protective racks for columns")
     
+    logger.info(f"[COLUMN_PROTECTION] ========================================")
     logger.info(f"[COLUMN_PROTECTION] Successfully created {len(solution.protective_racks)} protective racks")
+    logger.info(f"[COLUMN_PROTECTION] ========================================")
 
 
 def optimize_protective_racks(
@@ -192,38 +218,68 @@ def analyze_free_strips(
         reference_book (ReferenceBook): The reference book.
         solution (Solution): The current solution.
     """
-    logger.info("[COLUMN_PROTECTION] Analyzing free strips")
+    logger.info("[COLUMN_PROTECTION] ========================================")
+    logger.info("[COLUMN_PROTECTION] ANALYZING FREE STRIPS")
+    logger.info("[COLUMN_PROTECTION] ========================================")
     
     available_zone = solution.available_zones[solution.available_zone_idx]
     zone_bounds = available_zone.bounds
     solution.free_strips = []
     
+    logger.info(f"[COLUMN_PROTECTION] Zone: x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
+                f"y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}]")
+    logger.info(f"[COLUMN_PROTECTION] Zone height: {zone_bounds[3]-zone_bounds[1]:.1f}mm")
+    logger.info(f"[COLUMN_PROTECTION] Min strip width required: {reference_book.min_free_strip_width:.1f}mm")
+    logger.info(f"[COLUMN_PROTECTION] Roads width: {reference_book.roads_width:.1f}mm")
+    
     if not solution.protective_racks:
         # No protective racks - entire zone is one free strip
+        strip_width = zone_bounds[3] - zone_bounds[1]
         solution.free_strips.append({
             'y_min': zone_bounds[1],
             'y_max': zone_bounds[3],
-            'width': zone_bounds[3] - zone_bounds[1],
+            'width': strip_width,
             'index': 0
         })
-        logger.info("[COLUMN_PROTECTION] No protective racks - entire zone is free")
+        logger.info(f"[COLUMN_PROTECTION] No protective racks - entire zone is free")
+        logger.info(f"[COLUMN_PROTECTION] Single strip: width={strip_width:.1f}mm")
+        logger.info(f"[COLUMN_PROTECTION] ========================================")
         return
+    
+    logger.info(f"[COLUMN_PROTECTION] Found {len(solution.protective_racks)} protective racks")
     
     # Sort protective racks by Y coordinate
     sorted_racks = sorted(solution.protective_racks, key=lambda r: r.bounds[1])
     
+    # Log all protective racks
+    for idx, rack in enumerate(sorted_racks):
+        rack_height = rack.bounds[3] - rack.bounds[1]
+        logger.info(f"[COLUMN_PROTECTION]   Rack {idx}: y=[{rack.bounds[1]:.1f}, {rack.bounds[3]:.1f}], "
+                   f"height={rack_height:.1f}mm")
+    
+    logger.info(f"[COLUMN_PROTECTION] --- Checking strips ---")
+    
     # Strip below first protective rack
     first_rack = sorted_racks[0]
-    strip_width = first_rack.bounds[1] - zone_bounds[1] - reference_book.roads_width
+    strip_y_min = zone_bounds[1]
+    strip_y_max = first_rack.bounds[1] - reference_book.roads_width
+    strip_width = strip_y_max - strip_y_min
+    
+    logger.info(f"[COLUMN_PROTECTION] Strip BELOW first rack:")
+    logger.info(f"[COLUMN_PROTECTION]   y_min = zone_bounds[1] = {zone_bounds[1]:.1f}")
+    logger.info(f"[COLUMN_PROTECTION]   y_max = first_rack.y_min - roads_width = {first_rack.bounds[1]:.1f} - {reference_book.roads_width:.1f} = {strip_y_max:.1f}")
+    logger.info(f"[COLUMN_PROTECTION]   width = {strip_width:.1f}mm")
     
     if strip_width >= reference_book.min_free_strip_width:
         solution.free_strips.append({
-            'y_min': zone_bounds[1],
-            'y_max': first_rack.bounds[1] - reference_book.roads_width,
+            'y_min': strip_y_min,
+            'y_max': strip_y_max,
             'width': strip_width,
             'index': len(solution.free_strips)
         })
-        logger.debug(f"[COLUMN_PROTECTION] Free strip 0: y=[{zone_bounds[1]:.1f}, {first_rack.bounds[1] - reference_book.roads_width:.1f}], width={strip_width:.1f}")
+        logger.info(f"[COLUMN_PROTECTION]   ✓ ADDED strip {len(solution.free_strips)-1}")
+    else:
+        logger.warning(f"[COLUMN_PROTECTION]   ✗ REJECTED: {strip_width:.1f} < {reference_book.min_free_strip_width:.1f}")
     
     # Strips between consecutive protective racks
     for i in range(len(sorted_racks) - 1):
@@ -234,6 +290,11 @@ def analyze_free_strips(
         strip_y_max = rack_2.bounds[1] - reference_book.roads_width
         strip_width = strip_y_max - strip_y_min
         
+        logger.info(f"[COLUMN_PROTECTION] Strip BETWEEN rack {i} and rack {i+1}:")
+        logger.info(f"[COLUMN_PROTECTION]   y_min = rack_{i}.y_max + roads_width = {rack_1.bounds[3]:.1f} + {reference_book.roads_width:.1f} = {strip_y_min:.1f}")
+        logger.info(f"[COLUMN_PROTECTION]   y_max = rack_{i+1}.y_min - roads_width = {rack_2.bounds[1]:.1f} - {reference_book.roads_width:.1f} = {strip_y_max:.1f}")
+        logger.info(f"[COLUMN_PROTECTION]   width = {strip_width:.1f}mm")
+        
         if strip_width >= reference_book.min_free_strip_width:
             solution.free_strips.append({
                 'y_min': strip_y_min,
@@ -241,22 +302,39 @@ def analyze_free_strips(
                 'width': strip_width,
                 'index': len(solution.free_strips)
             })
-            logger.debug(f"[COLUMN_PROTECTION] Free strip {len(solution.free_strips) - 1}: y=[{strip_y_min:.1f}, {strip_y_max:.1f}], width={strip_width:.1f}")
+            logger.info(f"[COLUMN_PROTECTION]   ✓ ADDED strip {len(solution.free_strips)-1}")
+        else:
+            logger.warning(f"[COLUMN_PROTECTION]   ✗ REJECTED: {strip_width:.1f} < {reference_book.min_free_strip_width:.1f}")
     
     # Strip above last protective rack
     last_rack = sorted_racks[-1]
-    strip_width = zone_bounds[3] - last_rack.bounds[3] - reference_book.roads_width
+    strip_y_min = last_rack.bounds[3] + reference_book.roads_width
+    strip_y_max = zone_bounds[3]
+    strip_width = strip_y_max - strip_y_min
+    
+    logger.info(f"[COLUMN_PROTECTION] Strip ABOVE last rack:")
+    logger.info(f"[COLUMN_PROTECTION]   y_min = last_rack.y_max + roads_width = {last_rack.bounds[3]:.1f} + {reference_book.roads_width:.1f} = {strip_y_min:.1f}")
+    logger.info(f"[COLUMN_PROTECTION]   y_max = zone_bounds[3] = {zone_bounds[3]:.1f}")
+    logger.info(f"[COLUMN_PROTECTION]   width = {strip_width:.1f}mm")
     
     if strip_width >= reference_book.min_free_strip_width:
         solution.free_strips.append({
-            'y_min': last_rack.bounds[3] + reference_book.roads_width,
-            'y_max': zone_bounds[3],
+            'y_min': strip_y_min,
+            'y_max': strip_y_max,
             'width': strip_width,
             'index': len(solution.free_strips)
         })
-        logger.debug(f"[COLUMN_PROTECTION] Free strip {len(solution.free_strips) - 1}: y=[{last_rack.bounds[3] + reference_book.roads_width:.1f}, {zone_bounds[3]:.1f}], width={strip_width:.1f}")
+        logger.info(f"[COLUMN_PROTECTION]   ✓ ADDED strip {len(solution.free_strips)-1}")
+    else:
+        logger.warning(f"[COLUMN_PROTECTION]   ✗ REJECTED: {strip_width:.1f} < {reference_book.min_free_strip_width:.1f}")
     
-    logger.info(f"[COLUMN_PROTECTION] Found {len(solution.free_strips)} free strips for regular rack placement")
+    logger.info(f"[COLUMN_PROTECTION] ========================================")
+    logger.info(f"[COLUMN_PROTECTION] RESULT: {len(solution.free_strips)} free strips available")
+    if solution.free_strips:
+        total_free_height = sum(s['width'] for s in solution.free_strips)
+        logger.info(f"[COLUMN_PROTECTION] Total free height: {total_free_height:.1f}mm")
+        logger.info(f"[COLUMN_PROTECTION] Percentage of zone: {100*total_free_height/(zone_bounds[3]-zone_bounds[1]):.1f}%")
+    logger.info(f"[COLUMN_PROTECTION] ========================================")
 
 
 def set_first_free_strip(
@@ -272,11 +350,18 @@ def set_first_free_strip(
     Raises:
         ActionFailure: If no free strips are available.
     """
+    logger.info("[COLUMN_PROTECTION] Setting first free strip")
+    
     if not solution.free_strips:
+        logger.warning("[COLUMN_PROTECTION] ✗ No free strips available!")
+        logger.warning("[COLUMN_PROTECTION] Will proceed with standard placement logic")
         raise ActionFailure("No free strips available for rack placement")
     
     solution.current_strip_idx = 0
-    logger.info(f"[COLUMN_PROTECTION] Starting with free strip 0 of {len(solution.free_strips)}")
+    strip = solution.free_strips[0]
+    logger.info(f"[COLUMN_PROTECTION] ✓ Starting with strip 0: "
+                f"y=[{strip['y_min']:.1f}, {strip['y_max']:.1f}], "
+                f"width={strip['width']:.1f}mm")
 
 
 def check_if_more_strips_available(
@@ -292,9 +377,14 @@ def check_if_more_strips_available(
     Raises:
         ActionFailure: If no more strips available.
     """
+    logger.info(f"[COLUMN_PROTECTION] Checking for more strips (current: {solution.current_strip_idx}, "
+                f"total: {len(solution.free_strips)})")
+    
     if solution.current_strip_idx >= len(solution.free_strips) - 1:
-        logger.info("[COLUMN_PROTECTION] All free strips processed")
+        logger.info("[COLUMN_PROTECTION] ✓ All free strips processed")
         raise ActionFailure("No more free strips to process")
+    
+    logger.info(f"[COLUMN_PROTECTION] More strips available: {len(solution.free_strips) - solution.current_strip_idx - 1}")
 
 
 def set_next_free_strip(
@@ -311,10 +401,14 @@ def set_next_free_strip(
         ActionFailure: If already at last strip.
     """
     if solution.current_strip_idx >= len(solution.free_strips) - 1:
+        logger.error("[COLUMN_PROTECTION] ✗ Already at last free strip!")
         raise ActionFailure("Already at last free strip")
     
     solution.current_strip_idx += 1
-    logger.info(f"[COLUMN_PROTECTION] Moving to free strip {solution.current_strip_idx} of {len(solution.free_strips)}")
+    strip = solution.free_strips[solution.current_strip_idx]
+    logger.info(f"[COLUMN_PROTECTION] ✓ Moving to strip {solution.current_strip_idx}: "
+                f"y=[{strip['y_min']:.1f}, {strip['y_max']:.1f}], "
+                f"width={strip['width']:.1f}mm")
 
 
 # =============================================================================
@@ -358,10 +452,6 @@ def _is_column(occupied_zone: OccupiedZone, reference_book: ReferenceBook) -> bo
     
     result = is_compact and is_small and is_not_available
     
-    if result:
-        logger.debug(f"[COLUMN_PROTECTION] Column identified: width={width:.1f}, height={height:.1f}, "
-                    f"aspect_ratio={aspect_ratio:.2f}, max_dim={max_dimension:.1f}")
-    
     return result
 
 
@@ -393,7 +483,8 @@ def _calculate_dynamic_rack_distance_for_column(
                       f"Required distance {distance:.1f}mm exceeds max {max_distance:.1f}mm")
         distance = max_distance
     
-    logger.debug(f"[COLUMN_PROTECTION] Calculated rack distance: {distance:.1f}mm for column width {column_width:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION] Rack distance: {distance:.1f}mm (column: {column_width:.1f}mm, "
+                f"clearance: {column.clearance:.1f}mm, eps: {reference_book.double_rack_distance_eps:.1f}mm)")
     
     return distance
 
@@ -423,27 +514,24 @@ def _create_protective_rack_for_column(
     Raises:
         ValueError: If rack cannot be created for the column.
     """
+    column_bounds = column.contour.bounds
+    zone_bounds = available_zone.bounds
+    pallet = solution.pallets[solution.pallet_idx]
+    
+    logger.debug(f"[COLUMN_PROTECTION]   Column bounds: y=[{column_bounds[1]:.1f}, {column_bounds[3]:.1f}]")
+    
     # Calculate dynamic distance
     rack_distance = _calculate_dynamic_rack_distance_for_column(column, reference_book)
     
-    # Position: align with column's Y coordinate
-    column_bounds = column.contour.bounds
-    zone_bounds = available_zone.bounds
-    
-    # Position first rack at zone's left edge, Y-aligned with column
-    # We want the column to be between the two halves, so:
-    # first_rack Y = column center Y - rack_distance/2 - pallet.length/2
-    pallet = solution.pallets[solution.pallet_idx]
-    
+    # Calculate Y position
     column_center_y = (column_bounds[1] + column_bounds[3]) / 2
-    
-    # Calculate Y position for first rack so that column is centered between halves
     first_rack_y = column_center_y - rack_distance / 2 - pallet.length / 2
-    
-    # Ensure we don't go below zone boundary
     first_rack_y = max(zone_bounds[1], first_rack_y)
     
     position = (zone_bounds[0], first_rack_y)
+    
+    logger.debug(f"[COLUMN_PROTECTION]   Position: ({position[0]:.1f}, {position[1]:.1f})")
+    logger.debug(f"[COLUMN_PROTECTION]   Rack distance: {rack_distance:.1f}mm")
     
     # Create protective double rack
     try:
@@ -460,11 +548,8 @@ def _create_protective_rack_for_column(
             protected_column=column
         )
         
-        # Fill with frames to make it as long as possible
+        # Fill with frames
         _fill_protective_rack_with_frames(protective_rack, available_zone)
-        
-        logger.debug(f"[COLUMN_PROTECTION] Created protective rack at y={first_rack_y:.1f}, "
-                    f"distance={rack_distance:.1f}, frames={len(protective_rack.rack_1)}")
         
         return protective_rack
         
@@ -483,7 +568,6 @@ def _fill_protective_rack_with_frames(
         protective_rack (DoubleRack): The protective rack to fill.
         available_zone: The available zone (for boundary checking).
     """
-    # Calculate how many frames can fit
     section_length = (protective_rack.rack_1.beam_type.length + 
                      protective_rack.rack_1.upright_type.width)
     
@@ -492,16 +576,19 @@ def _fill_protective_rack_with_frames(
     
     frames_count = max(0, int(max_available_length // section_length))
     
+    logger.debug(f"[COLUMN_PROTECTION]   Section length: {section_length:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION]   Max available: {max_available_length:.1f}mm")
+    logger.debug(f"[COLUMN_PROTECTION]   Calculated frames: {frames_count}")
+    
     if frames_count > 0:
         protective_rack.add_multiple_frames(frames_count)
-        logger.debug(f"[COLUMN_PROTECTION] Added {frames_count} frames to protective rack")
     
     # Verify the rack fits in the zone
     if not shapely.contains(available_zone.contour, protective_rack.contour):
-        # Remove frames until it fits
+        logger.warning(f"[COLUMN_PROTECTION]   Rack doesn't fit! Trimming...")
         while not shapely.contains(available_zone.contour, protective_rack.contour) and len(protective_rack.rack_1) > 0:
             protective_rack.delete_last_frame()
-        logger.warning(f"[COLUMN_PROTECTION] Had to trim protective rack to fit zone. Final frames: {len(protective_rack.rack_1)}")
+        logger.warning(f"[COLUMN_PROTECTION]   Had to trim protective rack to fit zone. Final frames: {len(protective_rack.rack_1)}")
 
 
 def _merge_close_protective_racks(
@@ -522,41 +609,18 @@ def _merge_close_protective_racks(
     
     logger.debug("[COLUMN_PROTECTION] Checking for mergeable protective racks")
     
-    merged_indices = set()
-    new_protective_racks = []
-    
-    i = 0
-    while i < len(solution.protective_racks):
-        if i in merged_indices:
-            i += 1
-            continue
-        
+    for i in range(len(solution.protective_racks) - 1):
         current_rack = solution.protective_racks[i]
+        next_rack = solution.protective_racks[i + 1]
+        
         current_column = current_rack.protected_column
+        next_column = next_rack.protected_column
         
-        # Check if next rack is close enough to merge
-        if i + 1 < len(solution.protective_racks):
-            next_rack = solution.protective_racks[i + 1]
-            next_column = next_rack.protected_column
-            
-            # Calculate gap between columns
-            gap = next_column.bounds[1] - current_column.bounds[3]
-            
-            # If gap is smaller than minimum road width, merge
-            if gap < reference_book.roads_width:
-                logger.info(f"[COLUMN_PROTECTION] Merging protective racks {i} and {i+1} (gap={gap:.1f}mm)")
-                # For now, just keep both separate (merging is complex)
-                # In future: create one wide rack covering both columns
-                new_protective_racks.append(current_rack)
-                merged_indices.add(i)
-                i += 1
-                continue
+        gap = next_column.bounds[1] - current_column.bounds[3]
         
-        new_protective_racks.append(current_rack)
-        i += 1
-    
-    # Update solution (currently no actual merging, just preparation)
-    # solution.protective_racks = new_protective_racks
+        if gap < reference_book.roads_width:
+            logger.info(f"[COLUMN_PROTECTION] Close racks {i} and {i+1}: gap={gap:.1f}mm < {reference_book.roads_width:.1f}mm")
+            # For now, just log - merging is complex
 
 
 def _shorten_edge_protective_racks(
@@ -575,20 +639,15 @@ def _shorten_edge_protective_racks(
     available_zone = solution.available_zones[solution.available_zone_idx]
     zone_bounds = available_zone.bounds
     
-    for protective_rack in solution.protective_racks:
+    for idx, protective_rack in enumerate(solution.protective_racks):
         column = protective_rack.protected_column
         column_bounds = column.bounds
         
-        # Check distance from column to left edge
         distance_to_left = column_bounds[0] - zone_bounds[0]
-        
-        # Check distance from column to right edge  
         distance_to_right = zone_bounds[2] - column_bounds[2]
         
-        # If column is very close to an edge, we might optimize
-        # For now, just log the information
         if distance_to_left < reference_book.roads_width * 2:
-            logger.debug(f"[COLUMN_PROTECTION] Column close to left edge: {distance_to_left:.1f}mm")
+            logger.debug(f"[COLUMN_PROTECTION] Rack {idx} near left edge: {distance_to_left:.1f}mm")
         
         if distance_to_right < reference_book.roads_width * 2:
-            logger.debug(f"[COLUMN_PROTECTION] Column close to right edge: {distance_to_right:.1f}mm")
+            logger.debug(f"[COLUMN_PROTECTION] Rack {idx} near right edge: {distance_to_right:.1f}mm")
