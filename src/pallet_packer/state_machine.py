@@ -199,7 +199,7 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
             [f'{Block.CF}-SNRTD'],
-            ['GFS']),
+            [f'{Block.MAIN}-CHECK_STRIPS']), 
         
         # === Создание двойного стеллажа ===
         f'{Block.RACK_PLACEMENT}-CDR': State(
