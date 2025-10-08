@@ -236,10 +236,27 @@ def place_new_double_rack(
     solution.last_intersected_vertical_road = None
 
     current_rack_group = solution.current_rack_group
+    
+    # DEBUG: BEFORE creating rack
+    logger.warning(f"[DEBUG_RACK] ========================================")
+    logger.warning(f"[DEBUG_RACK] PLACE_NEW_DOUBLE_RACK called")
+    logger.warning(f"[DEBUG_RACK] RackGroup BEFORE place_double_rack:")
+    logger.warning(f"[DEBUG_RACK]   bounds: {current_rack_group.bounds}")
+    logger.warning(f"[DEBUG_RACK]   position: {current_rack_group.position}")
+    logger.warning(f"[DEBUG_RACK]   racks count: {len(current_rack_group.racks)}")
+    
     current_rack_group.place_double_rack()
     
-    # NEW: Check intersection with protective racks
+    # DEBUG: AFTER creating rack
     new_rack = current_rack_group.current_rack
+    logger.warning(f"[DEBUG_RACK] RackGroup AFTER place_double_rack:")
+    logger.warning(f"[DEBUG_RACK]   bounds: {current_rack_group.bounds}")
+    logger.warning(f"[DEBUG_RACK]   New rack bounds: {new_rack.bounds}")
+    rack_width = new_rack.bounds[2] - new_rack.bounds[0]
+    logger.warning(f"[DEBUG_RACK]   New rack width: {rack_width:.1f} mm")
+    logger.warning(f"[DEBUG_RACK] ========================================")
+    
+    # NEW: Check intersection with protective racks
     for protective_rack in solution.protective_racks:
         if new_rack.intersects(protective_rack.contour):
             logger.warning("[RACK_PLACEMENT] New double rack intersects with protective rack")
@@ -399,22 +416,38 @@ def create_new_rack(
 
     solution.last_intersected_vertical_road = None
 
+    # DEBUG: BEFORE creating rack
+    logger.warning(f"[DEBUG_RACK] ========================================")
+    logger.warning(f"[DEBUG_RACK] CREATE_NEW_RACK called")
+    logger.warning(f"[DEBUG_RACK] Rack type: {solution.next_rack_type.__name__}")
+    logger.warning(f"[DEBUG_RACK] RackGroup BEFORE creating rack:")
+    logger.warning(f"[DEBUG_RACK]   bounds: {current_rack_group.bounds}")
+    logger.warning(f"[DEBUG_RACK]   position: {current_rack_group.position}")
+    logger.warning(f"[DEBUG_RACK]   racks count: {len(current_rack_group.racks)}")
+
     if solution.next_rack_type is Rack:
         current_rack_group.place_single_rack()
         logger.debug("[RACK_PLACEMENT] Created new single rack")
     elif solution.next_rack_type is DoubleRack:
         current_rack_group.place_double_rack()
-        
-        # NEW: Check intersection with protective racks
-        new_rack = current_rack_group.current_rack
-        for protective_rack in solution.protective_racks:
-            if new_rack.intersects(protective_rack.contour):
-                logger.warning("[RACK_PLACEMENT] New rack intersects with protective rack")
-                raise ActionFailure("Cannot place rack: intersects with protective rack")
-        
         logger.debug("[RACK_PLACEMENT] Created new double rack")
     else:
         raise TypeError("Unknown rack type in current rack group")
+    
+    # DEBUG: AFTER creating rack
+    new_rack = current_rack_group.current_rack
+    logger.warning(f"[DEBUG_RACK] RackGroup AFTER creating rack:")
+    logger.warning(f"[DEBUG_RACK]   bounds: {current_rack_group.bounds}")
+    logger.warning(f"[DEBUG_RACK]   New rack bounds: {new_rack.bounds}")
+    rack_width = new_rack.bounds[2] - new_rack.bounds[0]
+    logger.warning(f"[DEBUG_RACK]   New rack width: {rack_width:.1f} mm")
+    logger.warning(f"[DEBUG_RACK] ========================================")
+    
+    # NEW: Check intersection with protective racks
+    for protective_rack in solution.protective_racks:
+        if new_rack.intersects(protective_rack.contour):
+            logger.warning("[RACK_PLACEMENT] New rack intersects with protective rack")
+            raise ActionFailure("Cannot place rack: intersects with protective rack")
 
 
 def assert_current_rack_is_double(
@@ -631,6 +664,14 @@ def fill_with_frames(
 
     section_len = rack.beam_type.length + rack.upright_type.width
     
+    # DEBUG: BEFORE fill
+    logger.warning(f"[DEBUG_FILL] ========================================")
+    logger.warning(f"[DEBUG_FILL] FILL_WITH_FRAMES called")
+    logger.warning(f"[DEBUG_FILL] Rack BEFORE fill:")
+    logger.warning(f"[DEBUG_FILL]   bounds: {rack.bounds}")
+    logger.warning(f"[DEBUG_FILL]   frames: {len(rack)}")
+    logger.warning(f"[DEBUG_FILL]   section_len: {section_len:.1f} mm")
+    
     # Determine maximum length based on zone or strip
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
         # NEW: Use current strip boundary
@@ -644,11 +685,19 @@ def fill_with_frames(
     
     frames_count = max(0, int(max_len_bbox // section_len))
 
-    logger.info(f"[RACK_PLACEMENT] Before fill: frames={len(rack)}, "
-                f"section_len={section_len:.1f}, max_len={max_len_bbox:.1f}, "
-                f"adding={frames_count}")
+    logger.warning(f"[DEBUG_FILL] Zone X: [{az.contour.bounds[0]:.1f}, {az.contour.bounds[2]:.1f}]")
+    logger.warning(f"[DEBUG_FILL] Available X space: {max_len_bbox:.1f} mm")
+    logger.warning(f"[DEBUG_FILL] Frames to add: {frames_count}")
 
     rack.add_multiple_frames(frames_count)
+
+    # DEBUG: AFTER fill
+    logger.warning(f"[DEBUG_FILL] Rack AFTER fill:")
+    logger.warning(f"[DEBUG_FILL]   bounds: {rack.bounds}")
+    logger.warning(f"[DEBUG_FILL]   frames: {len(rack)}")
+    rack_width = rack.bounds[2] - rack.bounds[0]
+    logger.warning(f"[DEBUG_FILL]   rack width: {rack_width:.1f} mm")
+    logger.warning(f"[DEBUG_FILL] ========================================")
 
     # Verify rack fits in zone
     inside = shapely.covers(az.contour, rack.contour)
