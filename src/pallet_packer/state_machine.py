@@ -501,7 +501,7 @@ class StateMachine:
         except ActionFailure as e:
             solution.action_status = ActionStatus.FAILED
             logger.warning(f"[STATE_MACHINE] ✗ Action FAILED: {action_name}")
-            logger.inwarningfo(f"[STATE_MACHINE] Failure reason: {str(e)}")
+            logger.warning(f"[STATE_MACHINE] Failure reason: {str(e)}")
             
         except Exception as e:
             logger.error(f"[STATE_MACHINE] ✗✗✗ CRITICAL ERROR in {action_name}: {e}")
