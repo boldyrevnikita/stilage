@@ -140,22 +140,36 @@ def assert_current_rack_fits_available_zone(
 ) -> None:
     """Checks if the current rack fits into the available zone.
     
+    NEW: Also checks free strip boundaries if protective racks are active.
+    
     Args:
         _ (ReferenceBook): The reference book (not used).
         solution (Solution): The current solution.
     
     Raises:
-        ActionFailure: If rack doesn't fit in the zone.
+        ActionFailure: If rack doesn't fit in the zone or strip.
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     current_rack = solution.current_rack_group.get_current_rack()
 
+    # Check zone boundaries
     if not shapely.contains(available_zone.contour, current_rack.contour):
         logger.warning(f"[ZONES] Rack doesn't fit in zone. Rack bounds: {current_rack.bounds}, "
                       f"Zone bounds: {available_zone.bounds}")
         raise ActionFailure("Current rack does not fit into the available zone.")
     
-    logger.debug("[ZONES] Rack fits in available zone")
+    # NEW: Check strip boundaries (Y-axis only)
+    if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
+        current_strip = solution.free_strips[solution.current_strip_idx]
+        rack_bounds = current_rack.contour.bounds
+        
+        # Check Y boundaries with small tolerance
+        if rack_bounds[1] < current_strip['y_min'] - 0.1 or rack_bounds[3] > current_strip['y_max'] + 0.1:
+            logger.warning(f"[ZONES] Rack Y=[{rack_bounds[1]:.1f}, {rack_bounds[3]:.1f}] "
+                          f"exceeds strip Y=[{current_strip['y_min']:.1f}, {current_strip['y_max']:.1f}]")
+            raise ActionFailure("Current rack exceeds free strip boundary.")
+    
+    logger.debug("[ZONES] Rack fits in available zone and strip")
 
 
 def split_available_zone(
