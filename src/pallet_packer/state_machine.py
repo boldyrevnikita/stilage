@@ -487,11 +487,11 @@ class StateMachine:
         logger.info(f"[STATE_MACHINE] Action: {action_name}")
 
         if hasattr(solution, 'current_strip_idx') and hasattr(solution, 'free_strips'):
-        logger.warning(f"[STATE_MACHINE] Current strip: {solution.current_strip_idx}/{len(solution.free_strips)}")
-        if solution.free_strips:
-            strip = solution.free_strips[solution.current_strip_idx] if solution.current_strip_idx < len(solution.free_strips) else None
-            if strip:
-                logger.warning(f"[STATE_MACHINE] Strip Y: [{strip['y_min']:.1f}, {strip['y_max']:.1f}], width={strip['width']:.1f}")
+            logger.warning(f"[STATE_MACHINE] Current strip: {solution.current_strip_idx}/{len(solution.free_strips)}")
+            if solution.free_strips:
+                strip = solution.free_strips[solution.current_strip_idx] if solution.current_strip_idx < len(solution.free_strips) else None
+                if strip:
+                    logger.warning(f"[STATE_MACHINE] Strip Y: [{strip['y_min']:.1f}, {strip['y_max']:.1f}], width={strip['width']:.1f}")
         
         try:
             action_function(self.reference_book, solution)
