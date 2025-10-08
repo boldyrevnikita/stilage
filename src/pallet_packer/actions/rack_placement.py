@@ -119,7 +119,7 @@ def decrease_current_frame_length(
         current_rack.set_next_beam_type()
         current_rack.delete_last_frame()
         current_rack.add_frame()
-        logger.debug(f"[RACK_PLACEMENT] Decreased frame length to {current_rack.beam_type.length}mm")
+        logger.warning(f"[RACK_PLACEMENT] Decreased frame length to {current_rack.beam_type.length}mm")
     else:
         logger.warning("[RACK_PLACEMENT] Cannot decrease frame length further")
         raise ActionFailure("Cannot decrease frame length further.")
@@ -137,7 +137,7 @@ def place_new_frame(
     """
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.add_frame()
-    logger.debug(f"[RACK_PLACEMENT] Added new frame. Total frames: {len(current_rack)}")
+    logger.warning(f"[RACK_PLACEMENT] Added new frame. Total frames: {len(current_rack)}")
 
 
 def set_next_rack_position_higher_default(
@@ -182,11 +182,11 @@ def set_next_rack_position_higher_default(
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
         current_strip = solution.free_strips[solution.current_strip_idx]
         if nr_position[1] > current_strip['y_max']:
-            logger.info(f"[RACK_PLACEMENT] Next rack position {nr_position[1]:.1f} exceeds "
+            logger.warning(f"[RACK_PLACEMENT] Next rack position {nr_position[1]:.1f} exceeds "
                        f"strip boundary {current_strip['y_max']:.1f}")
             raise ActionFailure("Next rack position exceeds current free strip boundary")
     
-    logger.debug(f"[RACK_PLACEMENT] Next rack position set to y={nr_position[1]:.1f}")
+    logger.warning(f"[RACK_PLACEMENT] Next rack position set to y={nr_position[1]:.1f}")
 
 
 def set_next_rack_position_higher_oz(
@@ -214,7 +214,7 @@ def set_next_rack_position_higher_oz(
         nr_position[1] = occupied_zone.contour_with_roads_width.bounds[3] + 1
 
     solution.current_rack_group.next_rack_placement = nr_position
-    logger.debug(f"[RACK_PLACEMENT] Next rack position set higher than OZ: y={nr_position[1]:.1f}")
+    logger.warning(f"[RACK_PLACEMENT] Next rack position set higher than OZ: y={nr_position[1]:.1f}")
 
 
 def place_new_double_rack(
@@ -262,7 +262,7 @@ def place_new_double_rack(
             logger.warning("[RACK_PLACEMENT] New double rack intersects with protective rack")
             raise ActionFailure("Cannot place rack: intersects with protective rack")
     
-    logger.debug(f"[RACK_PLACEMENT] Placed new double rack at {new_rack.bounds}")
+    logger.warning(f"[RACK_PLACEMENT] Placed new double rack at {new_rack.bounds}")
 
 
 def swap_double_rack_to_single_rack(
@@ -288,7 +288,7 @@ def swap_double_rack_to_single_rack(
         )
 
     current_rack_group.current_rack = current_rack_group.current_rack.rack_1
-    logger.info("[RACK_PLACEMENT] Swapped double rack to single rack")
+    logger.warning("[RACK_PLACEMENT] Swapped double rack to single rack")
 
 
 def move_current_rack_verticaly(
@@ -320,7 +320,7 @@ def move_current_rack_verticaly(
     ]
 
     solution.current_road_zones.remove(road_zone)
-    logger.debug(f"[RACK_PLACEMENT] Moved rack vertically by {yoff:.1f}mm to clear road zone")
+    logger.warning(f"[RACK_PLACEMENT] Moved rack vertically by {yoff:.1f}mm to clear road zone")
 
 
 def set_current_frame_as_special(
@@ -335,7 +335,7 @@ def set_current_frame_as_special(
     """
     current_rack = solution.current_rack_group.current_rack
     current_rack.make_frame_bridge(len(current_rack) - 1)
-    logger.debug(f"[RACK_PLACEMENT] Set frame {len(current_rack) - 1} as bridge")
+    logger.warning(f"[RACK_PLACEMENT] Set frame {len(current_rack) - 1} as bridge")
 
 
 def set_default_frame_size(
@@ -352,7 +352,7 @@ def set_default_frame_size(
     """
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.set_zero_beam_type()
-    logger.debug(f"[RACK_PLACEMENT] Reset to default beam type: {current_rack.beam_type.length}mm")
+    logger.warning(f"[RACK_PLACEMENT] Reset to default beam type: {current_rack.beam_type.length}mm")
 
 
 def delete_last_frame(
@@ -368,7 +368,7 @@ def delete_last_frame(
     current_rack = solution.current_rack_group.get_current_rack()
     frames_before = len(current_rack)
     current_rack.delete_last_frame()
-    logger.debug(f"[RACK_PLACEMENT] Deleted last frame. Frames: {frames_before} -> {len(current_rack)}")
+    logger.warning(f"[RACK_PLACEMENT] Deleted last frame. Frames: {frames_before} -> {len(current_rack)}")
 
 
 def set_next_rack_position_righter(
@@ -393,7 +393,7 @@ def set_next_rack_position_righter(
         nr_position[0] = forbidden_zone.contour.bounds[2] + 1
 
     current_rack_group.next_rack_placement = nr_position
-    logger.debug(f"[RACK_PLACEMENT] Next rack position set righter: x={nr_position[0]:.1f}")
+    logger.warning(f"[RACK_PLACEMENT] Next rack position set righter: x={nr_position[0]:.1f}")
 
 
 def create_new_rack(
@@ -427,10 +427,10 @@ def create_new_rack(
 
     if solution.next_rack_type is Rack:
         current_rack_group.place_single_rack()
-        logger.debug("[RACK_PLACEMENT] Created new single rack")
+        logger.warning("[RACK_PLACEMENT] Created new single rack")
     elif solution.next_rack_type is DoubleRack:
         current_rack_group.place_double_rack()
-        logger.debug("[RACK_PLACEMENT] Created new double rack")
+        logger.warning("[RACK_PLACEMENT] Created new double rack")
     else:
         raise TypeError("Unknown rack type in current rack group")
     
@@ -494,7 +494,7 @@ def decrease_first_rack_frame_length(
     current_rack.set_next_beam_type()
     current_rack.delete_last_frame()
     current_rack.add_frame()
-    logger.debug(f"[RACK_PLACEMENT] Decreased first rack frame length to {current_rack.beam_type.length}mm")
+    logger.warning(f"[RACK_PLACEMENT] Decreased first rack frame length to {current_rack.beam_type.length}mm")
 
 
 def decrease_second_rack_frame_length(
@@ -520,7 +520,7 @@ def decrease_second_rack_frame_length(
     current_rack.set_next_beam_type()
     current_rack.delete_last_frame()
     current_rack.add_frame()
-    logger.debug(f"[RACK_PLACEMENT] Decreased second rack frame length to {current_rack.beam_type.length}mm")
+    logger.warning(f"[RACK_PLACEMENT] Decreased second rack frame length to {current_rack.beam_type.length}mm")
 
 
 def disable_last_frame(
@@ -535,7 +535,7 @@ def disable_last_frame(
     """
     current_rack = solution.current_rack_group.get_current_rack()
     current_rack.disable_frame(len(current_rack) - 1)
-    logger.debug(f"[RACK_PLACEMENT] Disabled frame {len(current_rack) - 1}")
+    logger.warning(f"[RACK_PLACEMENT] Disabled frame {len(current_rack) - 1}")
 
 
 def disable_last_frame_for_first_rack(
@@ -550,7 +550,7 @@ def disable_last_frame_for_first_rack(
     """
     current_rack = solution.current_rack_group.get_current_rack().rack_1
     current_rack.disable_frame(len(current_rack) - 1)
-    logger.debug(f"[RACK_PLACEMENT] Disabled frame {len(current_rack) - 1} in first rack")
+    logger.warning(f"[RACK_PLACEMENT] Disabled frame {len(current_rack) - 1} in first rack")
 
 
 def disable_last_frame_for_second_rack(
@@ -565,7 +565,7 @@ def disable_last_frame_for_second_rack(
     """
     current_rack = solution.current_rack_group.get_current_rack().rack_2
     current_rack.disable_frame(len(current_rack) - 1)
-    logger.debug(f"[RACK_PLACEMENT] Disabled frame {len(current_rack) - 1} in second rack")
+    logger.warning(f"[RACK_PLACEMENT] Disabled frame {len(current_rack) - 1} in second rack")
 
 
 def save_rack(
@@ -583,7 +583,7 @@ def save_rack(
         logger.warning("[RACK_PLACEMENT] Attempted to save empty rack, skipping")
         return
     solution.current_rack_group.commit_current_rack()
-    logger.info(f"[RACK_PLACEMENT] Saved rack with {len(current_rack)} frames")
+    logger.warning(f"[RACK_PLACEMENT] Saved rack with {len(current_rack)} frames")
 
 
 def save_rack_group(
@@ -609,7 +609,7 @@ def save_rack_group(
     solution.max_intersected_oz_y = None
     
     total_racks = len(solution.current_rack_group.racks)
-    logger.info(f"[RACK_PLACEMENT] Saved rack group with {total_racks} racks")
+    logger.warning(f"[RACK_PLACEMENT] Saved rack group with {total_racks} racks")
 
 
 def set_next_rack_type_single(
@@ -623,7 +623,7 @@ def set_next_rack_type_single(
         solution (Solution): The current solution.
     """
     solution.next_rack_type = Rack
-    logger.debug("[RACK_PLACEMENT] Next rack type set to: Single")
+    logger.warning("[RACK_PLACEMENT] Next rack type set to: Single")
 
 
 def set_next_rack_type_double(
@@ -637,7 +637,7 @@ def set_next_rack_type_double(
         solution (Solution): The current solution.
     """
     solution.next_rack_type = DoubleRack
-    logger.debug("[RACK_PLACEMENT] Next rack type set to: Double")
+    logger.warning("[RACK_PLACEMENT] Next rack type set to: Double")
 
 
 def fill_with_frames(
@@ -657,7 +657,7 @@ def fill_with_frames(
     Raises:
         ActionFailure: If rack overflows zone during fill.
     """
-    logger.info("[RACK_PLACEMENT] Filling rack with frames")
+    logger.warning("[RACK_PLACEMENT] Filling rack with frames")
     
     az = solution.available_zones[solution.available_zone_idx]
     rack = solution.current_rack_group.current_rack
@@ -678,7 +678,7 @@ def fill_with_frames(
         current_strip = solution.free_strips[solution.current_strip_idx]
         # Strips are defined by Y boundaries, X is still zone-wide
         max_len_bbox = az.contour.bounds[2] - rack.contour.bounds[2]
-        logger.debug(f"[RACK_PLACEMENT] Filling within strip {solution.current_strip_idx}")
+        logger.warning(f"[RACK_PLACEMENT] Filling within strip {solution.current_strip_idx}")
     else:
         # Original behavior
         max_len_bbox = az.contour.bounds[2] - rack.contour.bounds[2]
@@ -697,20 +697,33 @@ def fill_with_frames(
     logger.warning(f"[DEBUG_FILL]   frames: {len(rack)}")
     rack_width = rack.bounds[2] - rack.bounds[0]
     logger.warning(f"[DEBUG_FILL]   rack width: {rack_width:.1f} mm")
-    logger.warning(f"[DEBUG_FILL] ========================================")
 
     # Verify rack fits in zone
     inside = shapely.covers(az.contour, rack.contour)
-    logger.info(f"[RACK_PLACEMENT] After fill: frames={len(rack)}, inside_zone={inside}")
+    logger.warning(f"[DEBUG_FILL] Shapely check: inside_zone={inside}")
+    logger.warning(f"[RACK_PLACEMENT] After fill: frames={len(rack)}, inside_zone={inside}")
 
     if not inside:
         # Remove frames until it fits
         overflow_count = 0
+        logger.warning(f"[DEBUG_FILL] OVERFLOW DETECTED! Starting to remove frames...")
         while not shapely.covers(az.contour, rack.contour) and len(rack) > 0:
+            logger.warning(f"[DEBUG_FILL] Before delete: frames={len(rack)}, bounds={rack.bounds}")
             rack.delete_last_frame()
             overflow_count += 1
+            logger.warning(f"[DEBUG_FILL] After delete: frames={len(rack)}, bounds={rack.bounds}")
         logger.warning(f"[RACK_PLACEMENT] Overflow detected, removed {overflow_count} frames")
         raise ActionFailure("Rack overflowed zone during fill_with_frames")
+    
+    # КРИТИЧНЫЕ ЛОГИ В КОНЦЕ
+    logger.warning(f"[DEBUG_FILL] ========================================")
+    logger.warning(f"[DEBUG_FILL] EXITING fill_with_frames")
+    logger.warning(f"[DEBUG_FILL] Final rack state:")
+    logger.warning(f"[DEBUG_FILL]   Final bounds: {rack.bounds}")
+    logger.warning(f"[DEBUG_FILL]   Final frames count: {len(rack)}")
+    final_width = rack.bounds[2] - rack.bounds[0]
+    logger.warning(f"[DEBUG_FILL]   Final rack width: {final_width:.1f} mm")
+    logger.warning(f"[DEBUG_FILL] ========================================")
 
 
 def delete_excess_frames_pl(
@@ -748,7 +761,7 @@ def delete_excess_frames_pl(
                 break
     
     if frames_deleted > 0:
-        logger.debug(f"[RACK_PLACEMENT] Deleted {frames_deleted} excess frames due to pallet limit")
+        logger.warning(f"[RACK_PLACEMENT] Deleted {frames_deleted} excess frames due to pallet limit")
 
 
 def delete_excess_frames_oz(
@@ -784,4 +797,4 @@ def delete_excess_frames_oz(
         frames_deleted += 1
     
     if frames_deleted > 0:
-        logger.debug(f"[RACK_PLACEMENT] Deleted {frames_deleted} excess frames due to occupied zone")
+        logger.warning(f"[RACK_PLACEMENT] Deleted {frames_deleted} excess frames due to occupied zone")
