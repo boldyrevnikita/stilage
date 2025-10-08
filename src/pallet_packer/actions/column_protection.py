@@ -76,7 +76,9 @@ def _save_protective_racks_as_rack_groups(
                 max_shelfs=solution.max_shelfs,
                 max_shelfs_bridge=solution.max_shelfs_bridge,
                 position=(zone_bounds[0], protective_rack.bounds[1]),
-                roads_width=reference_book.roads_width
+                roads_width=reference_book.roads_width,
+                pallet_extra_space=solution.pallet_extra_space,  # ✅ ДОБАВЛЕНО
+                frame_height_eps=reference_book.frame_height_eps  # ✅ ДОБАВЛЕНО
             )
             
             # Add the protective rack to the group
@@ -86,7 +88,7 @@ def _save_protective_racks_as_rack_groups(
             if hasattr(rack_group, '_update_bounds'):
                 rack_group._update_bounds()
             
-            # Save to solution - ИСПРАВЛЕНО: saved_rack_groups вместо rack_groups!
+            # Save to solution
             solution.saved_rack_groups.append(rack_group)
             saved_count += 1
             
