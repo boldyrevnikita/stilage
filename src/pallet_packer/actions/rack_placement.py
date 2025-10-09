@@ -639,6 +639,53 @@ def set_next_rack_type_double(
     solution.next_rack_type = DoubleRack
     logger.warning("[RACK_PLACEMENT] Next rack type set to: Double")
 
+def set_next_rack_type_double_or_single_based_on_strip(
+    reference_book: ReferenceBook,
+    solution: Solution
+) -> None:
+    """Automatically chooses rack type (double or single) based on available strip height.
+    
+    If we're working within a free strip and the strip is too narrow for a double rack,
+    this function will automatically select a single rack instead.
+    
+    Args:
+        reference_book (ReferenceBook): The reference book.
+        solution (Solution): The current solution.
+    """
+    # Default to double rack
+    solution.next_rack_type = DoubleRack
+    
+    # Check if we're working within a free strip
+    if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
+        current_strip = solution.free_strips[solution.current_strip_idx]
+        strip_height = current_strip['y_max'] - current_strip['y_min']
+        
+        # Calculate minimum height needed for a double rack
+        pallet_length = solution.pallets[solution.pallet_idx].length
+        
+        # Double rack needs: pallet + rack_distance + pallet + roads on both sides
+        # Typical: 1200 + 200 + 1200 + 2*144 (double_rack_distance_eps) ≈ 2888mm minimum
+        # Add roads_width for safety: 2888 + roads_width
+        min_double_height = 2 * pallet_length + 200 + reference_book.roads_width
+        
+        # Use a more conservative estimate to ensure it fits
+        min_safe_double_height = min_double_height * 1.2  # 20% safety margin
+        
+        if strip_height < min_safe_double_height:
+            # Strip too narrow - force single rack
+            solution.next_rack_type = Rack
+            logger.warning(f"[RACK_PLACEMENT] ⚠️ Strip height {strip_height:.1f}mm is too narrow "
+                          f"for double rack (needs {min_safe_double_height:.1f}mm)")
+            logger.warning(f"[RACK_PLACEMENT] → Automatically selecting SINGLE rack instead")
+        else:
+            # Strip wide enough - use double rack
+            logger.warning(f"[RACK_PLACEMENT] ✓ Strip height {strip_height:.1f}mm is sufficient "
+                          f"for double rack (needs {min_safe_double_height:.1f}mm)")
+            logger.warning(f"[RACK_PLACEMENT] → Using DOUBLE rack")
+    else:
+        # No strips - use double rack (original behavior)
+        logger.warning("[RACK_PLACEMENT] No free strips - using DOUBLE rack")
+
 
 def fill_with_frames(
     _: ReferenceBook, 

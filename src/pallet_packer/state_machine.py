@@ -372,7 +372,8 @@ def get_coarse_fill_states() -> dict[str, State]:
             [f'{Block.CF}-SNRTD'],
             ['GFS']),
         f'{Block.CF}-SNRTD': State(
-            actions.set_next_rack_type_double,
+            #actions.set_next_rack_type_double,
+            actions.set_next_rack_type_double_or_single_based_on_strip,
             [f'{Block.CF}-CNR'],
             ['GFS']),
         f'{Block.CF}-CNR': State(
