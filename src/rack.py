@@ -432,7 +432,7 @@ class DoubleRack():
             max_shelfs (int): Maximum number of shelves.
             max_shelfs_bridge (int): Maximum number of shelves in bridge mode.
             position (tuple[float, float]): Starting position of the rack.
-            rack_distance (float): Base distance between the two racks.
+            rack_distance (float): Distance between the two racks (fixed for protective racks).
             double_rack_distance_eps (float): Additional spacing for double rack.
             is_protective (bool): Whether this is a protective rack for a column.
             protected_column (OccupiedZone): The column this rack protects (if protective).
@@ -442,18 +442,16 @@ class DoubleRack():
         self.pallet = pallet
         self.max_shelfs = max_shelfs
         self.max_shelfs_bridge = max_shelfs_bridge
-
         self.double_rack_distance_eps = double_rack_distance_eps
         
         # NEW: Protective rack properties
         self.is_protective = is_protective
         self.protected_column = protected_column
         
-        # Calculate rack_distance dynamically for protective racks
-        if self.is_protective and self.protected_column is not None:
-            self.rack_distance = self._calculate_distance_for_column()
-        else:
-            self.rack_distance = rack_distance
+        # ✅ КРИТИЧНОЕ ИСПРАВЛЕНИЕ:
+        # Для protective racks ВСЕГДА используем переданный rack_distance (1000mm для jumper)
+        # НЕ пересчитываем из геометрии колонны!
+        self.rack_distance = rack_distance
 
         self.first_rack_position = position
         self.rack_1 = Rack(beam_types, upright_type, pallet, max_shelfs,
@@ -466,28 +464,6 @@ class DoubleRack():
         self.contour = None
         self.__update_contour()
         self.orientation = 0  # 0 - horizontal, 1 - vertical
-
-    def _calculate_distance_for_column(self) -> float:
-        """Calculates the required distance between rack halves for a column.
-        
-        This method is called when creating a protective rack to determine
-        the spacing needed to fit the column between the two rack halves.
-        
-        Returns:
-            float: The required distance between rack halves.
-        """
-        if self.protected_column is None:
-            return 200.0  # Default value
-        
-        # Get column dimensions
-        column_bounds = self.protected_column.contour.bounds
-        column_width = column_bounds[2] - column_bounds[0]
-        
-        # Distance = column width + clearance on both sides + base spacing
-        clearance = self.protected_column.clearance
-        distance = column_width + 2 * clearance + self.double_rack_distance_eps
-        
-        return distance
 
     def add_frame(self) -> None:
         """Adds a frame to both racks."""
@@ -617,12 +593,22 @@ class DoubleRack():
 
     def move_second_rack_higher(self, height: float) -> None:
         """Moves the second rack higher by a given height
+        
+        CRITICAL: This method should NEVER be called for protective racks!
+        
         Args:
             height (float): The height to move the second rack higher.
         
         Raises:
-            ValueError: If the resulting internal distance exceeds maximum.
+            ValueError: If called on a protective rack.
         """
+        # ✅ КРИТИЧНАЯ ПРОВЕРКА: Protective racks НЕ должны двигаться!
+        if self.is_protective:
+            raise ValueError(
+                "Cannot move second rack higher: this is a protective rack "
+                f"with fixed distance={self.rack_distance:.1f}mm"
+            )
+        
         self.second_rack_position = (
             self.second_rack_position[0],
             self.second_rack_position[1] + height)
