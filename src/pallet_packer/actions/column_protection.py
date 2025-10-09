@@ -77,8 +77,8 @@ def _save_protective_racks_as_rack_groups(
                 max_shelfs_bridge=solution.max_shelfs_bridge,
                 position=(zone_bounds[0], protective_rack.bounds[1]),
                 roads_width=reference_book.roads_width,
-                pallet_extra_space=solution.pallet_extra_space,  # ✅ ДОБАВЛЕНО
-                frame_height_eps=reference_book.frame_height_eps  # ✅ ДОБАВЛЕНО
+                pallet_extra_space=solution.pallet_extra_space,
+                frame_height_eps=reference_book.frame_height_eps
             )
             
             # Add the protective rack to the group
@@ -257,11 +257,11 @@ def analyze_free_strips(
     logger.warning(f"[COLUMN_PROTECTION] ALL PROTECTIVE RACKS ({len(solution.protective_racks)})")
     logger.warning(f"[COLUMN_PROTECTION] ========================================")
     
-    # УДАЛЯЕМ ДУБЛИКАТЫ по Y-координатам
+    # Deduplicate by Y coordinates
     unique_racks = []
     seen_bounds = set()
     for rack in solution.protective_racks:
-        bounds_tuple = (round(rack.bounds[1], 1), round(rack.bounds[3], 1))  # (y_min, y_max)
+        bounds_tuple = (round(rack.bounds[1], 1), round(rack.bounds[3], 1))
         if bounds_tuple not in seen_bounds:
             unique_racks.append(rack)
             seen_bounds.add(bounds_tuple)
@@ -271,7 +271,7 @@ def analyze_free_strips(
     # Sort unique protective racks by Y coordinate
     sorted_racks = sorted(unique_racks, key=lambda r: r.bounds[1])
     
-    # Log ALL unique protective racks
+    # Log all unique protective racks
     for idx, rack in enumerate(sorted_racks):
         rack_height = rack.bounds[3] - rack.bounds[1]
         logger.warning(f"[COLUMN_PROTECTION] Rack {idx}: "
@@ -446,11 +446,8 @@ def _calculate_dynamic_rack_distance_for_column(
     Uses a fixed distance of 1000mm to match the maximum available jumper
     from the rack configuration (jumper_1000).
     """
-    # Use fixed distance matching maximum available jumper
     distance = 1000.0
-    
     logger.warning(f"[COLUMN_PROTECTION]   Rack distance: {distance:.1f}mm (fixed jumper)")
-    
     return distance
 
 
@@ -469,13 +466,17 @@ def _create_protective_rack_for_column(
     logger.warning(f"[COLUMN_PROTECTION]   Zone Y: [{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}]")
     logger.warning(f"[COLUMN_PROTECTION]   Pallet length: {pallet.length:.1f}mm")
     
-    # Calculate dynamic distance
+    # Calculate rack distance
     rack_distance = _calculate_dynamic_rack_distance_for_column(column, reference_book)
     
-    # Calculate total rack height
-    total_rack_height = 2 * pallet.length + rack_distance
+    # ✅ КРИТИЧНОЕ ИСПРАВЛЕНИЕ: Вычисляем РЕАЛЬНУЮ высоту protective rack
+    # Учитываем double_rack_distance_eps!
+    actual_gap = rack_distance - reference_book.double_rack_distance_eps
+    total_rack_height = 2 * pallet.length + actual_gap
     
-    logger.warning(f"[COLUMN_PROTECTION]   Total rack height: 2×{pallet.length:.1f} + {rack_distance:.1f} = {total_rack_height:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Double rack distance eps: {reference_book.double_rack_distance_eps:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Actual gap size: {rack_distance:.1f} - {reference_book.double_rack_distance_eps:.1f} = {actual_gap:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Total rack height: 2×{pallet.length:.1f} + {actual_gap:.1f} = {total_rack_height:.1f}mm")
     
     # Calculate available space
     zone_height = zone_bounds[3] - zone_bounds[1]
@@ -488,19 +489,32 @@ def _create_protective_rack_for_column(
         logger.error(f"[COLUMN_PROTECTION]   ✗ TOO TALL: {total_rack_height:.1f} > {available_height:.1f}")
         raise ValueError(f"Rack too tall: {total_rack_height:.1f} > {available_height:.1f}")
     
-    # Calculate Y position
+    # ✅ КРИТИЧНО: ЦЕНТРИРУЕМ весь protective rack относительно колонны!
     column_center_y = (column_bounds[1] + column_bounds[3]) / 2
-    ideal_first_rack_y = column_center_y - rack_distance / 2 - pallet.length / 2
+    
+    # Начало первой половины стеллажа (rack_1)
+    first_rack_y = column_center_y - (total_rack_height / 2)
+    
+    # Применяем ограничения зоны с дорогами
     min_first_rack_y = zone_bounds[1] + reference_book.roads_width
     max_first_rack_y = zone_bounds[3] - reference_book.roads_width - total_rack_height
-    first_rack_y = max(min_first_rack_y, min(ideal_first_rack_y, max_first_rack_y))
+    first_rack_y = max(min_first_rack_y, min(first_rack_y, max_first_rack_y))
     
     logger.warning(f"[COLUMN_PROTECTION]   Column center: {column_center_y:.1f}")
-    logger.warning(f"[COLUMN_PROTECTION]   Ideal Y: {ideal_first_rack_y:.1f}")
+    logger.warning(f"[COLUMN_PROTECTION]   Half height: {total_rack_height / 2:.1f}")
+    logger.warning(f"[COLUMN_PROTECTION]   Ideal Y: {column_center_y - total_rack_height / 2:.1f}")
     logger.warning(f"[COLUMN_PROTECTION]   Min Y: {min_first_rack_y:.1f}")
     logger.warning(f"[COLUMN_PROTECTION]   Max Y: {max_first_rack_y:.1f}")
     logger.warning(f"[COLUMN_PROTECTION]   Final Y: {first_rack_y:.1f}")
     logger.warning(f"[COLUMN_PROTECTION]   Expected rack Y: [{first_rack_y:.1f}, {first_rack_y + total_rack_height:.1f}]")
+    
+    # Проверка: колонна должна быть в центре GAP
+    gap_start = first_rack_y + pallet.length
+    gap_end = first_rack_y + pallet.length + actual_gap
+    gap_center = (gap_start + gap_end) / 2
+    logger.warning(f"[COLUMN_PROTECTION]   Gap: [{gap_start:.1f}, {gap_end:.1f}], center={gap_center:.1f}")
+    logger.warning(f"[COLUMN_PROTECTION]   Column center should be at: {gap_center:.1f}")
+    logger.warning(f"[COLUMN_PROTECTION]   Difference: {abs(column_center_y - gap_center):.1f}mm")
     
     position = (zone_bounds[0], first_rack_y)
     
@@ -533,6 +547,23 @@ def _create_protective_rack_for_column(
         if rack_bounds[3] > max_allowed_y:
             logger.error(f"[COLUMN_PROTECTION]   ✗ Too high: {rack_bounds[3]:.1f} > {max_allowed_y:.1f}")
             raise ValueError("Rack violates top road")
+        
+        # ✅ КРИТИЧНАЯ ПРОВЕРКА: Колонна в gap?
+        rack1_end = protective_rack.rack_1.bounds[3]
+        rack2_start = protective_rack.rack_2.bounds[1]
+        actual_gap_start = rack1_end
+        actual_gap_end = rack2_start
+        
+        logger.warning(f"[COLUMN_PROTECTION]   Actual rack_1 end: {rack1_end:.1f}")
+        logger.warning(f"[COLUMN_PROTECTION]   Actual rack_2 start: {rack2_start:.1f}")
+        logger.warning(f"[COLUMN_PROTECTION]   Actual gap: [{actual_gap_start:.1f}, {actual_gap_end:.1f}] = {actual_gap_end - actual_gap_start:.1f}mm")
+        logger.warning(f"[COLUMN_PROTECTION]   Column: [{column_bounds[1]:.1f}, {column_bounds[3]:.1f}]")
+        
+        if column_bounds[1] < actual_gap_start or column_bounds[3] > actual_gap_end:
+            logger.error(f"[COLUMN_PROTECTION]   ✗ COLUMN NOT IN GAP!")
+            logger.error(f"[COLUMN_PROTECTION]     Column escapes gap by: {max(0, actual_gap_start - column_bounds[1], column_bounds[3] - actual_gap_end):.1f}mm")
+        else:
+            logger.warning(f"[COLUMN_PROTECTION]   ✓ Column properly centered in gap")
         
         logger.warning(f"[COLUMN_PROTECTION]   ✓ Fits vertically")
         
