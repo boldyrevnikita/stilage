@@ -441,20 +441,15 @@ def _calculate_dynamic_rack_distance_for_column(
     column: OccupiedZone,
     reference_book: ReferenceBook
 ) -> float:
-    """Calculates the required distance between double rack halves for a column."""
-    bounds = column.contour.bounds
-    column_width = bounds[2] - bounds[0]
+    """Calculates the required distance between double rack halves for a column.
     
-    distance = column_width + 2 * column.clearance + reference_book.double_rack_distance_eps
+    Uses a fixed distance of 1000mm to match the maximum available jumper
+    from the rack configuration (jumper_1000).
+    """
+    # Use fixed distance matching maximum available jumper
+    distance = 1000.0
     
-    max_distance = reference_book.max_protective_rack_internal_distance
-    if distance > max_distance:
-        logger.warning(f"[COLUMN_PROTECTION] Column too wide: {column_width:.1f}mm, "
-                      f"distance {distance:.1f} > max {max_distance:.1f}")
-        distance = max_distance
-    
-    logger.warning(f"[COLUMN_PROTECTION]   Rack distance: {distance:.1f}mm "
-                f"(column={column_width:.1f}, clearance={column.clearance:.1f}, eps={reference_book.double_rack_distance_eps:.1f})")
+    logger.warning(f"[COLUMN_PROTECTION]   Rack distance: {distance:.1f}mm (fixed jumper)")
     
     return distance
 
