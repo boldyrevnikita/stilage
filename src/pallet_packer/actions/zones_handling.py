@@ -7,7 +7,7 @@ and checking intersections with occupied zones and road zones.
 
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
-from src.rack import Rack
+from src.rack import Rack, DoubleRack  # ✅ ДОБАВЛЕН ИМПОРТ
 from src.zone import SpecialRoadZone, OccupiedZone
 import shapely
 from copy import deepcopy
@@ -684,15 +684,27 @@ def move_second_rack_higher_over_oz(
 ) -> None:
     """Moves the second rack higher over the occupied zone.
     
+    CRITICAL: This function should NEVER be called for protective racks!
+    Protective racks have a fixed rack_distance that must not be modified.
+    
     Args:
         reference_book (ReferenceBook): The reference book.
         solution (Solution): The current solution.
     
     Raises:
-        ActionFailure: If internal distance becomes too large.
+        ActionFailure: If rack is protective or if internal distance becomes too large.
     """
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
+
+    # ✅ КРИТИЧНАЯ ПРОВЕРКА: Запретить движение protective racks!
+    if isinstance(current_rack, DoubleRack) and current_rack.is_protective:
+        logger.error(f"[ZONES] ❌ FORBIDDEN: Attempted to move protective rack!")
+        logger.error(f"[ZONES]   Protective racks must maintain fixed rack_distance={current_rack.rack_distance:.1f}mm")
+        logger.error(f"[ZONES]   Protected column: {current_rack.protected_column.bounds if current_rack.protected_column else 'None'}")
+        raise ActionFailure(
+            "Cannot move second rack higher: this is a protective rack with fixed distance."
+        )
 
     y_shift = (current_occupied_zone.contour.bounds[3] -
                current_rack.rack_2.contour.bounds[1]) + 1
@@ -703,11 +715,8 @@ def move_second_rack_higher_over_oz(
 
     final_double_rack_internal_distance = y_shift + current_rack.rack_distance
     
-    # Use different max distance for protective racks
-    if current_rack.is_protective:
-        max_distance = reference_book.max_protective_rack_internal_distance
-    else:
-        max_distance = reference_book.max_double_rack_internal_distance
+    # Use correct max distance
+    max_distance = reference_book.max_double_rack_internal_distance
     
     if final_double_rack_internal_distance > max_distance:
         logger.warning(f"[ZONES] Internal distance {final_double_rack_internal_distance:.1f} "
@@ -715,7 +724,8 @@ def move_second_rack_higher_over_oz(
         raise ActionFailure("Internal double rack distance is too big.")
 
     current_rack.move_second_rack_higher(y_shift)
-    logger.debug(f"[ZONES] Moved second rack higher by {y_shift:.1f}mm")
+    logger.debug(f"[ZONES] Moved second rack higher by {y_shift:.1f}mm "
+                f"(new distance: {current_rack.rack_distance:.1f}mm)")
 
 
 def remove_unavailable_rack_parts(
