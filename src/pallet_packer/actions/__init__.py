@@ -17,6 +17,7 @@ from src.pallet_packer.actions.rack_placement import (
     set_current_frame_as_special, set_default_frame_size,
     set_next_rack_position_higher_default, set_next_rack_position_higher_oz,
     set_next_rack_position_righter, set_next_rack_type_double,
+    set_next_rack_type_double_or_single_based_on_strip,
     set_next_rack_type_single, swap_double_rack_to_single_rack)
 from src.pallet_packer.actions.zones_handling import (
     assert_both_racks_intersecting_occupied_zone,
@@ -80,6 +81,7 @@ __all__ = [
     set_next_rack_position_higher_oz.__name__,
     set_next_rack_position_righter.__name__,
     set_next_rack_type_double.__name__,
+    set_next_rack_type_double_or_single_based_on_strip.__name__,
     set_next_rack_type_single.__name__,
     swap_double_rack_to_single_rack.__name__,
     assert_both_racks_intersecting_occupied_zone.__name__,
