@@ -38,12 +38,12 @@ def place_horizontal_rack_group(
     available_zone = solution.available_zones[solution.available_zone_idx]
 
     # Check orientation restrictions
-    if available_zone.orientation == 1 and solution.is_rotated:
-        raise ActionFailure("Vertical rack placement is "
-                            "not allowed in this zone.")
-    elif available_zone.orientation == 2 and not solution.is_rotated:
-        raise ActionFailure("Horizontal rack placement is "
-                            "not allowed in this zone.")
+    # if available_zone.orientation == 1 and solution.is_rotated:
+    #     raise ActionFailure("Vertical rack placement is "
+    #                         "not allowed in this zone.")
+    # elif available_zone.orientation == 2 and not solution.is_rotated:
+    #     raise ActionFailure("Horizontal rack placement is "
+    #                         "not allowed in this zone.")
 
     # Determine starting position
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):

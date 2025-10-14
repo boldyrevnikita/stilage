@@ -54,8 +54,19 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-CBaU'], ['GFS']),
         f'{Block.MAIN}-CBaU': State(
             actions.find_suitable_beams_and_upright,
-            [f'{Block.MAIN}-RZC-90', f'{Block.MAIN}-PROTECT_COLUMNS'],
+            [f'{Block.MAIN}-TRY_VERTICAL', f'{Block.MAIN}-TRY_HORIZONTAL'],  # ← ИЗМЕНЕНО
             [f'{Block.MAIN}-SNZ']),
+
+        # === НОВОЕ: Проверка ориентации ===
+        f'{Block.MAIN}-TRY_VERTICAL': State(
+            actions.check_if_vertical_allowed,
+            [f'{Block.MAIN}-RZC-90'],  # SUCCESS → идем на поворот
+            ['GFS']),  # FAIL → удаляем этот вариант
+
+        f'{Block.MAIN}-TRY_HORIZONTAL': State(
+            actions.check_if_horizontal_allowed,
+            [f'{Block.MAIN}-PROTECT_COLUMNS'],  # SUCCESS → идем на защиту колонн
+            ['GFS']),
         
         # === НОВАЯ ЛОГИКА: Защита колонн (Фаза 1) ===
         f'{Block.MAIN}-PROTECT_COLUMNS': State(

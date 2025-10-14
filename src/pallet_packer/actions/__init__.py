@@ -37,6 +37,8 @@ from src.pallet_packer.actions.zones_handling import (
     rotate_everything_90_clockwise, rotate_everything_90_counterclockwise,
     set_current_occupied_zones_and_road_zones, set_next_zone, set_zero_zone,
     sort_available_zones_by_area_and_height, split_available_zone,
+    check_if_vertical_allowed,  
+    check_if_horizontal_allowed,
     remove_unavailable_rack_parts)
 from src.pallet_packer.actions.column_protection import (
     identify_and_protect_all_columns,
@@ -116,4 +118,6 @@ __all__ = [
     set_first_free_strip.__name__,
     check_if_more_strips_available.__name__,
     set_next_free_strip.__name__,
+    check_if_vertical_allowed.__name__,     
+    check_if_horizontal_allowed.__name__,
 ]

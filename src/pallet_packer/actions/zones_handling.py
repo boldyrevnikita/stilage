@@ -753,3 +753,56 @@ def remove_unavailable_rack_parts(
     
     if removed_count > 0:
         logger.info(f"[ZONES] Removed {removed_count} unavailable rack parts")
+
+def check_if_vertical_allowed(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """Checks if vertical rack placement is allowed in the current zone.
+    
+    Vertical placement is allowed when:
+    - orientation == 2 (only vertical)
+    - orientation == 0 (any orientation)
+    
+    Args:
+        _: The reference book (not used).
+        solution: The current solution.
+    
+    Raises:
+        ActionFailure: If vertical placement is not allowed (orientation == 1).
+    """
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    
+    if available_zone.orientation == 1:  # Only horizontal allowed
+        logger.info(f"[ORIENTATION] ✗ Vertical placement NOT allowed (orientation=1 - horizontal only)")
+        raise ActionFailure("Vertical rack placement is not allowed in this zone")
+    
+    # orientation == 2 (vertical) or orientation == 0 (any) → SUCCESS
+    logger.info(f"[ORIENTATION] ✓ Vertical placement allowed (orientation={available_zone.orientation})")
+
+
+def check_if_horizontal_allowed(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """Checks if horizontal rack placement is allowed in the current zone.
+    
+    Horizontal placement is allowed when:
+    - orientation == 1 (only horizontal)
+    - orientation == 0 (any orientation)
+    
+    Args:
+        _: The reference book (not used).
+        solution: The current solution.
+    
+    Raises:
+        ActionFailure: If horizontal placement is not allowed (orientation == 2).
+    """
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    
+    if available_zone.orientation == 2:  # Only vertical allowed
+        logger.info(f"[ORIENTATION] ✗ Horizontal placement NOT allowed (orientation=2 - vertical only)")
+        raise ActionFailure("Horizontal rack placement is not allowed in this zone")
+    
+    # orientation == 1 (horizontal) or orientation == 0 (any) → SUCCESS
+    logger.info(f"[ORIENTATION] ✓ Horizontal placement allowed (orientation={available_zone.orientation})")
