@@ -206,7 +206,13 @@ def split_available_zone(
     
     has_regular_racks = False
     
-    for rack_group in solution.saved_rack_groups:
+    # ✅ CRITICAL: Check both saved_rack_groups AND current_rack_group!
+    # Regular racks might still be in current_rack_group (not yet saved)
+    all_rack_groups = list(solution.saved_rack_groups)
+    if solution.current_rack_group is not None:
+        all_rack_groups.append(solution.current_rack_group)
+    
+    for rack_group in all_rack_groups:
         # Check if this rack group contains protective racks
         is_protective_group = False
         
