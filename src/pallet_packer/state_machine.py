@@ -211,6 +211,10 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
             [f'{Block.CF}-SNRTD'],
+            [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']),
+        f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP': State(
+            actions.save_rack_group,
+            [f'{Block.MAIN}-CHECK_STRIPS'],
             [f'{Block.MAIN}-CHECK_STRIPS']), 
         
         # === Создание двойного стеллажа ===
@@ -383,7 +387,7 @@ def get_coarse_fill_states() -> dict[str, State]:
         f'{Block.CF}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
             [f'{Block.CF}-SNRTD'],
-            [f'{Block.MAIN}-CHECK_STRIPS']),  
+            [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']), 
         f'{Block.CF}-SNRTD': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
             [f'{Block.CF}-CNR'],
