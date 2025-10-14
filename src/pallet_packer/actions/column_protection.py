@@ -273,12 +273,19 @@ def check_if_more_strips_available(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Checks if there are more free strips to process."""
+    """Checks if there are more free strips to process.
+    
+    ✅ CRITICAL: This function MUST return FAILURE (raise ActionFailure) 
+    when all strips are processed, so the state machine proceeds to 
+    rotate_everything_90_counterclockwise and then split_available_zone.
+    """
     if solution.current_strip_idx >= len(solution.free_strips) - 1:
         logger.warning("[COLUMN_PROTECTION] All strips processed")
+        # ✅ This MUST be ActionFailure to trigger rotation back!
         raise ActionFailure("No more free strips to process")
     
-    logger.warning(f"[COLUMN_PROTECTION] More strips available: {len(solution.free_strips) - solution.current_strip_idx - 1} remaining")
+    logger.warning(f"[COLUMN_PROTECTION] More strips available: "
+                  f"{len(solution.free_strips) - solution.current_strip_idx - 1} remaining")
 
 
 def set_next_free_strip(

@@ -7,7 +7,7 @@ and checking intersections with occupied zones and road zones.
 
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
-from src.rack import Rack, DoubleRack  # ✅ ДОБАВЛЕН ИМПОРТ
+from src.rack import Rack, DoubleRack
 from src.zone import SpecialRoadZone, OccupiedZone
 import shapely
 from copy import deepcopy
@@ -82,7 +82,6 @@ def rotate_everything_90_counterclockwise(
         
         solution.current_rack_group.rotate(angle, solution.rot_point)
         
-        # ✅ ДОБАВИТЬ ЭТО:
         # Rotate all saved rack groups back
         for rack_group in solution.saved_rack_groups:
             rack_group.rotate(angle, solution.rot_point)
@@ -182,14 +181,20 @@ def split_available_zone(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Splits the available zone into two parts."""
+    """Splits the available zone into two parts.
+    
+    ✅ CRITICAL FIX: Only creates zones that are at least 5000mm (5 meters) 
+    in BOTH width and height. This prevents creation of tiny unusable zones
+    that cause failures in subsequent processing.
+    """
     if len(solution.current_rack_group.racks) == 0:
         raise ActionFailure("No racks are placed.")
 
     current_rack_group = solution.current_rack_group
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    MIN_ZONE_SIZE = 2000.0  # NEW: Минимум 2 метра
+    # ✅ FIXED: Increased from 2000 to 5000mm
+    MIN_ZONE_SIZE = 5000.0  # Minimum 5 meters to ensure usable zones
     
     split_point = list(current_rack_group.bounds[2:])
     split_point[0] += reference_book.roads_width
@@ -197,24 +202,39 @@ def split_available_zone(
     split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
     split_point[1] = min(available_zone.bounds[3], split_point[1]) - 1
 
-    # NEW: Проверка размеров ДО split
+    # Check if split will produce any viable zones
     right_zone_width = available_zone.bounds[2] - split_point[0]
     top_zone_height = available_zone.bounds[3] - split_point[1]
     
-    # Только split если хоть одна зона будет достаточно большой
+    logger.warning(f"[ZONES] Split analysis: right_width={right_zone_width:.1f}mm, "
+                  f"top_height={top_zone_height:.1f}mm (min={MIN_ZONE_SIZE:.1f}mm)")
+    
+    # Only split if at least one resulting zone will be large enough
     if right_zone_width >= MIN_ZONE_SIZE or top_zone_height >= MIN_ZONE_SIZE:
         if available_zone.contains_point(split_point):
             new_zones = available_zone.split_zone(split_point)
             
-            # Фильтр: добавляй только зоны >= 2 метров
+            added_count = 0
+            # Filter: only add zones that meet minimum size requirements
             for zone in new_zones:
                 zone_w = zone.bounds[2] - zone.bounds[0]
                 zone_h = zone.bounds[3] - zone.bounds[1]
+                
                 if zone_w >= MIN_ZONE_SIZE and zone_h >= MIN_ZONE_SIZE:
                     solution.available_zones.append(zone)
+                    added_count += 1
+                    logger.warning(f"[ZONES] Added new zone: {zone_w:.1f} x {zone_h:.1f} mm")
+                else:
+                    logger.warning(f"[ZONES] Rejected small zone: {zone_w:.1f} x {zone_h:.1f} mm "
+                                 f"(below minimum {MIN_ZONE_SIZE:.1f}mm)")
+            
+            logger.warning(f"[ZONES] Split created {added_count} viable zones")
+    else:
+        logger.warning(f"[ZONES] Split skipped - no resulting zones would meet minimum size")
 
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zone_idx -= 1
+
 
 def sort_available_zones_by_area_and_height(
     _: ReferenceBook,
@@ -701,7 +721,7 @@ def move_second_rack_higher_over_oz(
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
 
-    # ✅ КРИТИЧНАЯ ПРОВЕРКА: Запретить движение protective racks!
+    # CRITICAL CHECK: Prevent moving protective racks!
     if isinstance(current_rack, DoubleRack) and current_rack.is_protective:
         logger.error(f"[ZONES] ❌ FORBIDDEN: Attempted to move protective rack!")
         logger.error(f"[ZONES]   Protective racks must maintain fixed rack_distance={current_rack.rack_distance:.1f}mm")
@@ -757,6 +777,7 @@ def remove_unavailable_rack_parts(
     
     if removed_count > 0:
         logger.warning(f"[ZONES] Removed {removed_count} unavailable rack parts")
+
 
 def check_if_vertical_allowed(
     _: ReferenceBook,
