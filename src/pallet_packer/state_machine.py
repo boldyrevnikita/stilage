@@ -72,7 +72,7 @@ def get_main_loop_states() -> dict[str, State]:
         # === Вращение (если нужно) ===
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
-            [f'{Block.MAIN}-PHG'], ['GFS']),
+            [f'{Block.MAIN}-PROTECT_COLUMNS'], ['GFS']),
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-CHECK_STRIPS'], ['GFS']),
