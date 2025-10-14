@@ -383,7 +383,7 @@ def get_coarse_fill_states() -> dict[str, State]:
         f'{Block.CF}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
             [f'{Block.CF}-SNRTD'],
-            ['GFS']),
+            [f'{Block.MAIN}-CHECK_STRIPS']),  
         f'{Block.CF}-SNRTD': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
             [f'{Block.CF}-CNR'],
