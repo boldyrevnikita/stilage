@@ -51,7 +51,7 @@ def rotate_everything_90_clockwise(
     solution.current_occupied_zones.sort(key=lambda x: x.bounds[0])
     solution.current_road_zones.sort(key=lambda x: x.bounds[0])
     
-    logger.debug("[ZONES] Rotated everything 90 degrees clockwise")
+    logger.warning("[ZONES] Rotated everything 90 degrees clockwise")
 
 
 def rotate_everything_90_counterclockwise(
@@ -89,7 +89,7 @@ def rotate_everything_90_counterclockwise(
         solution.current_road_zones.sort(
             key=lambda x: (x.bounds[0], x.bounds[2]))
         
-        logger.debug("[ZONES] Rotated everything 90 degrees counterclockwise")
+        logger.warning("[ZONES] Rotated everything 90 degrees counterclockwise")
 
 
 # =============================================================================
@@ -129,7 +129,7 @@ def set_zero_zone(
         solution (Solution): The current solution.
     """
     solution.available_zone_idx = 0
-    logger.debug("[ZONES] Reset to zone 0")
+    logger.warning("[ZONES] Reset to zone 0")
 
 
 # =============================================================================
@@ -171,7 +171,7 @@ def assert_current_rack_fits_available_zone(
                           f"exceeds strip Y=[{current_strip['y_min']:.1f}, {current_strip['y_max']:.1f}]")
             raise ActionFailure("Current rack exceeds free strip boundary.")
     
-    logger.debug("[ZONES] Rack fits in available zone and strip")
+    logger.warning("[ZONES] Rack fits in available zone and strip")
 
 
 def split_available_zone(
@@ -223,7 +223,7 @@ def sort_available_zones_by_area_and_height(
         solution (Solution): The current solution.
     """
     solution.available_zones.sort(key=lambda x: (-x.height, -x.area))
-    logger.debug(f"[ZONES] Sorted {len(solution.available_zones)} zones by area and height")
+    logger.warning(f"[ZONES] Sorted {len(solution.available_zones)} zones by area and height")
 
 
 # =============================================================================
@@ -270,13 +270,13 @@ def set_current_occupied_zones_and_road_zones(
 
         if intersects_with_clearance or intersects_with_roads_width:
             solution.current_occupied_zones.append(deepcopy(occupied_zone))
-            logger.debug(f"[ZONES] Found occupied zone in zone: bounds={occupied_zone.bounds}")
+            logger.warning(f"[ZONES] Found occupied zone in zone: bounds={occupied_zone.bounds}")
 
     # Process road zones
     for road_zone in solution.road_zones:
         if shapely.intersects(road_zone.contour, available_zone.contour):
             solution.current_road_zones.append(deepcopy(road_zone))
-            logger.debug(f"[ZONES] Found road zone in zone: bounds={road_zone.bounds}")
+            logger.warning(f"[ZONES] Found road zone in zone: bounds={road_zone.bounds}")
 
     # Sort for consistent processing order
     solution.current_occupied_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
@@ -311,7 +311,7 @@ def assert_current_rack_intersecting_occupied_zones(
     for occupied_zone in solution.current_occupied_zones:
         # NEW: Skip if this zone is a protected column
         if occupied_zone in protected_columns:
-            logger.debug(f"[ZONES] Skipping protected column at {occupied_zone.bounds}")
+            logger.warning(f"[ZONES] Skipping protected column at {occupied_zone.bounds}")
             continue
         
         first_condition = current_rack.intersects(occupied_zone.contour)
@@ -330,7 +330,7 @@ def assert_current_rack_intersecting_occupied_zones(
                 solution.max_intersected_oz_y = max(
                     occupied_zone.bounds[3],
                     solution.max_intersected_oz_y)
-            logger.debug(f"[ZONES] Rack intersects occupied zone at {occupied_zone.bounds}")
+            logger.warning(f"[ZONES] Rack intersects occupied zone at {occupied_zone.bounds}")
             return
 
     raise ActionFailure("Current rack does not intersect with any occupied zone.")
@@ -366,7 +366,7 @@ def assert_both_racks_intersecting_occupied_zone(
     if not is_second_rack_intersecting:
         raise ActionFailure("Second rack does not intersect with the occupied zone.")
     
-    logger.debug("[ZONES] Both racks intersect occupied zone")
+    logger.warning("[ZONES] Both racks intersect occupied zone")
 
 
 def assert_first_rack_intersecting_occupied_zone(
@@ -517,7 +517,7 @@ def assert_current_rack_intersecting_road_zones(
             if not road_zone.is_horizontal():
                 solution.last_intersected_vertical_road = road_zone
 
-            logger.debug(f"[ZONES] Rack intersects road zone at {road_zone.bounds}")
+            logger.warning(f"[ZONES] Rack intersects road zone at {road_zone.bounds}")
             return
 
     raise ActionFailure("Current rack does not intersect with any road zone.")
@@ -631,7 +631,7 @@ def assert_current_rack_not_intersecting_oz_or_rz(
 
     if intersected_special_zone is not None:
         solution.intersected_special_zone = intersected_special_zone
-        logger.debug(f"[ZONES] Rack intersects with zone at {intersected_special_zone.bounds}")
+        logger.warning(f"[ZONES] Rack intersects with zone at {intersected_special_zone.bounds}")
         raise ActionFailure("Current rack intersects with an occupied or road zone.")
 
 
@@ -675,7 +675,7 @@ def place_road_zone_on_right_size(
     )
 
     solution.current_road_zones.append(new_road_zone)
-    logger.debug("[ZONES] Placed road zones on right and top edges")
+    logger.warning("[ZONES] Placed road zones on right and top edges")
 
 
 def move_second_rack_higher_over_oz(
@@ -724,7 +724,7 @@ def move_second_rack_higher_over_oz(
         raise ActionFailure("Internal double rack distance is too big.")
 
     current_rack.move_second_rack_higher(y_shift)
-    logger.debug(f"[ZONES] Moved second rack higher by {y_shift:.1f}mm "
+    logger.warning(f"[ZONES] Moved second rack higher by {y_shift:.1f}mm "
                 f"(new distance: {current_rack.rack_distance:.1f}mm)")
 
 
