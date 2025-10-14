@@ -57,16 +57,21 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-TRY_VERTICAL', f'{Block.MAIN}-TRY_HORIZONTAL'],
             [f'{Block.MAIN}-SNZ']),
 
-        # === Проверка ориентации (БЕЗ вращения!) ===
+        # === Проверка ориентации ===
         f'{Block.MAIN}-TRY_VERTICAL': State(
             actions.check_if_vertical_allowed,
-            [f'{Block.MAIN}-PROTECT_COLUMNS'],  # ✅ БЕЗ rotation!
-            ['GFS']),  # FAIL → удаляем этот вариант
+            [f'{Block.MAIN}-RZC-90'],  # ✅ Vertical нужен rotation!
+            ['GFS']),
 
         f'{Block.MAIN}-TRY_HORIZONTAL': State(
             actions.check_if_horizontal_allowed,
-            [f'{Block.MAIN}-PROTECT_COLUMNS'],  # ✅ БЕЗ rotation!
+            [f'{Block.MAIN}-PROTECT_COLUMNS'],  # ✅ Horizontal БЕЗ rotation!
             ['GFS']),
+        
+        # === Вращение для vertical ===
+        f'{Block.MAIN}-RZC-90': State(
+            actions.rotate_everything_90_clockwise,
+            [f'{Block.MAIN}-PROTECT_COLUMNS'], ['GFS']),
         
         # === Защита колонн (Фаза 1) ===
         f'{Block.MAIN}-PROTECT_COLUMNS': State(
@@ -89,15 +94,25 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.CF}-SNRTS'], [f'{Block.MAIN}-DFS']),
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
-            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-SNZ']),  # ✅ Убрали RZCC-90-2
+            [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-RZCC-90-2']),
+        
+        # === Откат rotation после DFS ===
+        f'{Block.MAIN}-RZCC-90-2': State(
+            actions.rotate_everything_90_counterclockwise,
+            [f'{Block.MAIN}-SNZ'], ['GFS']),
         
         # === После завершения работы с полосой ===
         f'{Block.MAIN}-CHECK_STRIPS': State(
             actions.check_if_more_strips_available,
-            [f'{Block.MAIN}-NEXT_STRIP'], [f'{Block.MAIN}-SpZ']),
+            [f'{Block.MAIN}-NEXT_STRIP'], [f'{Block.MAIN}-RZCC-90']),
         f'{Block.MAIN}-NEXT_STRIP': State(
             actions.set_next_free_strip,
             [f'{Block.MAIN}-PHG'], ['GFS']),
+        
+        # === Откат rotation после всех strips ===
+        f'{Block.MAIN}-RZCC-90': State(
+            actions.rotate_everything_90_counterclockwise,
+            [f'{Block.MAIN}-SpZ'], ['GFS']),
         
         # === Разделение зоны ===
         f'{Block.MAIN}-SpZ': State(
@@ -159,8 +174,8 @@ def get_rack_placement_states() -> dict[str, State]:
         # === Завершение работы с текущим грузом ===
         f'{Block.RACK_PLACEMENT}-GNC': State(
             actions.set_next_pallet,
-            [f'{Block.MAIN}-SNZ'],  # ✅ Убрали RZCC-90
-            ['TS']),  # ✅ Убрали RZCC-90-3
+            [f'{Block.MAIN}-RZCC-90'],
+            [f'{Block.RACK_PLACEMENT}-RZCC-90-3']),
         f'{Block.RACK_PLACEMENT}-SR-CC': State(
             actions.save_rack,
             [f'{Block.RACK_PLACEMENT}-SRG-CC'],
@@ -219,7 +234,7 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-RURP']),
         f'{Block.RACK_PLACEMENT}-RURP': State(
             actions.remove_unavailable_rack_parts,
-            [f'{Block.MAIN}-SNZ'],  # ✅ Убрали RZCC-90
+            [f'{Block.MAIN}-RZCC-90'],
             [f'{Block.MAIN}-SNZ']),
         
         # === Обработка горизонтального проезда ===
@@ -249,6 +264,11 @@ def get_rack_placement_states() -> dict[str, State]:
             actions.set_default_frame_size,
             [f'{Block.RACK_PLACEMENT}-IPC'],
             ['GFS']),
+        
+        # === Откат rotation ===
+        f'{Block.RACK_PLACEMENT}-RZCC-90-3': State(
+            actions.rotate_everything_90_counterclockwise,
+            ['TS'], ['GFS']),
     }
 
 
