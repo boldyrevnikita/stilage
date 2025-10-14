@@ -108,14 +108,14 @@ def set_next_zone(
     
     # DEBUG: Новая зона
     new_zone = solution.available_zones[solution.available_zone_idx]
-    logger.info(f"[DEBUG_NEXT_ZONE] ========================================")
-    logger.info(f"[DEBUG_NEXT_ZONE] SWITCHING TO NEXT ZONE")
-    logger.info(f"[DEBUG_NEXT_ZONE] Zone index: {solution.available_zone_idx}/{len(solution.available_zones)}")
-    logger.info(f"[DEBUG_NEXT_ZONE] Zone bounds: {new_zone.bounds}")
+    logger.warning(f"[DEBUG_NEXT_ZONE] ========================================")
+    logger.warning(f"[DEBUG_NEXT_ZONE] SWITCHING TO NEXT ZONE")
+    logger.warning(f"[DEBUG_NEXT_ZONE] Zone index: {solution.available_zone_idx}/{len(solution.available_zones)}")
+    logger.warning(f"[DEBUG_NEXT_ZONE] Zone bounds: {new_zone.bounds}")
     width = new_zone.bounds[2] - new_zone.bounds[0]
     height = new_zone.bounds[3] - new_zone.bounds[1]
-    logger.info(f"[DEBUG_NEXT_ZONE] Zone size: {width:.1f} x {height:.1f} mm")
-    logger.info(f"[DEBUG_NEXT_ZONE] ========================================")
+    logger.warning(f"[DEBUG_NEXT_ZONE] Zone size: {width:.1f} x {height:.1f} mm")
+    logger.warning(f"[DEBUG_NEXT_ZONE] ========================================")
 
 
 def set_zero_zone(
@@ -752,7 +752,7 @@ def remove_unavailable_rack_parts(
             removed_count += 1
     
     if removed_count > 0:
-        logger.info(f"[ZONES] Removed {removed_count} unavailable rack parts")
+        logger.warning(f"[ZONES] Removed {removed_count} unavailable rack parts")
 
 def check_if_vertical_allowed(
     _: ReferenceBook,
@@ -774,11 +774,11 @@ def check_if_vertical_allowed(
     available_zone = solution.available_zones[solution.available_zone_idx]
     
     if available_zone.orientation == 1:  # Only horizontal allowed
-        logger.info(f"[ORIENTATION] ✗ Vertical placement NOT allowed (orientation=1 - horizontal only)")
+        logger.warning(f"[ORIENTATION] ✗ Vertical placement NOT allowed (orientation=1 - horizontal only)")
         raise ActionFailure("Vertical rack placement is not allowed in this zone")
     
     # orientation == 2 (vertical) or orientation == 0 (any) → SUCCESS
-    logger.info(f"[ORIENTATION] ✓ Vertical placement allowed (orientation={available_zone.orientation})")
+    logger.warning(f"[ORIENTATION] ✓ Vertical placement allowed (orientation={available_zone.orientation})")
 
 
 def check_if_horizontal_allowed(
@@ -801,8 +801,8 @@ def check_if_horizontal_allowed(
     available_zone = solution.available_zones[solution.available_zone_idx]
     
     if available_zone.orientation == 2:  # Only vertical allowed
-        logger.info(f"[ORIENTATION] ✗ Horizontal placement NOT allowed (orientation=2 - vertical only)")
+        logger.warning(f"[ORIENTATION] ✗ Horizontal placement NOT allowed (orientation=2 - vertical only)")
         raise ActionFailure("Horizontal rack placement is not allowed in this zone")
     
     # orientation == 1 (horizontal) or orientation == 0 (any) → SUCCESS
-    logger.info(f"[ORIENTATION] ✓ Horizontal placement allowed (orientation={available_zone.orientation})")
+    logger.warning(f"[ORIENTATION] ✓ Horizontal placement allowed (orientation={available_zone.orientation})")
