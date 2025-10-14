@@ -183,20 +183,58 @@ def split_available_zone(
 ) -> None:
     """Splits the available zone into two parts.
     
-    ✅ CRITICAL FIX: Only creates zones that are at least 5000mm (5 meters) 
-    in BOTH width and height. This prevents creation of tiny unusable zones
-    that cause failures in subsequent processing.
+    ✅ NEW LOGIC WITH PROTECTIVE RACKS:
+    When protective racks exist, split is calculated based on REGULAR racks only,
+    not protective racks. This is because:
+    - Protective racks span the full width of the zone (X-axis)
+    - Regular racks are placed in strips between protective racks
+    - We need to split based on where regular racks end, not protective racks
     """
-    if len(solution.current_rack_group.racks) == 0:
-        raise ActionFailure("No racks are placed.")
-
-    current_rack_group = solution.current_rack_group
     available_zone = solution.available_zones[solution.available_zone_idx]
-    
-    # ✅ FIXED: Increased from 2000 to 5000mm
     MIN_ZONE_SIZE = 5000.0  # Minimum 5 meters to ensure usable zones
     
-    split_point = list(current_rack_group.bounds[2:])
+    # ✅ NEW: Calculate split point from ALL saved rack groups, excluding protective
+    if not solution.saved_rack_groups:
+        logger.warning("[ZONES] No saved rack groups, skipping split")
+        solution.available_zones.pop(solution.available_zone_idx)
+        solution.available_zone_idx -= 1
+        return
+    
+    # Find maximum X and Y from regular (non-protective) racks
+    max_x = available_zone.bounds[0]  # Start from zone left edge
+    max_y = available_zone.bounds[1]  # Start from zone bottom edge
+    
+    has_regular_racks = False
+    
+    for rack_group in solution.saved_rack_groups:
+        # Check if this rack group contains protective racks
+        is_protective_group = False
+        
+        if rack_group.racks:
+            first_rack = rack_group.racks[0]
+            if isinstance(first_rack, DoubleRack):
+                if hasattr(first_rack, 'is_protective') and first_rack.is_protective:
+                    is_protective_group = True
+        
+        if not is_protective_group:
+            # This is a REGULAR rack group - use it for split calculation
+            has_regular_racks = True
+            max_x = max(max_x, rack_group.bounds[2])
+            max_y = max(max_y, rack_group.bounds[3])
+            logger.warning(f"[ZONES] Including regular rack: bounds={rack_group.bounds}")
+        else:
+            logger.warning(f"[ZONES] Excluding protective rack from split calculation")
+    
+    # If no regular racks were placed, skip split
+    if not has_regular_racks:
+        logger.warning("[ZONES] ⚠️ No regular racks placed, only protective racks exist")
+        logger.warning("[ZONES] Skipping split - zone is fully processed")
+        solution.available_zones.pop(solution.available_zone_idx)
+        solution.available_zone_idx -= 1
+        return
+    
+    # Calculate split point based on regular racks
+    split_point = [max_x, max_y]
     split_point[0] += reference_book.roads_width
     split_point[1] += reference_book.roads_width
     split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
@@ -206,8 +244,16 @@ def split_available_zone(
     right_zone_width = available_zone.bounds[2] - split_point[0]
     top_zone_height = available_zone.bounds[3] - split_point[1]
     
-    logger.warning(f"[ZONES] Split analysis: right_width={right_zone_width:.1f}mm, "
-                  f"top_height={top_zone_height:.1f}mm (min={MIN_ZONE_SIZE:.1f}mm)")
+    logger.warning(f"[ZONES] ========================================")
+    logger.warning(f"[ZONES] SPLIT ANALYSIS (excluding protective racks)")
+    logger.warning(f"[ZONES]   Available zone: {available_zone.bounds}")
+    logger.warning(f"[ZONES]   Regular racks max X: {max_x:.1f}mm")
+    logger.warning(f"[ZONES]   Regular racks max Y: {max_y:.1f}mm")
+    logger.warning(f"[ZONES]   Split point: ({split_point[0]:.1f}, {split_point[1]:.1f})")
+    logger.warning(f"[ZONES]   Right zone width: {right_zone_width:.1f}mm")
+    logger.warning(f"[ZONES]   Top zone height: {top_zone_height:.1f}mm")
+    logger.warning(f"[ZONES]   Min required: {MIN_ZONE_SIZE:.1f}mm")
+    logger.warning(f"[ZONES] ========================================")
     
     # Only split if at least one resulting zone will be large enough
     if right_zone_width >= MIN_ZONE_SIZE or top_zone_height >= MIN_ZONE_SIZE:
@@ -215,7 +261,6 @@ def split_available_zone(
             new_zones = available_zone.split_zone(split_point)
             
             added_count = 0
-            # Filter: only add zones that meet minimum size requirements
             for zone in new_zones:
                 zone_w = zone.bounds[2] - zone.bounds[0]
                 zone_h = zone.bounds[3] - zone.bounds[1]
@@ -223,14 +268,15 @@ def split_available_zone(
                 if zone_w >= MIN_ZONE_SIZE and zone_h >= MIN_ZONE_SIZE:
                     solution.available_zones.append(zone)
                     added_count += 1
-                    logger.warning(f"[ZONES] Added new zone: {zone_w:.1f} x {zone_h:.1f} mm")
+                    logger.warning(f"[ZONES] ✅ Added new zone: {zone_w:.1f} x {zone_h:.1f} mm")
                 else:
-                    logger.warning(f"[ZONES] Rejected small zone: {zone_w:.1f} x {zone_h:.1f} mm "
-                                 f"(below minimum {MIN_ZONE_SIZE:.1f}mm)")
+                    logger.warning(f"[ZONES] ❌ Rejected small zone: {zone_w:.1f} x {zone_h:.1f} mm")
             
             logger.warning(f"[ZONES] Split created {added_count} viable zones")
+        else:
+            logger.warning(f"[ZONES] ⚠️ Split point outside zone bounds, skipping split")
     else:
-        logger.warning(f"[ZONES] Split skipped - no resulting zones would meet minimum size")
+        logger.warning(f"[ZONES] ⚠️ Split skipped - no resulting zones meet minimum size")
 
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zone_idx -= 1
