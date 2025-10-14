@@ -81,6 +81,11 @@ def rotate_everything_90_counterclockwise(
             protective_rack.rotate(angle, solution.rot_point)
         
         solution.current_rack_group.rotate(angle, solution.rot_point)
+        
+        # ✅ ДОБАВИТЬ ЭТО:
+        # Rotate all saved rack groups back
+        for rack_group in solution.saved_rack_groups:
+            rack_group.rotate(angle, solution.rot_point)
 
         solution.is_rotated = False
 
@@ -90,7 +95,6 @@ def rotate_everything_90_counterclockwise(
             key=lambda x: (x.bounds[0], x.bounds[2]))
         
         logger.warning("[ZONES] Rotated everything 90 degrees counterclockwise")
-
 
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
