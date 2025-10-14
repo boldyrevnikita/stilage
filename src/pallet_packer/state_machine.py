@@ -112,7 +112,7 @@ def get_main_loop_states() -> dict[str, State]:
         # === Откат rotation после всех strips ===
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_everything_90_counterclockwise,
-            [f'{Block.MAIN}-SpZ'], ['GFS']),
+            [f'{Block.MAIN}-SpZ'], [f'{Block.MAIN}-SpZ']),
         
         # === Разделение зоны ===
         f'{Block.MAIN}-SpZ': State(
