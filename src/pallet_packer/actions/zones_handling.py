@@ -40,11 +40,9 @@ def rotate_everything_90_clockwise(
     for road_zone in solution.current_road_zones:
         road_zone.rotate(solution.rot_point, angle)
     
-    # NEW: Also rotate columns and protective racks
+    # Rotate columns (protective racks don't exist yet at this stage)
     for column in solution.columns_in_zone:
         column.rotate(solution.rot_point, angle)
-    for protective_rack in solution.protective_racks:
-        protective_rack.rotate(angle, solution.rot_point)
 
     solution.is_rotated = True
 
@@ -60,6 +58,9 @@ def rotate_everything_90_counterclockwise(
 ) -> None:
     """Rotates the available zone's contour 90 degrees counterclockwise.
     
+    ✅ FIX: Protective racks are now ONLY rotated once via saved_rack_groups,
+    not twice (once directly and once via saved_rack_groups).
+    
     Args:
         _ (ReferenceBook): The reference book (not used).
         solution (Solution): The current solution.
@@ -68,21 +69,30 @@ def rotate_everything_90_counterclockwise(
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
+        # Rotate zone
         available_zone.rotate(solution.rot_point, angle)
+        
+        # Rotate obstacles
         for occupied_zone in solution.current_occupied_zones:
             occupied_zone.rotate(solution.rot_point, angle)
         for road_zone in solution.current_road_zones:
             road_zone.rotate(solution.rot_point, angle)
         
-        # NEW: Also rotate columns and protective racks
+        # Rotate columns
         for column in solution.columns_in_zone:
             column.rotate(solution.rot_point, angle)
-        for protective_rack in solution.protective_racks:
-            protective_rack.rotate(angle, solution.rot_point)
         
-        solution.current_rack_group.rotate(angle, solution.rot_point)
+        # ✅ REMOVED: Don't rotate protective_racks separately!
+        # They are already in saved_rack_groups and will be rotated below.
+        # OLD CODE (caused double rotation):
+        # for protective_rack in solution.protective_racks:
+        #     protective_rack.rotate(angle, solution.rot_point)
         
-        # Rotate all saved rack groups back
+        # Rotate current_rack_group
+        if solution.current_rack_group:
+            solution.current_rack_group.rotate(angle, solution.rot_point)
+        
+        # Rotate ALL saved rack groups (including protective racks)
         for rack_group in solution.saved_rack_groups:
             rack_group.rotate(angle, solution.rot_point)
 

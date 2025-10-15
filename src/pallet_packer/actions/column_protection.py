@@ -77,6 +77,10 @@ def _save_protective_racks_as_rack_groups(
             # Add the protective rack to the group
             rack_group.racks.append(protective_rack)
             
+            # ✅ CRITICAL: Mark this RackGroup as protective
+            # This prevents double rotation and helps with identification
+            rack_group.is_protective = True
+            
             # IMPORTANT: Update RackGroup bounds if method exists
             if hasattr(rack_group, '_update_bounds'):
                 rack_group._update_bounds()
