@@ -216,13 +216,9 @@ def split_available_zone(
     
     has_regular_racks = False
     
-    # ✅ CRITICAL: Check both saved_rack_groups AND current_rack_group!
-    # Regular racks might still be in current_rack_group (not yet saved)
-    all_rack_groups = list(solution.saved_rack_groups)
-    if solution.current_rack_group is not None:
-        all_rack_groups.append(solution.current_rack_group)
-    
-    for rack_group in all_rack_groups:
+    # ✅ CRITICAL FIX: Only use saved_rack_groups
+    # Don't check current_rack_group - it's either None or already in saved_rack_groups
+    for rack_group in solution.saved_rack_groups:
         # Check if this rack group contains protective racks
         is_protective_group = False
         
@@ -297,7 +293,6 @@ def split_available_zone(
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zone_idx -= 1
 
-
 def sort_available_zones_by_area_and_height(
     _: ReferenceBook,
     solution: Solution
@@ -343,7 +338,13 @@ def set_current_occupied_zones_and_road_zones(
     solution.free_strips = []
     solution.current_strip_idx = 0
     
-    logger.warning(f"[ZONES] Cleared protective racks and strips for new zone")
+    # ✅ CRITICAL FIX: Clear current_rack_group to avoid duplication in split
+    # When we switch zones, current_rack_group should be either:
+    # - Already saved in saved_rack_groups (so we don't need it)
+    # - Or it should be discarded (incomplete work from previous zone)
+    solution.current_rack_group = None
+    
+    logger.warning(f"[ZONES] Cleared protective racks, strips, and current_rack_group for new zone")
 
     # Process occupied zones - add ALL obstacles to current_occupied_zones
     for occupied_zone in solution.occupied_zones:
