@@ -56,54 +56,39 @@ def rotate_everything_90_counterclockwise(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Rotates the available zone's contour 90 degrees counterclockwise.
-    
-    ✅ FIX: Protective racks are now ONLY rotated once via saved_rack_groups,
-    not twice (once directly and once via saved_rack_groups).
-    
-    Args:
-        _ (ReferenceBook): The reference book (not used).
-        solution (Solution): The current solution.
-    """
     if solution.is_rotated:
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
+        # ✅ CRITICAL FIX: Use CURRENT zone corner for rotation back
+        # After clockwise rotation, the zone has moved, but rot_point stayed the same
+        # We need to rotate around the CURRENT bottom-left corner
+        current_rot_point = available_zone.bounds[:2]
+
         # Rotate zone
-        available_zone.rotate(solution.rot_point, angle)
+        available_zone.rotate(current_rot_point, angle)
         
         # Rotate obstacles
         for occupied_zone in solution.current_occupied_zones:
-            occupied_zone.rotate(solution.rot_point, angle)
+            occupied_zone.rotate(current_rot_point, angle)
         for road_zone in solution.current_road_zones:
-            road_zone.rotate(solution.rot_point, angle)
+            road_zone.rotate(current_rot_point, angle)
         
         # Rotate columns
         for column in solution.columns_in_zone:
-            column.rotate(solution.rot_point, angle)
-        
-        # ✅ REMOVED: Don't rotate protective_racks separately!
-        # They are already in saved_rack_groups and will be rotated below.
-        # OLD CODE (caused double rotation):
-        # for protective_rack in solution.protective_racks:
-        #     protective_rack.rotate(angle, solution.rot_point)
+            column.rotate(current_rot_point, angle)
         
         # Rotate current_rack_group
         if solution.current_rack_group:
-            solution.current_rack_group.rotate(angle, solution.rot_point)
+            solution.current_rack_group.rotate(angle, current_rot_point)
         
-        # Rotate ALL saved rack groups (including protective racks)
+        # ✅ Rotate ONLY regular racks (skip protective racks)
         for rack_group in solution.saved_rack_groups:
-            rack_group.rotate(angle, solution.rot_point)
+            if hasattr(rack_group, 'is_protective') and rack_group.is_protective:
+                continue
+            rack_group.rotate(angle, current_rot_point)
 
         solution.is_rotated = False
-
-        solution.current_occupied_zones.sort(
-            key=lambda x: (x.bounds[0], x.bounds[2]))
-        solution.current_road_zones.sort(
-            key=lambda x: (x.bounds[0], x.bounds[2]))
-        
-        logger.warning("[ZONES] Rotated everything 90 degrees counterclockwise")
 
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
