@@ -60,36 +60,29 @@ def rotate_everything_90_counterclockwise(
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
-        # ✅ CRITICAL FIX: Use CURRENT zone corner for rotation back
-        # After clockwise rotation, the zone has moved, but rot_point stayed the same
-        # We need to rotate around the CURRENT bottom-left corner
-        current_rot_point = available_zone.bounds[:2]
-
         # Rotate zone
-        available_zone.rotate(current_rot_point, angle)
+        available_zone.rotate(solution.rot_point, angle)
         
         # Rotate obstacles
         for occupied_zone in solution.current_occupied_zones:
-            occupied_zone.rotate(current_rot_point, angle)
+            occupied_zone.rotate(solution.rot_point, angle)
         for road_zone in solution.current_road_zones:
-            road_zone.rotate(current_rot_point, angle)
+            road_zone.rotate(solution.rot_point, angle)
         
         # Rotate columns
         for column in solution.columns_in_zone:
-            column.rotate(current_rot_point, angle)
+            column.rotate(solution.rot_point, angle)
         
         # Rotate current_rack_group
         if solution.current_rack_group:
-            solution.current_rack_group.rotate(angle, current_rot_point)
+            solution.current_rack_group.rotate(angle, solution.rot_point)
         
-        # ✅ Rotate ONLY regular racks (skip protective racks)
+        # ✅ Rotate ALL saved rack groups (including protective racks!)
+        # Everything was created in rotated coordinates and must return together
         for rack_group in solution.saved_rack_groups:
-            if hasattr(rack_group, 'is_protective') and rack_group.is_protective:
-                continue
-            rack_group.rotate(angle, current_rot_point)
+            rack_group.rotate(angle, solution.rot_point)
 
         solution.is_rotated = False
-
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
 # =============================================================================
