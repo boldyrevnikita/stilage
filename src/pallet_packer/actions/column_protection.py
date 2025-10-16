@@ -2,6 +2,8 @@
 Actions for protecting columns with continuous double racks.
 This module implements Phase 1 of the new placement logic:
 identifying all columns in a zone and covering them with protective racks.
+
+✅ FIXED: Protective racks now correctly handle road zone intersections (bridges)
 """
 
 from src.reference_book import ReferenceBook
@@ -414,8 +416,12 @@ def _create_protective_rack_for_column(
         if column_bounds[1] < rack1_end or column_bounds[3] > rack2_start:
             logger.error(f"[COLUMN_PROTECTION] Column not in gap!")
         
-        # Fill with frames
-        _fill_protective_rack_with_frames(protective_rack, available_zone)
+        # ✅ Fill with frames (now handles road zones!)
+        _fill_protective_rack_with_frames(
+            protective_rack, 
+            available_zone,
+            solution.current_road_zones  # ✅ Pass road zones!
+        )
         
         return protective_rack
         
@@ -426,9 +432,13 @@ def _create_protective_rack_for_column(
 
 def _fill_protective_rack_with_frames(
     protective_rack: DoubleRack,
-    available_zone
+    available_zone,
+    road_zones: list
 ) -> None:
-    """Fills a protective rack with as many frames as possible."""
+    """Fills a protective rack with frames, handling road zone intersections.
+    
+    ✅ NEW: Now checks for road zone intersections and creates bridges!
+    """
     section_length = (protective_rack.rack_1.beam_type.length + 
                      protective_rack.rack_1.upright_type.width)
     
@@ -437,14 +447,34 @@ def _fill_protective_rack_with_frames(
     
     frames_count = max(0, int(max_available_length // section_length))
     
-    if frames_count > 0:
-        protective_rack.add_multiple_frames(frames_count)
+    logger.warning(f"[COLUMN_PROTECTION] Filling protective rack with up to {frames_count} frames")
     
-    # Verify fit
-    if not shapely.contains(available_zone.contour, protective_rack.contour):
-        original = len(protective_rack.rack_1)
-        while not shapely.contains(available_zone.contour, protective_rack.contour) and len(protective_rack.rack_1) > 0:
+    # Add frames one by one, checking for road zone intersections
+    for i in range(frames_count):
+        protective_rack.add_frame()
+        
+        # ✅ NEW: Check if last frame intersects with any road zone
+        intersects_road = False
+        for road_zone in road_zones:
+            if protective_rack.last_frame_intersects(road_zone.contour):
+                intersects_road = True
+                # Check if it's a vertical road (needs bridge)
+                if not road_zone.is_horizontal():
+                    frame_idx = len(protective_rack.rack_1) - 1
+                    protective_rack.make_frame_bridge(frame_idx)
+                    logger.warning(f"[COLUMN_PROTECTION] ✅ Set frame {frame_idx} as BRIDGE in protective rack (vertical road intersection)")
+                else:
+                    logger.warning(f"[COLUMN_PROTECTION] Frame {i} intersects horizontal road - no bridge needed")
+                break
+        
+        # Verify fit
+        if not shapely.contains(available_zone.contour, protective_rack.contour):
             protective_rack.delete_last_frame()
+            logger.warning(f"[COLUMN_PROTECTION] Removed frame {i} - doesn't fit in zone")
+            break
+    
+    final_frames = len(protective_rack.rack_1)
+    logger.warning(f"[COLUMN_PROTECTION] Protective rack filled with {final_frames} frames")
 
 
 def _merge_close_protective_racks(
