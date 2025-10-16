@@ -1,5 +1,6 @@
 import numpy as np
 import plotly.graph_objects as go
+import shapely
 
 from src.pallet_packer.solution import Solution
 from src.rack import DoubleRack, Rack
@@ -156,6 +157,13 @@ def plot_rack(fig: go.Figure, rack: Rack):
 
     colors = ['indigo', 'magenta', 'cyan']
     for deck_idx, deck in enumerate(rack.decks):
+        # ✅ NEW: Skip drawing deck if it intersects with protected column
+        if rack.is_protective and rack.protected_column is not None:
+            # Check if deck intersects with protected column
+            if shapely.intersects(deck, rack.protected_column.contour):
+                # Don't draw this deck - it passes through the column
+                continue
+        
         deck_polygon = deck.exterior.xy
         color = colors[rack.deck_status[deck_idx].value - 1]
 

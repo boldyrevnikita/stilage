@@ -63,7 +63,9 @@ class Rack:
     def __init__(self, beam_types: list[BeamType], upright_type: UprightType,
                  pallet: Pallet, max_shelfs: int,
                  max_shelfs_bridge: int,
-                 position: tuple[float, float] = (0.0, 0.0)):
+                 position: tuple[float, float] = (0.0, 0.0),
+                 is_protective: bool = False,
+                 protected_column=None):
         self.beam_types = beam_types
         self.beam_types.sort(key=lambda x: -x.length)
 
@@ -81,6 +83,11 @@ class Rack:
         self.deck_status: list[DeckStatus] = []
         self.pillar_status: list[PillarStatus] = []
         self.contour: Polygon | None = None
+        
+        # ✅ NEW: Protective rack attributes
+        self.is_protective = is_protective
+        self.protected_column = protected_column
+        
         self.__init_first_frame()
         self.__update_contour()
 
@@ -444,7 +451,7 @@ class DoubleRack():
         self.max_shelfs_bridge = max_shelfs_bridge
         self.double_rack_distance_eps = double_rack_distance_eps
         
-        # NEW: Protective rack properties
+        # ✅ NEW: Protective rack properties
         self.is_protective = is_protective
         self.protected_column = protected_column
         
@@ -454,12 +461,18 @@ class DoubleRack():
         self.rack_distance = rack_distance
 
         self.first_rack_position = position
+        # ✅ NEW: Pass protective attributes to rack_1
         self.rack_1 = Rack(beam_types, upright_type, pallet, max_shelfs,
-                           max_shelfs_bridge, self.first_rack_position)
+                           max_shelfs_bridge, self.first_rack_position,
+                           is_protective=is_protective,
+                           protected_column=protected_column)
 
         self.second_rack_position = self.__calculate_2nd_rack_position()
+        # ✅ NEW: Pass protective attributes to rack_2
         self.rack_2 = Rack(beam_types, upright_type, pallet, max_shelfs,
-                           max_shelfs_bridge, self.second_rack_position)
+                           max_shelfs_bridge, self.second_rack_position,
+                           is_protective=is_protective,
+                           protected_column=protected_column)
 
         self.contour = None
         self.__update_contour()
@@ -687,17 +700,29 @@ class RackGroup():
 
     def place_single_rack(self) -> None:
         """Places the first rack in the group."""
-        self.current_rack = Rack(self.beam_types, self.upright_type,
-                                 self.pallet, self.max_shelfs,
-                                 self.max_shelfs_bridge,
-                                 self.next_rack_placement)
+        self.current_rack = Rack(
+            self.beam_types, 
+            self.upright_type,
+            self.pallet, 
+            self.max_shelfs,
+            self.max_shelfs_bridge,
+            self.next_rack_placement,
+            is_protective=False,  # ✅ NEW: Explicitly set for regular racks
+            protected_column=None
+        )
 
     def place_double_rack(self) -> None:
         """Places a double rack in the group."""
-        self.current_rack = DoubleRack(self.beam_types, self.upright_type,
-                                       self.pallet, self.max_shelfs,
-                                       self.max_shelfs_bridge,
-                                       self.next_rack_placement)
+        self.current_rack = DoubleRack(
+            self.beam_types, 
+            self.upright_type,
+            self.pallet, 
+            self.max_shelfs,
+            self.max_shelfs_bridge,
+            self.next_rack_placement,
+            is_protective=False,  # ✅ NEW: Explicitly set for regular racks
+            protected_column=None
+        )
 
     def rotate(self, angle: float,
                rot_point: tuple[float, float] = (0.0, 0.0)) -> None:
