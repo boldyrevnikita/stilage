@@ -57,6 +57,8 @@ def rotate_everything_90_counterclockwise(
     solution: Solution
 ) -> None:
     if solution.is_rotated:
+        from src.rack import normalize_rack_orientation  # ✅ ADD IMPORT
+        
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
@@ -76,13 +78,24 @@ def rotate_everything_90_counterclockwise(
         # Rotate current_rack_group
         if solution.current_rack_group:
             solution.current_rack_group.rotate(angle, solution.rot_point)
+            
+            # ✅ NEW: Normalize current rack group after rotation
+            if solution.current_rack_group.racks:
+                for rack in solution.current_rack_group.racks:
+                    normalize_rack_orientation(rack)
+                    logger.warning(f"[ZONES] Normalized rack in current_rack_group")
         
-        # ✅ Rotate ALL saved rack groups (including protective racks!)
-        # Everything was created in rotated coordinates and must return together
+        # Rotate ALL saved rack groups (including protective racks!)
         for rack_group in solution.saved_rack_groups:
             rack_group.rotate(angle, solution.rot_point)
+            
+            # ✅ NEW: Normalize all racks after rotation
+            for rack in rack_group.racks:
+                normalize_rack_orientation(rack)
+                logger.warning(f"[ZONES] Normalized rack in saved_rack_groups")
 
         solution.is_rotated = False
+        logger.warning("[ZONES] Rotated everything 90° counterclockwise and normalized all racks")
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
 # =============================================================================

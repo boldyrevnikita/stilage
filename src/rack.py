@@ -740,3 +740,75 @@ class RackGroup():
         bounds = self.bounds
         return abs((bounds[0] - bounds[2])
                    * (bounds[1] - bounds[3]))
+
+    def normalize_rack_orientation(rack: 'Rack | DoubleRack') -> None:
+    """Normalizes rack contours after rotation to ensure consistent coordinate order.
+    
+    After rotation, Shapely may change the order of exterior coordinates.
+    This function ensures that all rack contours start from the bottom-left corner
+    and proceed counter-clockwise.
+    
+    Args:
+        rack: The rack to normalize (Rack or DoubleRack).
+    """
+    if isinstance(rack, DoubleRack):
+        # Normalize both halves
+        _normalize_single_rack(rack.rack_1)
+        _normalize_single_rack(rack.rack_2)
+        
+        # Normalize main contour
+        if rack.contour is not None:
+            rack.contour = _normalize_polygon(rack.contour)
+    
+    elif isinstance(rack, Rack):
+        _normalize_single_rack(rack)
+
+
+    def _normalize_single_rack(rack: 'Rack') -> None:
+        """Normalizes a single rack's geometry.
+        
+        Args:
+            rack: The single rack to normalize.
+        """
+        # Normalize main contour
+        if rack.contour is not None:
+            rack.contour = _normalize_polygon(rack.contour)
+        
+        # Normalize each deck
+        for i in range(len(rack.decks)):
+            rack.decks[i] = _normalize_polygon(rack.decks[i])
+        
+        # Normalize each pillar
+        for i in range(len(rack.pillars)):
+            rack.pillars[i] = _normalize_polygon(rack.pillars[i])
+
+
+    def _normalize_polygon(polygon: Polygon) -> Polygon:
+        """Normalizes a polygon to start from bottom-left corner.
+        
+        Args:
+            polygon: The polygon to normalize.
+        
+        Returns:
+            Normalized polygon with coordinates starting from bottom-left.
+        """
+        # Get all exterior coordinates (without closing point)
+        coords = list(polygon.exterior.coords[:-1])
+        
+        if not coords:
+            return polygon
+        
+        # Find the bottom-left point (minimum y, then minimum x)
+        bottom_left_idx = min(
+            range(len(coords)), 
+            key=lambda i: (coords[i][1], coords[i][0])
+        )
+        
+        # Rotate the coordinate list to start from bottom-left
+        normalized_coords = coords[bottom_left_idx:] + coords[:bottom_left_idx]
+        
+        # Add closing point
+        normalized_coords.append(normalized_coords[0])
+        
+        # Create new polygon with normalized coordinates
+        return Polygon(normalized_coords)
