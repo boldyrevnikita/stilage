@@ -24,14 +24,15 @@ def rotate_everything_90_clockwise(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Rotates the available zone's contour 90 degrees clockwise.
-
-    Args:
-        _ (ReferenceBook): The reference book (not used).
-        solution (Solution): The current solution containing available zones.
-    """
     available_zone = solution.available_zones[solution.available_zone_idx]
-    solution.rot_point = available_zone.bounds[:2]
+    
+    # ✅ CRITICAL FIX: Use CENTER of zone as rotation point!
+    bounds = available_zone.bounds
+    solution.rot_point = (
+        (bounds[0] + bounds[2]) / 2,  # center_x
+        (bounds[1] + bounds[3]) / 2   # center_y
+    )
+    
     angle = -90
 
     available_zone.rotate(solution.rot_point, angle)
@@ -40,7 +41,6 @@ def rotate_everything_90_clockwise(
     for road_zone in solution.current_road_zones:
         road_zone.rotate(solution.rot_point, angle)
     
-    # Rotate columns (protective racks don't exist yet at this stage)
     for column in solution.columns_in_zone:
         column.rotate(solution.rot_point, angle)
 
@@ -49,7 +49,7 @@ def rotate_everything_90_clockwise(
     solution.current_occupied_zones.sort(key=lambda x: x.bounds[0])
     solution.current_road_zones.sort(key=lambda x: x.bounds[0])
     
-    logger.warning("[ZONES] Rotated everything 90 degrees clockwise")
+    logger.warning(f"[ZONES] Rotated everything 90° clockwise around CENTER {solution.rot_point}")
 
 
 def rotate_everything_90_counterclockwise(
