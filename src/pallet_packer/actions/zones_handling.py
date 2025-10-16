@@ -90,14 +90,9 @@ def rotate_everything_90_counterclockwise(
         for column in solution.columns_in_zone:
             column.rotate(solution.rot_point, angle)
         
-        # Rotate current_rack_group
-        if solution.current_rack_group:
-            solution.current_rack_group.rotate(angle, solution.rot_point)
-            
-            if solution.current_rack_group.racks:
-                for rack in solution.current_rack_group.racks:
-                    normalize_rack_orientation(rack)
-                    logger.warning(f"[ZONES] Normalized rack in current_rack_group")
+        # ✅ CRITICAL FIX: Don't rotate current_rack_group separately!
+        # If it was saved, it will be rotated with saved_rack_groups below.
+        # If it wasn't saved, we don't need to rotate it (it will be discarded).
         
         # Rotate ALL saved rack groups (including protective racks!)
         for rack_group in solution.saved_rack_groups:
@@ -127,6 +122,7 @@ def rotate_everything_90_counterclockwise(
 
         solution.is_rotated = False
         logger.warning("[ZONES] Rotated everything 90° counterclockwise and normalized all racks")
+
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
 # =============================================================================
