@@ -26,12 +26,9 @@ def rotate_everything_90_clockwise(
 ) -> None:
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    # ✅ CRITICAL FIX: Use CENTER of zone as rotation point!
-    bounds = available_zone.bounds
-    solution.rot_point = (
-        (bounds[0] + bounds[2]) / 2,  # center_x
-        (bounds[1] + bounds[3]) / 2   # center_y
-    )
+    # ✅ CRITICAL FIX: Use BOTTOM-LEFT corner as rotation point!
+    # This ensures that after rotation back, everything returns to exact positions
+    solution.rot_point = available_zone.bounds[:2]  # (min_x, min_y)
     
     angle = -90
 
@@ -49,7 +46,7 @@ def rotate_everything_90_clockwise(
     solution.current_occupied_zones.sort(key=lambda x: x.bounds[0])
     solution.current_road_zones.sort(key=lambda x: x.bounds[0])
     
-    logger.warning(f"[ZONES] Rotated everything 90° clockwise around CENTER {solution.rot_point}")
+    logger.warning(f"[ZONES] Rotated everything 90° clockwise around BOTTOM-LEFT {solution.rot_point}")
 
 
 def rotate_everything_90_counterclockwise(
@@ -57,11 +54,29 @@ def rotate_everything_90_counterclockwise(
     solution: Solution
 ) -> None:
     if solution.is_rotated:
-        from src.rack import normalize_rack_orientation  # ✅ ADD IMPORT
+        from src.rack import normalize_rack_orientation
         
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
+        # ✅ DEBUG: Log bounds BEFORE rotation back
+        logger.warning("[DEBUG_ROTATION_BACK] ========================================")
+        logger.warning("[DEBUG_ROTATION_BACK] BEFORE rotation counterclockwise:")
+        logger.warning(f"[DEBUG_ROTATION_BACK] Zone bounds: {available_zone.bounds}")
+        logger.warning(f"[DEBUG_ROTATION_BACK] Total saved_rack_groups: {len(solution.saved_rack_groups)}")
+        
+        for i, rg in enumerate(solution.saved_rack_groups):
+            is_protective = False
+            if rg.racks:
+                first_rack = rg.racks[0]
+                if isinstance(first_rack, DoubleRack) and hasattr(first_rack, 'is_protective'):
+                    is_protective = first_rack.is_protective
+            
+            logger.warning(f"[DEBUG_ROTATION_BACK]   RackGroup {i}: "
+                          f"protective={is_protective}, "
+                          f"bounds={rg.bounds}, "
+                          f"racks_count={len(rg.racks)}")
+        
         # Rotate zone
         available_zone.rotate(solution.rot_point, angle)
         
@@ -79,7 +94,6 @@ def rotate_everything_90_counterclockwise(
         if solution.current_rack_group:
             solution.current_rack_group.rotate(angle, solution.rot_point)
             
-            # ✅ NEW: Normalize current rack group after rotation
             if solution.current_rack_group.racks:
                 for rack in solution.current_rack_group.racks:
                     normalize_rack_orientation(rack)
@@ -89,10 +103,27 @@ def rotate_everything_90_counterclockwise(
         for rack_group in solution.saved_rack_groups:
             rack_group.rotate(angle, solution.rot_point)
             
-            # ✅ NEW: Normalize all racks after rotation
             for rack in rack_group.racks:
                 normalize_rack_orientation(rack)
                 logger.warning(f"[ZONES] Normalized rack in saved_rack_groups")
+
+        # ✅ DEBUG: Log bounds AFTER rotation back
+        logger.warning("[DEBUG_ROTATION_BACK] AFTER rotation counterclockwise:")
+        logger.warning(f"[DEBUG_ROTATION_BACK] Zone bounds: {available_zone.bounds}")
+        
+        for i, rg in enumerate(solution.saved_rack_groups):
+            is_protective = False
+            if rg.racks:
+                first_rack = rg.racks[0]
+                if isinstance(first_rack, DoubleRack) and hasattr(first_rack, 'is_protective'):
+                    is_protective = first_rack.is_protective
+            
+            logger.warning(f"[DEBUG_ROTATION_BACK]   RackGroup {i}: "
+                          f"protective={is_protective}, "
+                          f"bounds={rg.bounds}, "
+                          f"racks_count={len(rg.racks)}")
+        
+        logger.warning("[DEBUG_ROTATION_BACK] ========================================")
 
         solution.is_rotated = False
         logger.warning("[ZONES] Rotated everything 90° counterclockwise and normalized all racks")
