@@ -270,6 +270,10 @@ def set_first_free_strip(
         raise ActionFailure("No free strips available for rack placement")
     
     solution.current_strip_idx = 0
+    
+    # ✅ CRITICAL FIX: Reset last_intersected_vertical_road at the start!
+    solution.last_intersected_vertical_road = None
+    
     strip = solution.free_strips[0]
     logger.warning(f"[COLUMN_PROTECTION] Set first strip: Y=[{strip['y_min']:.1f}, {strip['y_max']:.1f}], "
                 f"width={strip['width']:.1f}mm")
@@ -304,6 +308,11 @@ def set_next_free_strip(
         raise ActionFailure("Already at last free strip")
     
     solution.current_strip_idx += 1
+    
+    # ✅ CRITICAL FIX: Reset last_intersected_vertical_road when switching strips!
+    # Each strip should handle road zones independently
+    solution.last_intersected_vertical_road = None
+    
     strip = solution.free_strips[solution.current_strip_idx]
     logger.warning(f"[COLUMN_PROTECTION] Set next strip {solution.current_strip_idx}: "
                 f"Y=[{strip['y_min']:.1f}, {strip['y_max']:.1f}], width={strip['width']:.1f}mm")

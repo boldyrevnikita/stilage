@@ -3,6 +3,9 @@ Actions for rack placement in the pallet packing system.
 
 This module contains functions for creating, positioning, and managing
 racks during the pallet packing process.
+
+✅ FIXED: Added reset of last_intersected_vertical_road in place_horizontal_rack_group
+to ensure each new RackGroup can independently create bridges for road zones.
 """
 
 from src.reference_book import ReferenceBook
@@ -37,13 +40,9 @@ def place_horizontal_rack_group(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
 
-    # Check orientation restrictions
-    # if available_zone.orientation == 1 and solution.is_rotated:
-    #     raise ActionFailure("Vertical rack placement is "
-    #                         "not allowed in this zone.")
-    # elif available_zone.orientation == 2 and not solution.is_rotated:
-    #     raise ActionFailure("Horizontal rack placement is "
-    #                         "not allowed in this zone.")
+    # ✅ CRITICAL FIX: Reset last_intersected_vertical_road for each new RackGroup!
+    # This ensures that each new rack in each strip can create bridges independently
+    solution.last_intersected_vertical_road = None
 
     # Determine starting position
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
@@ -762,7 +761,7 @@ def fill_with_frames(
         logger.warning(f"[RACK_PLACEMENT] Overflow detected, removed {overflow_count} frames")
         raise ActionFailure("Rack overflowed zone during fill_with_frames")
     
-    # КРИТИЧНЫЕ ЛОГИ В КОНЦЕ
+    # CRITICAL LOGS AT END
     logger.warning(f"[DEBUG_FILL] ========================================")
     logger.warning(f"[DEBUG_FILL] EXITING fill_with_frames")
     logger.warning(f"[DEBUG_FILL] Final rack state:")
