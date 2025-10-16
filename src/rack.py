@@ -742,26 +742,26 @@ class RackGroup():
                    * (bounds[1] - bounds[3]))
 
     def normalize_rack_orientation(rack: 'Rack | DoubleRack') -> None:
-    """Normalizes rack contours after rotation to ensure consistent coordinate order.
-    
-    After rotation, Shapely may change the order of exterior coordinates.
-    This function ensures that all rack contours start from the bottom-left corner
-    and proceed counter-clockwise.
-    
-    Args:
-        rack: The rack to normalize (Rack or DoubleRack).
-    """
-    if isinstance(rack, DoubleRack):
-        # Normalize both halves
-        _normalize_single_rack(rack.rack_1)
-        _normalize_single_rack(rack.rack_2)
+        """Normalizes rack contours after rotation to ensure consistent coordinate order.
         
-        # Normalize main contour
-        if rack.contour is not None:
-            rack.contour = _normalize_polygon(rack.contour)
-    
-    elif isinstance(rack, Rack):
-        _normalize_single_rack(rack)
+        After rotation, Shapely may change the order of exterior coordinates.
+        This function ensures that all rack contours start from the bottom-left corner
+        and proceed counter-clockwise.
+        
+        Args:
+            rack: The rack to normalize (Rack or DoubleRack).
+        """
+        if isinstance(rack, DoubleRack):
+            # Normalize both halves
+            _normalize_single_rack(rack.rack_1)
+            _normalize_single_rack(rack.rack_2)
+            
+            # Normalize main contour
+            if rack.contour is not None:
+                rack.contour = _normalize_polygon(rack.contour)
+        
+        elif isinstance(rack, Rack):
+            _normalize_single_rack(rack)
 
 
     def _normalize_single_rack(rack: 'Rack') -> None:
@@ -811,4 +811,5 @@ class RackGroup():
         normalized_coords.append(normalized_coords[0])
         
         # Create new polygon with normalized coordinates
+        
         return Polygon(normalized_coords)
