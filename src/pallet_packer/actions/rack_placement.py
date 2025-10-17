@@ -649,7 +649,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
     - Double racks are ALWAYS used in the center of the zone
     
     Edge detection:
-    - First rack in the ENTIRE zone (first rack in first RackGroup)
+    - First rack in the ENTIRE zone (first rack in first regular RackGroup)
     - Last rack near top/right edge of zone
     
     Args:
@@ -675,23 +675,19 @@ def set_next_rack_type_double_or_single_based_on_strip(
     if solution.is_rotated:
         # VERTICAL placement (after rotation) - racks go BOTTOM to TOP (Y changes)
         
-        # Check if this is the FIRST rack in the FIRST regular rack group
+        # ✅ FIX: Check RackGroup.protective attribute correctly
         has_regular_racks = False
         
         # Check saved rack groups for regular (non-protective) racks
         for rg in solution.saved_rack_groups:
-            is_protective_group = False
-            if rg.racks:
-                first_rack = rg.racks[0]
-                if isinstance(first_rack, DoubleRack):
-                    if hasattr(first_rack, 'is_protective') and first_rack.is_protective:
-                        is_protective_group = True
+            # ✅ FIX: Check RackGroup.protective attribute, not individual rack
+            is_protective_group = hasattr(rg, 'protective') and rg.protective
             
             if not is_protective_group:
                 has_regular_racks = True
                 break
         
-        # ✅ CRITICAL FIX: Also check current rack group!
+        # ✅ Also check current rack group!
         if not has_regular_racks and solution.current_rack_group and solution.current_rack_group.racks:
             # Current rack group already has racks, so this is NOT the first rack
             has_regular_racks = True
@@ -713,6 +709,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"y={current_position[1]:.1f}, "
                       f"zone_y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}], "
                       f"is_first_rack_in_zone={is_first_rack_in_zone}, "
+                      f"has_regular_racks={has_regular_racks}, "
                       f"current_group_has_racks={len(solution.current_rack_group.racks) if solution.current_rack_group else 0}, "
                       f"dist_bottom={distance_from_bottom:.1f}, "
                       f"dist_top={distance_from_top:.1f}, "
@@ -720,22 +717,18 @@ def set_next_rack_type_double_or_single_based_on_strip(
     else:
         # HORIZONTAL placement (no rotation) - racks go LEFT to RIGHT (X changes)
         
-        # Check if this is the FIRST rack in the FIRST regular rack group
+        # ✅ FIX: Check RackGroup.protective attribute correctly
         has_regular_racks = False
         
         for rg in solution.saved_rack_groups:
-            is_protective_group = False
-            if rg.racks:
-                first_rack = rg.racks[0]
-                if isinstance(first_rack, DoubleRack):
-                    if hasattr(first_rack, 'is_protective') and first_rack.is_protective:
-                        is_protective_group = True
+            # ✅ FIX: Check RackGroup.protective attribute, not individual rack
+            is_protective_group = hasattr(rg, 'protective') and rg.protective
             
             if not is_protective_group:
                 has_regular_racks = True
                 break
         
-        # ✅ CRITICAL FIX: Also check current rack group!
+        # ✅ Also check current rack group!
         if not has_regular_racks and solution.current_rack_group and solution.current_rack_group.racks:
             has_regular_racks = True
         
@@ -753,6 +746,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"x={current_position[0]:.1f}, "
                       f"zone_x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
                       f"is_first_rack_in_zone={is_first_rack_in_zone}, "
+                      f"has_regular_racks={has_regular_racks}, "
                       f"current_group_has_racks={len(solution.current_rack_group.racks) if solution.current_rack_group else 0}, "
                       f"dist_left={distance_from_left:.1f}, "
                       f"dist_right={distance_from_right:.1f}, "
