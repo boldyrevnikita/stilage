@@ -365,16 +365,29 @@ def _create_protective_rack_for_column(
     zone_bounds = available_zone.bounds
     pallet = solution.pallets[solution.pallet_idx]
     
+    logger.warning(f"[COLUMN_PROTECTION] ========================================")
+    logger.warning(f"[COLUMN_PROTECTION] Creating protective rack for column")
+    logger.warning(f"[COLUMN_PROTECTION]   Column bounds: {column_bounds}")
+    logger.warning(f"[COLUMN_PROTECTION]   Zone bounds: {zone_bounds}")
+    
     # Calculate rack distance
     rack_distance = _calculate_dynamic_rack_distance_for_column(column, reference_book)
+    logger.warning(f"[COLUMN_PROTECTION]   Calculated rack_distance: {rack_distance:.1f}mm")
     
     # Calculate actual rack height
     actual_gap = rack_distance - reference_book.double_rack_distance_eps
     total_rack_height = 2 * pallet.length + actual_gap
     
+    logger.warning(f"[COLUMN_PROTECTION]   Pallet length: {pallet.length:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Actual gap: {actual_gap:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Total rack height: {total_rack_height:.1f}mm")
+    
     # Calculate available space
     zone_height = zone_bounds[3] - zone_bounds[1]
     available_height = zone_height - 2 * reference_book.roads_width
+    
+    logger.warning(f"[COLUMN_PROTECTION]   Zone height: {zone_height:.1f}mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Available height: {available_height:.1f}mm")
     
     if total_rack_height > available_height:
         logger.error(f"[COLUMN_PROTECTION] Rack too tall: {total_rack_height:.1f} > {available_height:.1f}")
@@ -390,8 +403,13 @@ def _create_protective_rack_for_column(
     first_rack_y = max(min_first_rack_y, min(first_rack_y, max_first_rack_y))
     
     position = (zone_bounds[0], first_rack_y)
+    logger.warning(f"[COLUMN_PROTECTION]   Position: {position}")
     
     try:
+        logger.warning(f"[COLUMN_PROTECTION] Creating DoubleRack with:")
+        logger.warning(f"[COLUMN_PROTECTION]   is_protective=True")
+        logger.warning(f"[COLUMN_PROTECTION]   protected_column={column}")
+        
         protective_rack = DoubleRack(
             beam_types=solution.beam_types,
             upright_type=solution.upright_type,
@@ -405,7 +423,30 @@ def _create_protective_rack_for_column(
             protected_column=column
         )
         
+        # ✅ CRITICAL DEBUG: Check if attributes were properly set
+        logger.warning(f"[COLUMN_PROTECTION] ========================================")
+        logger.warning(f"[COLUMN_PROTECTION] DoubleRack created successfully!")
+        logger.warning(f"[COLUMN_PROTECTION] Checking attributes:")
+        logger.warning(f"[COLUMN_PROTECTION]   protective_rack.is_protective = {protective_rack.is_protective}")
+        logger.warning(f"[COLUMN_PROTECTION]   protective_rack.protected_column = {protective_rack.protected_column}")
+        logger.warning(f"[COLUMN_PROTECTION]   protective_rack.protected_column is not None: {protective_rack.protected_column is not None}")
+        
+        # Check rack_1 attributes
+        logger.warning(f"[COLUMN_PROTECTION] Checking rack_1 attributes:")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_1.is_protective = {protective_rack.rack_1.is_protective}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_1.protected_column = {protective_rack.rack_1.protected_column}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_1.protected_column is not None: {protective_rack.rack_1.protected_column is not None}")
+        
+        # Check rack_2 attributes
+        logger.warning(f"[COLUMN_PROTECTION] Checking rack_2 attributes:")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_2.is_protective = {protective_rack.rack_2.is_protective}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_2.protected_column = {protective_rack.rack_2.protected_column}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_2.protected_column is not None: {protective_rack.rack_2.protected_column is not None}")
+        
         rack_bounds = protective_rack.bounds
+        logger.warning(f"[COLUMN_PROTECTION] Rack bounds: {rack_bounds}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_1 bounds: {protective_rack.rack_1.bounds}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_2 bounds: {protective_rack.rack_2.bounds}")
         
         # Verify boundaries
         min_allowed_y = zone_bounds[1] + reference_book.roads_width
@@ -422,20 +463,57 @@ def _create_protective_rack_for_column(
         rack1_end = protective_rack.rack_1.bounds[3]
         rack2_start = protective_rack.rack_2.bounds[1]
         
+        logger.warning(f"[COLUMN_PROTECTION] Checking column position:")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_1 ends at Y={rack1_end:.1f}")
+        logger.warning(f"[COLUMN_PROTECTION]   Column starts at Y={column_bounds[1]:.1f}")
+        logger.warning(f"[COLUMN_PROTECTION]   Column ends at Y={column_bounds[3]:.1f}")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_2 starts at Y={rack2_start:.1f}")
+        
         if column_bounds[1] < rack1_end or column_bounds[3] > rack2_start:
-            logger.error(f"[COLUMN_PROTECTION] Column not in gap!")
+            logger.error(f"[COLUMN_PROTECTION] ⚠️ Column not in gap!")
+            logger.error(f"[COLUMN_PROTECTION]   Column overlaps with rack_1: {column_bounds[1] < rack1_end}")
+            logger.error(f"[COLUMN_PROTECTION]   Column overlaps with rack_2: {column_bounds[3] > rack2_start}")
+        else:
+            logger.warning(f"[COLUMN_PROTECTION] ✅ Column correctly positioned in gap")
         
         # ✅ Fill with frames (now handles road zones!)
+        logger.warning(f"[COLUMN_PROTECTION] Filling protective rack with frames...")
         _fill_protective_rack_with_frames(
             protective_rack, 
             available_zone,
             solution.current_road_zones  # ✅ Pass road zones!
         )
         
+        # ✅ DEBUG: Check how many decks were created
+        logger.warning(f"[COLUMN_PROTECTION] After filling:")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_1 has {len(protective_rack.rack_1.decks)} decks")
+        logger.warning(f"[COLUMN_PROTECTION]   rack_2 has {len(protective_rack.rack_2.decks)} decks")
+        
+        # ✅ DEBUG: Check which decks intersect with column
+        logger.warning(f"[COLUMN_PROTECTION] Checking deck-column intersections:")
+        for idx, deck in enumerate(protective_rack.rack_1.decks):
+            deck_bounds = deck.bounds
+            intersects = shapely.intersects(deck, column.contour)
+            y_overlap = (deck_bounds[1] < column_bounds[3] and deck_bounds[3] > column_bounds[1])
+            logger.warning(f"[COLUMN_PROTECTION]   rack_1 deck {idx}: "
+                          f"Y=[{deck_bounds[1]:.1f}, {deck_bounds[3]:.1f}], "
+                          f"intersects={intersects}, y_overlap={y_overlap}")
+        
+        for idx, deck in enumerate(protective_rack.rack_2.decks):
+            deck_bounds = deck.bounds
+            intersects = shapely.intersects(deck, column.contour)
+            y_overlap = (deck_bounds[1] < column_bounds[3] and deck_bounds[3] > column_bounds[1])
+            logger.warning(f"[COLUMN_PROTECTION]   rack_2 deck {idx}: "
+                          f"Y=[{deck_bounds[1]:.1f}, {deck_bounds[3]:.1f}], "
+                          f"intersects={intersects}, y_overlap={y_overlap}")
+        
+        logger.warning(f"[COLUMN_PROTECTION] ========================================")
+        
         return protective_rack
         
     except Exception as e:
-        logger.error(f"[COLUMN_PROTECTION] Failed: {e}")
+        logger.error(f"[COLUMN_PROTECTION] Failed to create protective rack: {e}")
+        logger.exception(e)
         raise ValueError(f"Cannot create rack: {e}")
 
 

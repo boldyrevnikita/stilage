@@ -156,13 +156,41 @@ def plot_rack(fig: go.Figure, rack: Rack):
     ))
 
     colors = ['indigo', 'magenta', 'cyan']
+    
+    # ✅ DEBUG: Check if this is a protective rack
+    if hasattr(rack, 'is_protective') and rack.is_protective:
+        print(f"[VISUALIZE] Protective rack detected!")
+        print(f"[VISUALIZE]   has protected_column: {rack.protected_column is not None}")
+        if rack.protected_column is not None:
+            print(f"[VISUALIZE]   column bounds: {rack.protected_column.contour.bounds}")
+    
     for deck_idx, deck in enumerate(rack.decks):
-        # ✅ NEW: Skip drawing deck if it intersects with protected column
-        if rack.is_protective and rack.protected_column is not None:
-            # Check if deck intersects with protected column
-            if shapely.intersects(deck, rack.protected_column.contour):
-                # Don't draw this deck - it passes through the column
-                continue
+        should_skip = False
+        
+        # ✅ IMPROVED: Better intersection check for protected columns
+        if (hasattr(rack, 'is_protective') and rack.is_protective and 
+            hasattr(rack, 'protected_column') and rack.protected_column is not None):
+            
+            column_bounds = rack.protected_column.contour.bounds
+            deck_bounds = deck.bounds
+            
+            # Check Y-coordinate overlap (more reliable than shapely.intersects)
+            # Deck and column overlap if:
+            # deck.y_min < column.y_max AND deck.y_max > column.y_min
+            y_overlap = (deck_bounds[1] < column_bounds[3] and 
+                        deck_bounds[3] > column_bounds[1])
+            
+            # Also check shapely intersection for full geometry check
+            geom_intersects = shapely.intersects(deck, rack.protected_column.contour)
+            
+            if y_overlap or geom_intersects:
+                should_skip = True
+                print(f"[VISUALIZE] ✅ Skipping deck {deck_idx}: Y-overlap={y_overlap}, Geom-intersect={geom_intersects}")
+                print(f"[VISUALIZE]   Deck Y: [{deck_bounds[1]:.1f}, {deck_bounds[3]:.1f}]")
+                print(f"[VISUALIZE]   Column Y: [{column_bounds[1]:.1f}, {column_bounds[3]:.1f}]")
+        
+        if should_skip:
+            continue
         
         deck_polygon = deck.exterior.xy
         color = colors[rack.deck_status[deck_idx].value - 1]
