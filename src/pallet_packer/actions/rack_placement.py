@@ -714,7 +714,15 @@ def set_next_rack_type_double_or_single_based_on_strip(
     available_zone = solution.available_zones[solution.available_zone_idx]
     zone_bounds = available_zone.bounds
     
-    # ✅ ИСПРАВЛЕНИЕ: более строгая проверка на первый rack
+    # ✅ РАСЧЕТ ШИРИНЫ DoubleRack
+    pallet = solution.pallets[solution.pallet_idx]
+    upright_width = solution.upright_type.width
+    
+    # DoubleRack = rack_1 + rack_distance + rack_2
+    # Ширина одного rack = pallet.length + 2*upright
+    single_rack_width = pallet.length + upright_width * 2
+    double_rack_width = single_rack_width * 2 + reference_book.roads_width
+    
     min_rack_height = 2456
     edge_tolerance = min_rack_height + reference_book.roads_width
     
@@ -722,39 +730,37 @@ def set_next_rack_type_double_or_single_based_on_strip(
     
     if solution.is_rotated:
         # VERTICAL placement
-        
-        # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: проверяем РЕАЛЬНЫЕ regular racks
         has_saved_regular_racks = False
         for rg in solution.saved_rack_groups:
-            # Проверяем что это НЕ protective группа
             if hasattr(rg, 'protective') and rg.protective:
                 continue
-            # И что в ней ЕСТЬ сохраненные racks
             if len(rg.racks) > 0:
                 has_saved_regular_racks = True
                 break
         
-        # ✅ Текущая группа тоже считается
         current_has_racks = (solution.current_rack_group and 
                            len(solution.current_rack_group.racks) > 0)
         
-        # ✅ Это первый rack только если НЕТ saved regular racks И текущая группа пустая
         is_first_rack_in_zone = (not has_saved_regular_racks and not current_has_racks)
         
         distance_from_bottom = current_position[1] - zone_bounds[1]
         distance_from_top = zone_bounds[3] - current_position[1]
         
+        # ✅ КЛЮЧЕВАЯ ПРОВЕРКА: достаточно ли места для DoubleRack + проезд справа?
+        space_after_double = zone_bounds[3] - (current_position[1] + double_rack_width)
+        
         is_at_bottom_edge = is_first_rack_in_zone
-        is_at_top_edge = distance_from_top < edge_tolerance
+        is_at_top_edge = (distance_from_top < edge_tolerance or 
+                         space_after_double < reference_book.roads_width)  # ← НОВОЕ!
         is_at_edge = is_at_bottom_edge or is_at_top_edge
         
         logger.warning(f"[RACK_PLACEMENT] VERTICAL placement: "
                       f"y={current_position[1]:.1f}, "
                       f"zone_y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}], "
-                      f"is_first_rack_in_zone={is_first_rack_in_zone}, "
-                      f"has_saved_regular_racks={has_saved_regular_racks}, "
-                      f"current_has_racks={current_has_racks}, "
-                      f"dist_bottom={distance_from_bottom:.1f}, "
+                      f"double_width={double_rack_width:.1f}, "
+                      f"space_after_double={space_after_double:.1f}, "
+                      f"roads_width={reference_book.roads_width:.1f}, "
+                      f"is_first={is_first_rack_in_zone}, "
                       f"dist_top={distance_from_top:.1f}, "
                       f"at_edge={is_at_edge}")
     else:
@@ -775,17 +781,21 @@ def set_next_rack_type_double_or_single_based_on_strip(
         distance_from_left = current_position[0] - zone_bounds[0]
         distance_from_right = zone_bounds[2] - current_position[0]
         
+        # ✅ КЛЮЧЕВАЯ ПРОВЕРКА: достаточно ли места для DoubleRack + проезд справа?
+        space_after_double = zone_bounds[2] - (current_position[0] + double_rack_width)
+        
         is_at_left_edge = is_first_rack_in_zone
-        is_at_right_edge = distance_from_right < edge_tolerance
+        is_at_right_edge = (distance_from_right < edge_tolerance or 
+                           space_after_double < reference_book.roads_width)  # ← НОВОЕ!
         is_at_edge = is_at_left_edge or is_at_right_edge
         
         logger.warning(f"[RACK_PLACEMENT] HORIZONTAL placement: "
                       f"x={current_position[0]:.1f}, "
                       f"zone_x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
-                      f"is_first_rack_in_zone={is_first_rack_in_zone}, "
-                      f"has_saved_regular_racks={has_saved_regular_racks}, "
-                      f"current_has_racks={current_has_racks}, "
-                      f"dist_left={distance_from_left:.1f}, "
+                      f"double_width={double_rack_width:.1f}, "
+                      f"space_after_double={space_after_double:.1f}, "
+                      f"roads_width={reference_book.roads_width:.1f}, "
+                      f"is_first={is_first_rack_in_zone}, "
                       f"dist_right={distance_from_right:.1f}, "
                       f"at_edge={is_at_edge}")
     
