@@ -642,23 +642,20 @@ def set_next_rack_type_double_or_single_based_on_strip(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Automatically chooses rack type (double or single) based on position and available space.
+    """Automatically chooses rack type based on position in zone.
     
-    NEW LOGIC:
-    - Single racks are ONLY allowed at ZONE edges (bottom/top for vertical, left/right for horizontal)
-    - Double racks are REQUIRED in the center of the ZONE
-    - If a double rack doesn't fit in the center, the placement fails (handled by state machine)
+    STRICT RULE:
+    - Single racks are ALWAYS used at zone edges
+    - Double racks are ALWAYS used in the center of the zone
     
     Args:
         reference_book (ReferenceBook): The reference book.
         solution (Solution): The current solution.
     """
-    # Default to double rack (always prefer double in center)
-    solution.next_rack_type = DoubleRack
-    
     # Get current placement position
     if solution.current_rack_group is None:
-        logger.warning("[RACK_PLACEMENT] No current rack group - using DOUBLE rack")
+        logger.warning("[RACK_PLACEMENT] No current rack group - defaulting to DOUBLE rack")
+        solution.next_rack_type = DoubleRack
         return
     
     current_position = solution.current_rack_group.next_rack_placement
@@ -706,36 +703,13 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"dist_right={distance_from_right:.1f}, "
                       f"at_edge={is_at_edge}")
     
-    # If we're NOT at an edge - MUST use double rack (no option for single)
-    if not is_at_edge:
+    # Apply strict rule: single at edge, double in center
+    if is_at_edge:
+        solution.next_rack_type = Rack
+        logger.warning(f"[RACK_PLACEMENT] ✓ At ZONE EDGE → FORCING SINGLE rack")
+    else:
         solution.next_rack_type = DoubleRack
         logger.warning(f"[RACK_PLACEMENT] ✓ In ZONE CENTER → FORCING DOUBLE rack")
-        return
-    
-    # We're at an edge - check if double rack fits, otherwise allow single
-    if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
-        current_strip = solution.free_strips[solution.current_strip_idx]
-        strip_height = current_strip['y_max'] - current_strip['y_min']
-        
-        # Calculate minimum height needed for a double rack
-        pallet_length = solution.pallets[solution.pallet_idx].length
-        min_double_height = 2 * pallet_length + 200 + reference_book.roads_width
-        min_safe_double_height = min_double_height * 1.2  # 20% safety margin
-        
-        if strip_height < min_safe_double_height:
-            # At edge AND strip too narrow - allow single rack
-            solution.next_rack_type = Rack
-            logger.warning(f"[RACK_PLACEMENT] ⚠️ At ZONE EDGE + strip too narrow ({strip_height:.1f}mm < {min_safe_double_height:.1f}mm)")
-            logger.warning(f"[RACK_PLACEMENT] → Allowing SINGLE rack at edge")
-        else:
-            # At edge AND strip fits double - prefer double
-            solution.next_rack_type = DoubleRack
-            logger.warning(f"[RACK_PLACEMENT] ✓ At ZONE EDGE + strip fits double ({strip_height:.1f}mm >= {min_safe_double_height:.1f}mm)")
-            logger.warning(f"[RACK_PLACEMENT] → Using DOUBLE rack")
-    else:
-        # No strips defined - at edge, default to double
-        solution.next_rack_type = DoubleRack
-        logger.warning("[RACK_PLACEMENT] At ZONE EDGE, no strips - using DOUBLE rack")
 
 
 def fill_with_frames(
