@@ -649,8 +649,8 @@ def set_next_rack_type_double_or_single_based_on_strip(
     - Double racks are ALWAYS used in the center of the zone
     
     Edge detection:
-    - For vertical placement: check if this is the FIRST rack group in the zone OR near top of zone
-    - For horizontal placement: check if this is the FIRST rack group OR near right of zone
+    - First rack in the ENTIRE zone (first rack in first RackGroup)
+    - Last rack near top/right edge of zone
     
     Args:
         reference_book (ReferenceBook): The reference book.
@@ -675,11 +675,11 @@ def set_next_rack_type_double_or_single_based_on_strip(
     if solution.is_rotated:
         # VERTICAL placement (after rotation) - racks go BOTTOM to TOP (Y changes)
         
-        # Check if this is the FIRST rack group in the zone
-        # (no non-protective rack groups exist yet)
+        # Check if this is the FIRST rack in the FIRST regular rack group
         has_regular_racks = False
+        
+        # Check saved rack groups for regular (non-protective) racks
         for rg in solution.saved_rack_groups:
-            # Check if this rack group is NOT protective
             is_protective_group = False
             if rg.racks:
                 first_rack = rg.racks[0]
@@ -691,31 +691,39 @@ def set_next_rack_type_double_or_single_based_on_strip(
                 has_regular_racks = True
                 break
         
-        # This is the first regular rack group if no regular racks exist
-        is_first_rack_group = not has_regular_racks
+        # ✅ CRITICAL FIX: Also check current rack group!
+        if not has_regular_racks and solution.current_rack_group and solution.current_rack_group.racks:
+            # Current rack group already has racks, so this is NOT the first rack
+            has_regular_racks = True
+        
+        # This is the first rack only if:
+        # - No regular racks in saved groups AND
+        # - Current rack group is empty
+        is_first_rack_in_zone = not has_regular_racks
         
         # Check distance from top of zone
         distance_from_bottom = current_position[1] - zone_bounds[1]
         distance_from_top = zone_bounds[3] - current_position[1]
         
-        is_at_bottom_edge = is_first_rack_group or (distance_from_bottom <= edge_tolerance)
+        is_at_bottom_edge = is_first_rack_in_zone
         is_at_top_edge = distance_from_top <= edge_tolerance
         is_at_edge = is_at_bottom_edge or is_at_top_edge
         
         logger.warning(f"[RACK_PLACEMENT] VERTICAL placement: "
                       f"y={current_position[1]:.1f}, "
                       f"zone_y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}], "
-                      f"is_first_rack_group={is_first_rack_group}, "
+                      f"is_first_rack_in_zone={is_first_rack_in_zone}, "
+                      f"current_group_has_racks={len(solution.current_rack_group.racks) if solution.current_rack_group else 0}, "
                       f"dist_bottom={distance_from_bottom:.1f}, "
                       f"dist_top={distance_from_top:.1f}, "
                       f"at_edge={is_at_edge}")
     else:
         # HORIZONTAL placement (no rotation) - racks go LEFT to RIGHT (X changes)
         
-        # Check if this is the FIRST rack group in the zone
+        # Check if this is the FIRST rack in the FIRST regular rack group
         has_regular_racks = False
+        
         for rg in solution.saved_rack_groups:
-            # Check if this rack group is NOT protective (in horizontal mode we don't have protective, but just in case)
             is_protective_group = False
             if rg.racks:
                 first_rack = rg.racks[0]
@@ -727,20 +735,25 @@ def set_next_rack_type_double_or_single_based_on_strip(
                 has_regular_racks = True
                 break
         
-        is_first_rack_group = not has_regular_racks
+        # ✅ CRITICAL FIX: Also check current rack group!
+        if not has_regular_racks and solution.current_rack_group and solution.current_rack_group.racks:
+            has_regular_racks = True
+        
+        is_first_rack_in_zone = not has_regular_racks
         
         # Check distance from edges
         distance_from_left = current_position[0] - zone_bounds[0]
         distance_from_right = zone_bounds[2] - current_position[0]
         
-        is_at_left_edge = is_first_rack_group or (distance_from_left <= edge_tolerance)
+        is_at_left_edge = is_first_rack_in_zone
         is_at_right_edge = distance_from_right <= edge_tolerance
         is_at_edge = is_at_left_edge or is_at_right_edge
         
         logger.warning(f"[RACK_PLACEMENT] HORIZONTAL placement: "
                       f"x={current_position[0]:.1f}, "
                       f"zone_x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
-                      f"is_first_rack_group={is_first_rack_group}, "
+                      f"is_first_rack_in_zone={is_first_rack_in_zone}, "
+                      f"current_group_has_racks={len(solution.current_rack_group.racks) if solution.current_rack_group else 0}, "
                       f"dist_left={distance_from_left:.1f}, "
                       f"dist_right={distance_from_right:.1f}, "
                       f"at_edge={is_at_edge}")
