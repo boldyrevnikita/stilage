@@ -60,12 +60,12 @@ def get_main_loop_states() -> dict[str, State]:
         # === Проверка ориентации ===
         f'{Block.MAIN}-TRY_VERTICAL': State(
             actions.check_if_vertical_allowed,
-            [f'{Block.MAIN}-RZC-90'],  # ✅ Vertical нужен rotation!
+            [f'{Block.MAIN}-RZC-90'],
             ['GFS']),
 
         f'{Block.MAIN}-TRY_HORIZONTAL': State(
             actions.check_if_horizontal_allowed,
-            [f'{Block.MAIN}-PROTECT_COLUMNS'],  # ✅ Horizontal БЕЗ rotation!
+            [f'{Block.MAIN}-PROTECT_COLUMNS'],
             ['GFS']),
         
         # === Вращение для vertical ===
@@ -297,7 +297,11 @@ def get_gooz_states() -> dict[str, State]:
 
 def get_jooz_states() -> dict[str, State]:
     """Returns a dictionary of states related to the JOOZ block in the
-    state machine."""
+    state machine.
+    
+    ✅ FIXED: Changed JOOZ-SNLR to use CF-SNRTD-2 instead of CF-CNR-2
+    to ensure rack type is determined intelligently before creation.
+    """
     return {
         f'{Block.JOOZ}-DLF': State(
             actions.delete_last_frame,
@@ -309,7 +313,7 @@ def get_jooz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.JOOZ}-SNLR': State(
             actions.set_next_rack_position_righter,
-            [f'{Block.CF}-CNR-2'],
+            [f'{Block.CF}-SNRTD-2'],  # ✅ FIXED: Use smart rack type determination
             ['GFS']),
     }
 
@@ -358,8 +362,13 @@ def get_eoz_states() -> dict[str, State]:
 
 def get_coarse_fill_states() -> dict[str, State]:
     """Returns a dictionary of states related to the coarse fill block in the
-    state machine."""
+    state machine.
+    
+    ✅ FIXED: Changed CF-SNRTS to use smart rack type determination.
+    ✅ FIXED: Added CF-SNRTD-2 state for alternative rack creation path.
+    """
     return {
+        # ✅ FIXED: First rack uses smart determination
         f'{Block.CF}-SNRTS': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
             [f'{Block.CF}-FwF'],
@@ -388,6 +397,8 @@ def get_coarse_fill_states() -> dict[str, State]:
             actions.set_next_rack_position_higher_default,
             [f'{Block.CF}-SNRTD'],
             [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']), 
+        
+        # Main rack creation path
         f'{Block.CF}-SNRTD': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
             [f'{Block.CF}-CNR'],
@@ -400,6 +411,8 @@ def get_coarse_fill_states() -> dict[str, State]:
             actions.assert_current_rack_fits_available_zone,
             [f'{Block.CF}-FwF'],
             [f'{Block.RACK_PLACEMENT}-CESFFH']),
+        
+        # Excess frames handling
         f'{Block.CF}-DEF-1': State(
             actions.delete_excess_frames_oz,
             [f'{Block.CF}-CIEP-2'],
@@ -415,6 +428,12 @@ def get_coarse_fill_states() -> dict[str, State]:
         f'{Block.CF}-IPC-2': State(
             actions.increase_pallet_counter_for_rack,
             [f'{Block.RACK_PLACEMENT}-SNF'],
+            ['GFS']),
+        
+        # ✅ ADDED: Alternative rack creation path (used when moving right due to OZ)
+        f'{Block.CF}-SNRTD-2': State(
+            actions.set_next_rack_type_double_or_single_based_on_strip,
+            [f'{Block.CF}-CNR-2'],
             ['GFS']),
         f'{Block.CF}-CNR-2': State(
             actions.create_new_rack,
