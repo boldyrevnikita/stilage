@@ -642,48 +642,95 @@ def set_next_rack_type_double_or_single_based_on_strip(
     reference_book: ReferenceBook,
     solution: Solution
 ) -> None:
-    """Automatically chooses rack type (double or single) based on available strip height.
+    """Automatically chooses rack type (double or single) based on position and available space.
     
-    If we're working within a free strip and the strip is too narrow for a double rack,
-    this function will automatically select a single rack instead.
+    NEW LOGIC:
+    - Single racks are ONLY allowed at zone edges (left/right for vertical, top/bottom for horizontal)
+    - Double racks are REQUIRED in the center of the zone
+    - If a double rack doesn't fit in the center, the placement fails (handled by state machine)
     
     Args:
         reference_book (ReferenceBook): The reference book.
         solution (Solution): The current solution.
     """
-    # Default to double rack
+    # Default to double rack (always prefer double in center)
     solution.next_rack_type = DoubleRack
     
-    # Check if we're working within a free strip
+    # Get current placement position
+    if solution.current_rack_group is None:
+        logger.warning("[RACK_PLACEMENT] No current rack group - using DOUBLE rack")
+        return
+    
+    current_position = solution.current_rack_group.next_rack_placement
+    available_zone = solution.available_zones[solution.available_zone_idx]
+    zone_bounds = available_zone.bounds  # (min_x, min_y, max_x, max_y)
+    
+    # Define edge tolerance - distance from edge to be considered "at edge"
+    # Use typical rack section length + roads width
+    edge_tolerance = reference_book.roads_width * 2
+    
+    # Determine if we're at an edge based on orientation
+    is_at_edge = False
+    
+    if solution.is_rotated:
+        # VERTICAL placement (after rotation) - check X coordinate (left/right edges)
+        distance_from_left = current_position[0] - zone_bounds[0]
+        distance_from_right = zone_bounds[2] - current_position[0]
+        
+        is_at_left_edge = distance_from_left <= edge_tolerance
+        is_at_right_edge = distance_from_right <= edge_tolerance
+        is_at_edge = is_at_left_edge or is_at_right_edge
+        
+        logger.warning(f"[RACK_PLACEMENT] VERTICAL placement: "
+                      f"x={current_position[0]:.1f}, "
+                      f"dist_left={distance_from_left:.1f}, "
+                      f"dist_right={distance_from_right:.1f}, "
+                      f"at_edge={is_at_edge}")
+    else:
+        # HORIZONTAL placement (no rotation) - check Y coordinate (top/bottom edges)
+        distance_from_bottom = current_position[1] - zone_bounds[1]
+        distance_from_top = zone_bounds[3] - current_position[1]
+        
+        is_at_bottom_edge = distance_from_bottom <= edge_tolerance
+        is_at_top_edge = distance_from_top <= edge_tolerance
+        is_at_edge = is_at_bottom_edge or is_at_top_edge
+        
+        logger.warning(f"[RACK_PLACEMENT] HORIZONTAL placement: "
+                      f"y={current_position[1]:.1f}, "
+                      f"dist_bottom={distance_from_bottom:.1f}, "
+                      f"dist_top={distance_from_top:.1f}, "
+                      f"at_edge={is_at_edge}")
+    
+    # If we're NOT at an edge - MUST use double rack (no option for single)
+    if not is_at_edge:
+        solution.next_rack_type = DoubleRack
+        logger.warning(f"[RACK_PLACEMENT] ✓ In ZONE CENTER → FORCING DOUBLE rack")
+        return
+    
+    # We're at an edge - check if double rack fits, otherwise allow single
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
         current_strip = solution.free_strips[solution.current_strip_idx]
         strip_height = current_strip['y_max'] - current_strip['y_min']
         
         # Calculate minimum height needed for a double rack
         pallet_length = solution.pallets[solution.pallet_idx].length
-        
-        # Double rack needs: pallet + rack_distance + pallet + roads on both sides
-        # Typical: 1200 + 200 + 1200 + 2*144 (double_rack_distance_eps) ≈ 2888mm minimum
-        # Add roads_width for safety: 2888 + roads_width
         min_double_height = 2 * pallet_length + 200 + reference_book.roads_width
-        
-        # Use a more conservative estimate to ensure it fits
         min_safe_double_height = min_double_height * 1.2  # 20% safety margin
         
         if strip_height < min_safe_double_height:
-            # Strip too narrow - force single rack
+            # At edge AND strip too narrow - allow single rack
             solution.next_rack_type = Rack
-            logger.warning(f"[RACK_PLACEMENT] ⚠️ Strip height {strip_height:.1f}mm is too narrow "
-                          f"for double rack (needs {min_safe_double_height:.1f}mm)")
-            logger.warning(f"[RACK_PLACEMENT] → Automatically selecting SINGLE rack instead")
+            logger.warning(f"[RACK_PLACEMENT] ⚠️ At EDGE + strip too narrow ({strip_height:.1f}mm < {min_safe_double_height:.1f}mm)")
+            logger.warning(f"[RACK_PLACEMENT] → Allowing SINGLE rack at edge")
         else:
-            # Strip wide enough - use double rack
-            logger.warning(f"[RACK_PLACEMENT] ✓ Strip height {strip_height:.1f}mm is sufficient "
-                          f"for double rack (needs {min_safe_double_height:.1f}mm)")
+            # At edge AND strip fits double - prefer double
+            solution.next_rack_type = DoubleRack
+            logger.warning(f"[RACK_PLACEMENT] ✓ At EDGE + strip fits double ({strip_height:.1f}mm >= {min_safe_double_height:.1f}mm)")
             logger.warning(f"[RACK_PLACEMENT] → Using DOUBLE rack")
     else:
-        # No strips - use double rack (original behavior)
-        logger.warning("[RACK_PLACEMENT] No free strips - using DOUBLE rack")
+        # No strips defined - at edge, default to double
+        solution.next_rack_type = DoubleRack
+        logger.warning("[RACK_PLACEMENT] At EDGE, no strips - using DOUBLE rack")
 
 
 def fill_with_frames(
