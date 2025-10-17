@@ -361,7 +361,7 @@ def get_coarse_fill_states() -> dict[str, State]:
     state machine."""
     return {
         f'{Block.CF}-SNRTS': State(
-            actions.set_next_rack_type_single,
+            actions.set_next_rack_type_double_or_single_based_on_strip,
             [f'{Block.CF}-FwF'],
             ['GFS']),
         f'{Block.CF}-FwF': State(
