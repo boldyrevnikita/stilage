@@ -675,25 +675,25 @@ def set_next_rack_type_double_or_single_based_on_strip(
     if solution.is_rotated:
         # VERTICAL placement (after rotation) - racks go BOTTOM to TOP (Y changes)
         
-        # ✅ FIX: Check RackGroup.protective attribute correctly
+        # ✅ CRITICAL FIX: Check for SAVED racks only (ignore empty groups)
         has_regular_racks = False
         
-        # Check saved rack groups for regular (non-protective) racks
+        # Check saved rack groups for regular (non-protective) racks with ACTUAL saved racks
         for rg in solution.saved_rack_groups:
-            # ✅ FIX: Check RackGroup.protective attribute, not individual rack
             is_protective_group = hasattr(rg, 'protective') and rg.protective
             
-            if not is_protective_group:
+            # ✅ CRITICAL: Check that group has saved racks (len(rg.racks) > 0)
+            if not is_protective_group and len(rg.racks) > 0:
                 has_regular_racks = True
                 break
         
         # ✅ Also check current rack group!
-        if not has_regular_racks and solution.current_rack_group and solution.current_rack_group.racks:
+        if not has_regular_racks and solution.current_rack_group and len(solution.current_rack_group.racks) > 0:
             # Current rack group already has racks, so this is NOT the first rack
             has_regular_racks = True
         
         # This is the first rack only if:
-        # - No regular racks in saved groups AND
+        # - No regular racks with saved content in saved groups AND
         # - Current rack group is empty
         is_first_rack_in_zone = not has_regular_racks
         
@@ -717,19 +717,19 @@ def set_next_rack_type_double_or_single_based_on_strip(
     else:
         # HORIZONTAL placement (no rotation) - racks go LEFT to RIGHT (X changes)
         
-        # ✅ FIX: Check RackGroup.protective attribute correctly
+        # ✅ CRITICAL FIX: Check for SAVED racks only (ignore empty groups)
         has_regular_racks = False
         
         for rg in solution.saved_rack_groups:
-            # ✅ FIX: Check RackGroup.protective attribute, not individual rack
             is_protective_group = hasattr(rg, 'protective') and rg.protective
             
-            if not is_protective_group:
+            # ✅ CRITICAL: Check that group has saved racks (len(rg.racks) > 0)
+            if not is_protective_group and len(rg.racks) > 0:
                 has_regular_racks = True
                 break
         
         # ✅ Also check current rack group!
-        if not has_regular_racks and solution.current_rack_group and solution.current_rack_group.racks:
+        if not has_regular_racks and solution.current_rack_group and len(solution.current_rack_group.racks) > 0:
             has_regular_racks = True
         
         is_first_rack_in_zone = not has_regular_racks
