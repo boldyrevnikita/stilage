@@ -448,6 +448,67 @@ def create_new_rack(
             logger.warning("[RACK_PLACEMENT] New rack intersects with protective rack")
             raise ActionFailure("Cannot place rack: intersects with protective rack")
 
+def create_first_rack_in_group(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """Creates the first rack in the current rack group based on next_rack_type.
+    
+    This function is called after set_next_rack_type_double_or_single_based_on_strip
+    to create the initial rack in a newly created RackGroup.
+    
+    Args:
+        _ (ReferenceBook): The reference book (not used).
+        solution (Solution): The current solution.
+    
+    Raises:
+        ActionFailure: If RackGroup doesn't exist or rack creation fails.
+    """
+    if solution.current_rack_group is None:
+        logger.error("[RACK_PLACEMENT] Cannot create first rack: no RackGroup exists!")
+        raise ActionFailure("No current rack group to place rack in")
+    
+    current_rack_group = solution.current_rack_group
+    
+    logger.warning(f"[DEBUG_FIRST_RACK] ========================================")
+    logger.warning(f"[DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called")
+    logger.warning(f"[DEBUG_FIRST_RACK] Rack type: {solution.next_rack_type.__name__ if solution.next_rack_type else 'None'}")
+    logger.warning(f"[DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:")
+    logger.warning(f"[DEBUG_FIRST_RACK]   bounds: {current_rack_group.bounds}")
+    logger.warning(f"[DEBUG_FIRST_RACK]   position: {current_rack_group.position}")
+    logger.warning(f"[DEBUG_FIRST_RACK]   racks count: {len(current_rack_group.racks)}")
+    logger.warning(f"[DEBUG_FIRST_RACK]   current_rack: {current_rack_group.current_rack}")
+    
+    # Create rack based on next_rack_type
+    if solution.next_rack_type is Rack:
+        current_rack_group.place_single_rack()
+        logger.warning("[RACK_PLACEMENT] ✅ Created FIRST rack in group: SINGLE")
+    elif solution.next_rack_type is DoubleRack:
+        current_rack_group.place_double_rack()
+        logger.warning("[RACK_PLACEMENT] ✅ Created FIRST rack in group: DOUBLE")
+    else:
+        # Fallback to single rack if type not set
+        logger.warning("[RACK_PLACEMENT] ⚠️ next_rack_type not set, defaulting to SINGLE")
+        current_rack_group.place_single_rack()
+        logger.warning("[RACK_PLACEMENT] Created FIRST rack in group: SINGLE (fallback)")
+    
+    # DEBUG: AFTER creating rack
+    new_rack = current_rack_group.current_rack
+    logger.warning(f"[DEBUG_FIRST_RACK] RackGroup AFTER creating rack:")
+    logger.warning(f"[DEBUG_FIRST_RACK]   bounds: {current_rack_group.bounds}")
+    logger.warning(f"[DEBUG_FIRST_RACK]   New rack bounds: {new_rack.bounds}")
+    rack_width = new_rack.bounds[2] - new_rack.bounds[0]
+    logger.warning(f"[DEBUG_FIRST_RACK]   New rack width: {rack_width:.1f} mm")
+    logger.warning(f"[DEBUG_FIRST_RACK]   Rack type: {type(new_rack).__name__}")
+    logger.warning(f"[DEBUG_FIRST_RACK] ========================================")
+    
+    # NEW: Check intersection with protective racks
+    for protective_rack in solution.protective_racks:
+        if new_rack.intersects(protective_rack.contour):
+            logger.warning("[RACK_PLACEMENT] First rack intersects with protective rack")
+            raise ActionFailure("Cannot place first rack: intersects with protective rack")
+
+
 
 def assert_current_rack_is_double(
     _: ReferenceBook,

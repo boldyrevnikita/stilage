@@ -86,12 +86,27 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-PHG']),       
         
         # === Размещение группы стеллажей ===
+        # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Изменён порядок!
         f'{Block.MAIN}-PHG': State(
-            actions.place_horizontal_rack_group,
-            [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),
+            actions.place_horizontal_rack_group,  # Создаёт RackGroup БЕЗ первого rack
+            [f'{Block.CF}-SNRTS'], ['TS-DEL']),  # ← Сразу к определению типа!
+        
+        # === Первый rack в группе (новый flow) ===
+        # ✅ ШАГ 1: Определяем тип первого rack
+        f'{Block.CF}-SNRTS': State(
+            actions.set_next_rack_type_double_or_single_based_on_strip,
+            [f'{Block.CF}-CREATE_FIRST_RACK'], ['GFS']),  # ← К созданию!
+        
+        # ✅ ШАГ 2: Создаём первый rack нужного типа
+        f'{Block.CF}-CREATE_FIRST_RACK': State(
+            actions.create_first_rack_in_group,  # ← НОВАЯ ФУНКЦИЯ!
+            [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),  # ← К проверке размещения!
+        
+        # ✅ ШАГ 3: Проверяем что rack помещается
         f'{Block.MAIN}-CES-HG': State(
             actions.assert_current_rack_fits_available_zone,
-            [f'{Block.CF}-SNRTS'], [f'{Block.MAIN}-DFS']),
+            [f'{Block.CF}-FwF'], [f'{Block.MAIN}-DFS']),  # ← К заполнению frames!
+        
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
             [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-RZCC-90-2']),
@@ -107,7 +122,7 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-NEXT_STRIP'], [f'{Block.MAIN}-RZCC-90']),
         f'{Block.MAIN}-NEXT_STRIP': State(
             actions.set_next_free_strip,
-            [f'{Block.MAIN}-PHG'], ['GFS']),
+            [f'{Block.MAIN}-PHG'], ['GFS']),  # ← Создаём новую RackGroup для нового strip
         
         # === Откат rotation после всех strips ===
         f'{Block.MAIN}-RZCC-90': State(
@@ -299,7 +314,7 @@ def get_jooz_states() -> dict[str, State]:
     """Returns a dictionary of states related to the JOOZ block in the
     state machine.
     
-    ✅ FIXED: Changed JOOZ-SNLR to use CF-SNRTD-2 instead of CF-CNR-2
+    ✅ FIXED: Changed JOOZ-SNLR to use CF-SNRTD instead of CF-CNR
     to ensure rack type is determined intelligently before creation.
     """
     return {
@@ -313,7 +328,7 @@ def get_jooz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.JOOZ}-SNLR': State(
             actions.set_next_rack_position_righter,
-            [f'{Block.CF}-SNRTD-2'],  # ✅ FIXED: Use smart rack type determination
+            [f'{Block.CF}-SNRTD'],  # ✅ FIXED: Use smart rack type determination
             ['GFS']),
     }
 
@@ -364,15 +379,20 @@ def get_coarse_fill_states() -> dict[str, State]:
     """Returns a dictionary of states related to the coarse fill block in the
     state machine.
     
-    ✅ FIXED: Changed CF-SNRTS to use smart rack type determination.
-    ✅ FIXED: Added CF-SNRTD-2 state for alternative rack creation path.
+    ✅ COMPLETELY REWRITTEN: CF-SNRTS moved to MAIN loop for first rack,
+    subsequent racks follow CF-SNRTD -> CF-CNR pattern.
     """
     return {
-        # ✅ FIXED: First rack uses smart determination
-        f'{Block.CF}-SNRTS': State(
-            actions.set_next_rack_type_double_or_single_based_on_strip,
-            [f'{Block.CF}-FwF'],
+        # ✅ CF-SNRTS теперь только для ПЕРВОГО rack (вызывается из MAIN-PHG)
+        # См. get_main_loop_states() выше
+        
+        # ✅ CF-CREATE_FIRST_RACK - создаёт первый rack (НОВОЕ!)
+        f'{Block.CF}-CREATE_FIRST_RACK': State(
+            actions.create_first_rack_in_group,  # ← НОВАЯ ФУНКЦИЯ в actions!
+            [f'{Block.CF}-FwF'],  # ← К заполнению frames
             ['GFS']),
+        
+        # Заполнение frames (для любого rack - первого или последующих)
         f'{Block.CF}-FwF': State(
             actions.fill_with_frames,
             [f'{Block.CF}-CTNOZpCNTRZ'],
@@ -395,13 +415,13 @@ def get_coarse_fill_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.CF}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
-            [f'{Block.CF}-SNRTD'],
+            [f'{Block.CF}-SNRTD'],  # ← К созданию следующего rack
             [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']), 
         
-        # Main rack creation path
+        # ✅ Создание ПОСЛЕДУЮЩИХ racks (не первого!)
         f'{Block.CF}-SNRTD': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
-            [f'{Block.CF}-CNR'],
+            [f'{Block.CF}-CNR'],  # ← Сразу создаём rack
             ['GFS']),
         f'{Block.CF}-CNR': State(
             actions.create_new_rack,
@@ -409,7 +429,7 @@ def get_coarse_fill_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.CF}-CESFF': State(
             actions.assert_current_rack_fits_available_zone,
-            [f'{Block.CF}-FwF'],
+            [f'{Block.CF}-FwF'],  # ← К заполнению frames
             [f'{Block.RACK_PLACEMENT}-CESFFH']),
         
         # Excess frames handling
@@ -429,20 +449,6 @@ def get_coarse_fill_states() -> dict[str, State]:
             actions.increase_pallet_counter_for_rack,
             [f'{Block.RACK_PLACEMENT}-SNF'],
             ['GFS']),
-        
-        # ✅ ADDED: Alternative rack creation path (used when moving right due to OZ)
-        f'{Block.CF}-SNRTD-2': State(
-            actions.set_next_rack_type_double_or_single_based_on_strip,
-            [f'{Block.CF}-CNR-2'],
-            ['GFS']),
-        f'{Block.CF}-CNR-2': State(
-            actions.create_new_rack,
-            [f'{Block.CF}-CESFF-2'],
-            ['GFS']),
-        f'{Block.CF}-CESFF-2': State(
-            actions.assert_current_rack_fits_available_zone,
-            [f'{Block.CF}-FwF'],
-            [f'{Block.CF}-SNLH-DEF']),
     }
 
 

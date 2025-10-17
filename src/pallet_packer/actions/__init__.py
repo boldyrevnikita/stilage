@@ -8,6 +8,7 @@ from src.pallet_packer.actions.pallet_handling import (
     sort_pallets_by_weight_height_width)
 from src.pallet_packer.actions.rack_placement import (
     assert_current_rack_is_double, create_new_rack,
+    create_first_rack_in_group,  # ✅ ДОБАВЛЕНО
     decrease_current_frame_length, decrease_first_rack_frame_length,
     decrease_second_rack_frame_length, delete_excess_frames_oz,
     delete_excess_frames_pl, delete_last_frame, disable_last_frame,
@@ -61,6 +62,7 @@ __all__ = [
     sort_pallets_by_weight_height_width.__name__,
     assert_current_rack_is_double.__name__,
     create_new_rack.__name__,
+    create_first_rack_in_group.__name__,  # ✅ ДОБАВЛЕНО
     decrease_current_frame_length.__name__,
     decrease_first_rack_frame_length.__name__,
     decrease_second_rack_frame_length.__name__,

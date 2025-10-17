@@ -676,7 +676,7 @@ class RackGroup():
         self.next_rack_placement = list(self.position)
 
         self.current_rack: Rack | DoubleRack | None = None
-        self.place_single_rack()
+        #self.place_single_rack()
 
         self.racks: list[Rack | DoubleRack] = []
 
