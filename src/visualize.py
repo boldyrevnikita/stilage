@@ -139,11 +139,13 @@ def plot_racks(fig: go.Figure, rack: list[Rack | DoubleRack]) -> None:
 
 
 def plot_rack(fig: go.Figure, rack: Rack):
-    """Plots a single rack on the figure.
+    """Plots a single rack on the figure with column intersection handling.
+    
     Args:
         fig (go.Figure): The Plotly figure to add the rack to.
         rack (Rack): The rack to plot.
     """
+    # Draw rack contour
     polygon = rack.contour.exterior.xy
     fig.add_trace(go.Scatter(
         x=np.array(polygon[0]),
@@ -157,41 +159,65 @@ def plot_rack(fig: go.Figure, rack: Rack):
 
     colors = ['indigo', 'magenta', 'cyan']
     
-    # ✅ DEBUG: Check if this is a protective rack
-    if hasattr(rack, 'is_protective') and rack.is_protective:
-        print(f"[VISUALIZE] Protective rack detected!")
-        print(f"[VISUALIZE]   has protected_column: {rack.protected_column is not None}")
-        if rack.protected_column is not None:
-            print(f"[VISUALIZE]   column bounds: {rack.protected_column.contour.bounds}")
+    # ✅ CRITICAL DEBUG: Check rack attributes
+    print(f"\n{'='*80}")
+    print(f"[VISUALIZE_DEBUG] Plotting rack")
+    print(f"[VISUALIZE_DEBUG] Rack type: {type(rack).__name__}")
+    print(f"[VISUALIZE_DEBUG] Rack bounds: {rack.bounds}")
+    print(f"[VISUALIZE_DEBUG] Number of decks: {len(rack.decks)}")
     
+    # Check for is_protective attribute
+    has_is_protective = hasattr(rack, 'is_protective')
+    print(f"[VISUALIZE_DEBUG] hasattr(rack, 'is_protective'): {has_is_protective}")
+    
+    if has_is_protective:
+        print(f"[VISUALIZE_DEBUG] rack.is_protective = {rack.is_protective}")
+    
+    # Check for protected_column attribute
+    has_protected_column = hasattr(rack, 'protected_column')
+    print(f"[VISUALIZE_DEBUG] hasattr(rack, 'protected_column'): {has_protected_column}")
+    
+    if has_protected_column:
+        print(f"[VISUALIZE_DEBUG] rack.protected_column = {rack.protected_column}")
+        print(f"[VISUALIZE_DEBUG] rack.protected_column is not None: {rack.protected_column is not None}")
+        
+        if rack.protected_column is not None:
+            print(f"[VISUALIZE_DEBUG] Column bounds: {rack.protected_column.contour.bounds}")
+    
+    print(f"{'='*80}\n")
+    
+    # Draw decks with intersection check
     for deck_idx, deck in enumerate(rack.decks):
         should_skip = False
+        deck_bounds = deck.bounds
         
-        # ✅ IMPROVED: Better intersection check for protected columns
+        print(f"[VISUALIZE_DEBUG] Deck {deck_idx}: Y=[{deck_bounds[1]:.1f}, {deck_bounds[3]:.1f}]")
+        
+        # ✅ Check if this is a protective rack with a column
         if (hasattr(rack, 'is_protective') and rack.is_protective and 
             hasattr(rack, 'protected_column') and rack.protected_column is not None):
             
             column_bounds = rack.protected_column.contour.bounds
-            deck_bounds = deck.bounds
             
-            # Check Y-coordinate overlap (more reliable than shapely.intersects)
-            # Deck and column overlap if:
-            # deck.y_min < column.y_max AND deck.y_max > column.y_min
+            # Check Y-coordinate overlap
             y_overlap = (deck_bounds[1] < column_bounds[3] and 
                         deck_bounds[3] > column_bounds[1])
             
-            # Also check shapely intersection for full geometry check
+            # Also check shapely intersection
             geom_intersects = shapely.intersects(deck, rack.protected_column.contour)
+            
+            print(f"[VISUALIZE_DEBUG]   Column Y=[{column_bounds[1]:.1f}, {column_bounds[3]:.1f}]")
+            print(f"[VISUALIZE_DEBUG]   Y-overlap: {y_overlap}")
+            print(f"[VISUALIZE_DEBUG]   Geom-intersects: {geom_intersects}")
             
             if y_overlap or geom_intersects:
                 should_skip = True
-                print(f"[VISUALIZE] ✅ Skipping deck {deck_idx}: Y-overlap={y_overlap}, Geom-intersect={geom_intersects}")
-                print(f"[VISUALIZE]   Deck Y: [{deck_bounds[1]:.1f}, {deck_bounds[3]:.1f}]")
-                print(f"[VISUALIZE]   Column Y: [{column_bounds[1]:.1f}, {column_bounds[3]:.1f}]")
+                print(f"[VISUALIZE_DEBUG]   ✅ SKIPPING deck {deck_idx} (intersects with column)")
         
         if should_skip:
             continue
         
+        # Draw the deck
         deck_polygon = deck.exterior.xy
         color = colors[rack.deck_status[deck_idx].value - 1]
 
@@ -204,6 +230,8 @@ def plot_rack(fig: go.Figure, rack: Rack):
             line=dict(color=color),
             name=f'Deck {rack.deck_status[deck_idx].name}'
         ))
+        
+        print(f"[VISUALIZE_DEBUG]   ✓ Drew deck {deck_idx}")
 
 
 def remove_duplicate_names(fig: go.Figure) -> None:
