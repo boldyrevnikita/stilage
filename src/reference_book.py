@@ -194,7 +194,11 @@ class ReferenceBook:
         # Sort beam types by length (descending) and capacity (ascending)
         for key in beam_types.keys():
             beam_types[key].sort(
-                key=lambda x: (-x.length, x.max_shelf_load_capacity_kg))
+                key=lambda x: (
+                    0 if x.length == 2700.0 else 1,  # Приоритет: 2700 идет первой
+                    -x.length,                        # Остальные по убыванию длины
+                    x.max_shelf_load_capacity_kg      # При равной длине - по возрастанию грузоподъемности
+                ))
 
         return beam_types
 
