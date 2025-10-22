@@ -727,7 +727,8 @@ def set_next_rack_type_double_or_single_based_on_strip(
     # DoubleRack = rack_1 + rack_distance + rack_2
     # Single rack width = pallet.length + 2*upright
     single_rack_width = pallet.length + upright_width * 2
-    double_rack_width = single_rack_width * 2 + reference_book.roads_width
+    #double_rack_width = single_rack_width * 2 + reference_book.roads_width
+    double_rack_width = single_rack_width * 2
     
     # ✅ CRITICAL: Space needed for double rack + road after it
     space_needed = double_rack_width + reference_book.roads_width
