@@ -79,7 +79,6 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
             poly = _safe_polygon(vertices)
             if poly is not None:
                 geometry_list.append(poly)
-            # geometry_list.append(shapely.geometry.Polygon(vertices))
         elif type(entity) is ezdxf.entities.Arc:
             center = entity.ocs().to_wcs(entity.dxf.center)
             radius = entity.dxf.radius
@@ -240,7 +239,7 @@ def get_polygons_from_primitives(
 
 def filter_empty_polygons(
     polygons: list[shapely.Polygon]
-):
+) -> list[shapely.Polygon]:
     """Filters out empty polygons from the list of polygons.
     Args:
         polygons (list[shapely.Polygon]): The list of polygons to filter.
@@ -259,7 +258,7 @@ def filter_empty_polygons(
 def filter_small_polygons(
     polygons: list[shapely.Polygon],
     area_threshold: float = 100
-):
+) -> list[shapely.Polygon]:
     """Filters out polygons that are smaller than a given area threshold.
     Args:
         polygons (list[shapely.Polygon]): The list of polygons to filter.
@@ -274,6 +273,51 @@ def filter_small_polygons(
         if polygon.area > area_threshold:
             filtered_polygons.append(polygon)
 
+    return filtered_polygons
+
+
+def filter_thin_polygons(
+    polygons: list[shapely.Polygon],
+    min_dimension_threshold: float = 50.0
+) -> list[shapely.Polygon]:
+    """✅ НОВАЯ ФУНКЦИЯ: Фильтрует очень тонкие полигоны - артефакты DXF.
+    
+    Эта функция удаляет полигоны, где ширина или высота ниже минимального порога.
+    Такие полигоны обычно являются:
+    - Тонкими линиями из DXF аннотаций
+    - Границами текстовых блоков
+    - Размерными линиями
+    - Другими нефизическими артефактами DXF
+    
+    Args:
+        polygons (list[shapely.Polygon]): Список полигонов для фильтрации
+        min_dimension_threshold (float): Минимальная ширина или высота для валидного
+            полигона. По умолчанию 50мм (разумно для складских препятствий)
+    
+    Returns:
+        list[shapely.Polygon]: Отфильтрованный список без тонких артефактов
+    """
+    filtered_polygons = []
+    filtered_count = 0
+    
+    for polygon in polygons:
+        bounds = polygon.bounds
+        width = bounds[2] - bounds[0]   # max_x - min_x
+        height = bounds[3] - bounds[1]  # max_y - min_y
+        
+        # Пропускаем очень тонкие полигоны (скорее всего артефакты DXF)
+        if width < min_dimension_threshold or height < min_dimension_threshold:
+            logger.debug(f"[ZONE_FILTER] Отфильтрован тонкий полигон: "
+                        f"bounds={bounds}, width={width:.1f}мм, height={height:.1f}мм")
+            filtered_count += 1
+            continue
+            
+        filtered_polygons.append(polygon)
+    
+    if filtered_count > 0:
+        logger.warning(f"[ZONE_FILTER] ✅ Отфильтровано {filtered_count} тонких полигонов "
+                      f"(порог: {min_dimension_threshold:.1f}мм)")
+    
     return filtered_polygons
 
 
@@ -316,36 +360,97 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                             available_zones: List[AvailableZone],
                             occupied_zone_clearance: float,
                             roads_width: float,
+                            min_zone_dimension: float = 50.0
                             ) -> List[OccupiedZone]:
-    """Scans the DXF document for occupied zones based on the available zones
-    and returns a list of occupied zones.
+    """✅ УЛУЧШЕННАЯ ФУНКЦИЯ: Сканирует DXF документ на occupied zones с фильтрацией артефактов.
+    
+    Теперь включает фильтрацию тонких полигонов для предотвращения создания
+    ложных препятствий из DXF артефактов.
+    
     Args:
-        doc (ezdxf.document.Drawing): The DXF document to scan.
-        available_zones (List[AvailableZone]): The list of available zones.
-        occupied_zone_clearance (float): The clearance for occupied zones.
-        roads_width (float): The width of the roads around the occupied zones.
+        doc (ezdxf.document.Drawing): DXF документ для сканирования
+        available_zones (List[AvailableZone]): Список доступных зон
+        occupied_zone_clearance (float): Зазор для occupied zones
+        roads_width (float): Ширина дорог вокруг occupied zones
+        min_zone_dimension (float): Минимальная ширина или высота для валидной
+            occupied zone. По умолчанию 50мм.
     Returns:
-        List[OccupiedZone]: The list of occupied zones found in the DXF
-            document.
+        List[OccupiedZone]: Список найденных occupied zones без артефактов
     """
+    logger.info(f"[ZONE_SCAN] 🔍 Начало сканирования occupied zones (мин. размер={min_zone_dimension:.1f}мм)")
+    
     occupied_zones = []
     geometries = []
 
+    # Извлекаем все геометрии из DXF
     msp = doc.modelspace()
+    entity_count = 0
     for entity in msp:
         geometries.extend(dxf_entity_to_shapely(entity))
+        entity_count += 1
+    
+    logger.info(f"[ZONE_SCAN] Обработано {entity_count} DXF объектов → {len(geometries)} геометрий")
 
+    # Применяем все фильтры последовательно
     geometries = filter_primitives(geometries, available_zones)
+    logger.info(f"[ZONE_SCAN] После фильтрации по зонам: {len(geometries)} геометрий")
+    
     polygons = get_polygons_from_primitives(geometries)
+    logger.info(f"[ZONE_SCAN] После конвертации в полигоны: {len(polygons)} полигонов")
+    
     polygons = filter_empty_polygons(polygons)
+    logger.info(f"[ZONE_SCAN] После удаления пустых: {len(polygons)} полигонов")
+    
     polygons = filter_small_polygons(polygons)
+    logger.info(f"[ZONE_SCAN] После фильтрации малых по площади: {len(polygons)} полигонов")
+    
+    # ✅ НОВОЕ: Фильтруем тонкие полигоны (артефакты DXF)
+    polygons = filter_thin_polygons(polygons, min_zone_dimension)
+    logger.info(f"[ZONE_SCAN] После фильтрации тонких полигонов: {len(polygons)} полигонов")
+    
     polygons = filter_intersecting_polygons(polygons)
+    logger.info(f"[ZONE_SCAN] После фильтрации пересекающихся: {len(polygons)} полигонов")
 
-    for polygon in polygons:
-        occupied_zones.append(OccupiedZone(
-            list(polygon.exterior.coords),
-            occupied_zone_clearance,
-            roads_width
-        ))
+    # Конвертируем в объекты OccupiedZone
+    for i, polygon in enumerate(polygons):
+        try:
+            bounds = polygon.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            
+            occupied_zone = OccupiedZone(
+                list(polygon.exterior.coords),
+                occupied_zone_clearance,
+                roads_width
+            )
+            occupied_zones.append(occupied_zone)
+            
+            logger.debug(f"[ZONE_SCAN] Создана OccupiedZone {i+1}: "
+                        f"bounds={bounds}, размер={width:.1f}x{height:.1f}мм")
+                        
+        except Exception as e:
+            logger.warning(f"[ZONE_SCAN] ❌ Ошибка создания OccupiedZone из полигона {i}: {e}")
+            continue
 
+    logger.warning(f"[ZONE_SCAN] ✅ Успешно создано {len(occupied_zones)} occupied zones")
+    
+    # Дополнительная диагностика
+    if len(occupied_zones) == 0:
+        logger.warning("[ZONE_SCAN] ⚠️  ВНИМАНИЕ: Не найдено ни одной occupied zone!")
+    else:
+        # Показываем статистику размеров найденных зон
+        widths = []
+        heights = []
+        for zone in occupied_zones:
+            bounds = zone.bounds
+            widths.append(bounds[2] - bounds[0])
+            heights.append(bounds[3] - bounds[1])
+        
+        min_width, max_width = min(widths), max(widths)
+        min_height, max_height = min(heights), max(heights)
+        
+        logger.info(f"[ZONE_SCAN] 📊 Статистика зон: "
+                   f"ширина {min_width:.1f}-{max_width:.1f}мм, "
+                   f"высота {min_height:.1f}-{max_height:.1f}мм")
+    
     return occupied_zones
