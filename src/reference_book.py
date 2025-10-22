@@ -246,7 +246,7 @@ class ReferenceBook:
         # Minimum and maximum rack heights for each upright section
         min_rack_heights = [2000, 2000, 6000, 6000, 6000,
                             6000, 6000, 6000, 6000, 6000]
-        max_rack_heights = [10000, 10000, 12000, 12000, 12000,
+        max_rack_heights = [8000, 10000, 12000, 12000, 12000,
                             12000, 12000, 12000, 12000, 12000]
 
         # Add upright_width_eps to upright_width for structural reasons
