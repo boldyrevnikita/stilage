@@ -278,7 +278,7 @@ def filter_small_polygons(
 
 def filter_thin_polygons(
     polygons: list[shapely.Polygon],
-    min_dimension_threshold: float = 50.0
+    min_dimension_threshold: float = 10.0
 ) -> list[shapely.Polygon]:
     """✅ НОВАЯ ФУНКЦИЯ: Фильтрует очень тонкие полигоны - артефакты DXF.
     
@@ -292,7 +292,7 @@ def filter_thin_polygons(
     Args:
         polygons (list[shapely.Polygon]): Список полигонов для фильтрации
         min_dimension_threshold (float): Минимальная ширина или высота для валидного
-            полигона. По умолчанию 50мм (разумно для складских препятствий)
+            полигона. По умолчанию 10мм (разумно для складских препятствий)
     
     Returns:
         list[shapely.Polygon]: Отфильтрованный список без тонких артефактов
@@ -360,7 +360,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                             available_zones: List[AvailableZone],
                             occupied_zone_clearance: float,
                             roads_width: float,
-                            min_zone_dimension: float = 50.0
+                            min_zone_dimension: float = 10.0
                             ) -> List[OccupiedZone]:
     """✅ УЛУЧШЕННАЯ ФУНКЦИЯ: Сканирует DXF документ на occupied zones с фильтрацией артефактов.
     
@@ -373,7 +373,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
         occupied_zone_clearance (float): Зазор для occupied zones
         roads_width (float): Ширина дорог вокруг occupied zones
         min_zone_dimension (float): Минимальная ширина или высота для валидной
-            occupied zone. По умолчанию 50мм.
+            occupied zone. По умолчанию 10мм.
     Returns:
         List[OccupiedZone]: Список найденных occupied zones без артефактов
     """
