@@ -148,13 +148,6 @@ def set_next_rack_position_higher_default(
     NEW BEHAVIOR:
     Checks if the new position would exceed the current free strip boundary.
     If so, signals that we need to move to the next strip.
-    
-    Args:
-        reference_book (ReferenceBook): The reference book.
-        solution (Solution): The current solution.
-    
-    Raises:
-        ActionFailure: If the new position exceeds free strip boundaries.
     """
     rg_position = solution.current_rack_group.position
     nr_position = solution.current_rack_group.next_rack_placement
@@ -186,7 +179,6 @@ def set_next_rack_position_higher_default(
             raise ActionFailure("Next rack position exceeds current free strip boundary")
     
     logger.warning(f"[RACK_PLACEMENT] Next rack position set to y={nr_position[1]:.1f}")
-
 
 def set_next_rack_position_higher_oz(
     reference_book: ReferenceBook,
