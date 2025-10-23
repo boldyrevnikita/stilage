@@ -287,7 +287,7 @@ def swap_double_rack_to_single_rack(
         )
 
     current_rack_group.current_rack = current_rack_group.current_rack.rack_1
-    logger.warning("[RACK_PLACEMENT] Swapped double rack to single rack")
+    logger.warning("[RACK_PLACEMENT] New Logs! Swapped double rack to single rack")
 
 
 def move_current_rack_verticaly(
