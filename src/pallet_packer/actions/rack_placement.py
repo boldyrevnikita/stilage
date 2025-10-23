@@ -272,12 +272,14 @@ def swap_double_rack_to_single_rack(
     
     Takes only the first half (rack_1) of the double rack and discards the second half.
     
+    ✅ NEW: Only swaps if we're in the LAST strip! Otherwise raises ActionFailure.
+    
     Args:
         _ (ReferenceBook): The reference book (not used).
         solution (Solution): The current solution.
     
     Raises:
-        ActionFailure: If current rack is not a DoubleRack.
+        ActionFailure: If current rack is not a DoubleRack OR if not in last strip.
     """
     current_rack_group = solution.current_rack_group
 
@@ -285,9 +287,20 @@ def swap_double_rack_to_single_rack(
         raise ActionFailure(
             "Current rack is not a DoubleRack, cannot swap to single rack."
         )
-
+    
+    # ✅ NEW: Check if we're in the last strip
+    is_in_last_strip = (solution.free_strips and 
+                       solution.current_strip_idx == len(solution.free_strips) - 1)
+    
+    if not is_in_last_strip:
+        logger.warning(f"[RACK_PLACEMENT] Double rack doesn't fit, but NOT in last strip "
+                      f"(strip {solution.current_strip_idx}/{len(solution.free_strips)-1}). "
+                      f"Moving to next strip instead of swapping.")
+        raise ActionFailure("Double rack doesn't fit in current strip (not last strip)")
+    
+    # Only swap if in last strip
     current_rack_group.current_rack = current_rack_group.current_rack.rack_1
-    logger.warning("[RACK_PLACEMENT] New Logs! Swapped double rack to single rack")
+    logger.warning("[RACK_PLACEMENT] In LAST strip → Swapped double rack to single rack")
 
 
 def move_current_rack_verticaly(
