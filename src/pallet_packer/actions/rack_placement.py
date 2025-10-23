@@ -759,7 +759,9 @@ def set_next_rack_type_double_or_single_based_on_strip(
         is_at_bottom_edge = is_first_rack_in_zone
         
         # ✅ At top edge: not enough space for double rack + road after it
-        is_at_top_edge = distance_from_top < space_needed
+        is_in_last_strip = (solution.free_strips and 
+           solution.current_strip_idx == len(solution.free_strips) - 1)
+        is_at_top_edge = is_in_last_strip and (distance_from_top < space_needed)
         
         is_at_edge = is_at_bottom_edge or is_at_top_edge
         
@@ -770,6 +772,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"space_needed={space_needed:.1f}, "
                       f"dist_top={distance_from_top:.1f}, "
                       f"is_first={is_first_rack_in_zone}, "
+                      f"is_in_last_strip={is_in_last_strip}, "
                       f"at_bottom_edge={is_at_bottom_edge}, "
                       f"at_top_edge={is_at_top_edge}, "
                       f"at_edge={is_at_edge}")
@@ -797,7 +800,9 @@ def set_next_rack_type_double_or_single_based_on_strip(
         is_at_left_edge = is_first_rack_in_zone
         
         # ✅ At right edge: not enough space for double rack + road after it
-        is_at_right_edge = distance_from_right < space_needed
+        is_in_last_strip = (solution.free_strips and 
+                   solution.current_strip_idx == len(solution.free_strips) - 1)
+        is_at_right_edge = is_in_last_strip and (distance_from_right < space_needed)
         
         is_at_edge = is_at_left_edge or is_at_right_edge
         
@@ -808,6 +813,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"space_needed={space_needed:.1f}, "
                       f"dist_right={distance_from_right:.1f}, "
                       f"is_first={is_first_rack_in_zone}, "
+                      f"is_in_last_strip={is_in_last_strip}, "
                       f"at_left_edge={is_at_left_edge}, "
                       f"at_right_edge={is_at_right_edge}, "
                       f"at_edge={is_at_edge}")
