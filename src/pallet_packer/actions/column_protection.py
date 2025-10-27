@@ -524,7 +524,7 @@ def _fill_protective_rack_with_frames(
 ) -> None:
     """Fills a protective rack with frames, handling road zone intersections.
     
-    ✅ NEW: Now checks for road zone intersections and creates bridges!
+    ✅ FIXED: Now tracks last intersected road zone to prevent consecutive bridge frames
     """
     section_length = (protective_rack.rack_1.beam_type.length + 
                      protective_rack.rack_1.upright_type.width)
@@ -536,23 +536,37 @@ def _fill_protective_rack_with_frames(
     
     logger.warning(f"[COLUMN_PROTECTION] Filling protective rack with up to {frames_count} frames")
     
+    # ✅ CRITICAL FIX: Track last road zone that got a bridge to prevent consecutive bridges
+    last_bridged_road_zone = None
+    
     # Add frames one by one, checking for road zone intersections
     for i in range(frames_count):
         protective_rack.add_frame()
         
-        # ✅ NEW: Check if last frame intersects with any road zone
+        # ✅ Check if last frame intersects with any road zone
         intersects_road = False
         for road_zone in road_zones:
             if protective_rack.last_frame_intersects(road_zone.contour):
                 intersects_road = True
                 # Check if it's a vertical road (needs bridge)
                 if not road_zone.is_horizontal():
-                    frame_idx = len(protective_rack.rack_1) - 1
-                    protective_rack.make_frame_bridge(frame_idx)
-                    logger.warning(f"[COLUMN_PROTECTION] ✅ Set frame {frame_idx} as BRIDGE in protective rack (vertical road intersection)")
+                    # ✅ CRITICAL FIX: Only create bridge if this is a NEW road zone
+                    # (not the same one as the previous frame)
+                    if road_zone is not last_bridged_road_zone:
+                        frame_idx = len(protective_rack.rack_1) - 1
+                        protective_rack.make_frame_bridge(frame_idx)
+                        last_bridged_road_zone = road_zone
+                        logger.warning(f"[COLUMN_PROTECTION] ✅ Set frame {frame_idx} as BRIDGE in protective rack (vertical road intersection)")
+                    else:
+                        logger.warning(f"[COLUMN_PROTECTION] ⏭️  Frame {i} intersects same road zone as previous frame - skipping bridge (already bridged)")
                 else:
                     logger.warning(f"[COLUMN_PROTECTION] Frame {i} intersects horizontal road - no bridge needed")
                 break
+        
+        # ✅ CRITICAL: Reset tracking when we exit a road zone
+        # This allows creating bridges for subsequent road zones
+        if not intersects_road:
+            last_bridged_road_zone = None
         
         # Verify fit
         if not shapely.contains(available_zone.contour, protective_rack.contour):
