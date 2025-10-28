@@ -1,11 +1,3 @@
-"""
-Actions for protecting columns with continuous double racks.
-This module implements Phase 1 of the new placement logic:
-identifying all columns in a zone and covering them with protective racks.
-
-✅ FIXED: Protective racks now correctly handle road zone intersections (bridges)
-"""
-
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import DoubleRack, RackGroup
@@ -13,6 +5,7 @@ from src.zone import OccupiedZone
 import shapely
 from copy import deepcopy
 import logging
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -343,15 +336,68 @@ def _is_column(occupied_zone: OccupiedZone, reference_book: ReferenceBook) -> bo
 
 def _calculate_dynamic_rack_distance_for_column(
     column: OccupiedZone,
-    reference_book: ReferenceBook
+    reference_book: ReferenceBook,
+    solution: Solution  # ← ДОБАВИЛИ параметр!
 ) -> float:
-    """Calculates the required distance between double rack halves for a column.
+    """Calculates dynamic rack distance based on column size and orientation.
     
-    Uses a fixed distance of 1000mm to match the maximum available jumper
-    from the rack configuration (jumper_1000).
+    Logic:
+    1. Choose column dimension based on rack orientation:
+       - Horizontal placement (is_rotated=False): use column HEIGHT
+       - Vertical placement (is_rotated=True): use column WIDTH
+    2. Add 50mm safety margin on each side (+100mm total)
+    3. Round UP to nearest multiple of 50
+    4. Cap at maximum 1100mm
+    
+    Args:
+        column: The column to calculate distance for
+        reference_book: Reference book with configuration
+        solution: Current solution (needed for is_rotated flag)
+    
+    Returns:
+        Rack distance in mm (between 150mm and 1100mm, multiple of 50)
     """
-    distance = 1000.0
-    return distance
+    import math
+    
+    # Step 1: Get column dimensions
+    column_bounds = column.contour.bounds
+    column_width = column_bounds[2] - column_bounds[0]   # horizontal size
+    column_height = column_bounds[3] - column_bounds[1]  # vertical size
+    
+    # Step 2: Choose dimension based on orientation
+    if solution.is_rotated:
+        # Vertical placement → racks are left/right → use WIDTH
+        column_size = column_width
+        orientation_desc = "vertical (rotated)"
+    else:
+        # Horizontal placement → racks are top/bottom → use HEIGHT
+        column_size = column_height
+        orientation_desc = "horizontal"
+    
+    logger.warning(f"[COLUMN_PROTECTION] Calculating rack_distance:")
+    logger.warning(f"[COLUMN_PROTECTION]   Column size: {column_width:.1f} x {column_height:.1f} mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Orientation: {orientation_desc}")
+    logger.warning(f"[COLUMN_PROTECTION]   Selected dimension: {column_size:.1f} mm")
+    
+    # Step 3: Add safety margins (50mm on each side)
+    SAFETY_MARGIN = 50  # mm per side
+    distance_with_gaps = column_size + 2 * SAFETY_MARGIN
+    logger.warning(f"[COLUMN_PROTECTION]   With safety margins: {distance_with_gaps:.1f} mm")
+    
+    # Step 4: Round UP to nearest multiple of 50
+    distance_rounded = math.ceil(distance_with_gaps / 50) * 50
+    logger.warning(f"[COLUMN_PROTECTION]   Rounded to multiple of 50: {distance_rounded:.1f} mm")
+    
+    # Step 5: Apply maximum limit
+    MAX_RACK_DISTANCE = 1100  # mm
+    rack_distance = min(distance_rounded, MAX_RACK_DISTANCE)
+    
+    if distance_rounded > MAX_RACK_DISTANCE:
+        logger.warning(f"[COLUMN_PROTECTION]   ⚠️  Capped at maximum: {MAX_RACK_DISTANCE} mm")
+    
+    logger.warning(f"[COLUMN_PROTECTION]   Final rack_distance: {rack_distance:.1f} mm")
+    
+    return rack_distance
 
 
 def _create_protective_rack_for_column(
@@ -371,7 +417,11 @@ def _create_protective_rack_for_column(
     logger.warning(f"[COLUMN_PROTECTION]   Zone bounds: {zone_bounds}")
     
     # Calculate rack distance
-    rack_distance = _calculate_dynamic_rack_distance_for_column(column, reference_book)
+    rack_distance = _calculate_dynamic_rack_distance_for_column(
+        column, 
+        reference_book,
+        solution  # ← ДОБАВИЛИ параметр!
+    )
     logger.warning(f"[COLUMN_PROTECTION]   Calculated rack_distance: {rack_distance:.1f}mm")
     
     # Calculate actual rack height
