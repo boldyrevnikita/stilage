@@ -37,6 +37,7 @@ from src.pallet_packer.actions.zones_handling import (
     move_second_rack_higher_over_oz, place_road_zone_on_right_size,
     rotate_everything_90_clockwise, rotate_everything_90_counterclockwise,
     set_current_occupied_zones_and_road_zones, set_next_zone, set_zero_zone,
+    reset_zone_specific_data,  # ✅ ДОБАВЛЕНО
     sort_available_zones_by_area_and_height, split_available_zone,
     check_if_vertical_allowed,  
     check_if_horizontal_allowed,
@@ -107,6 +108,7 @@ __all__ = [
     rotate_everything_90_counterclockwise.__name__,
     set_next_zone.__name__,
     set_zero_zone.__name__,
+    reset_zone_specific_data.__name__,  # ✅ ДОБАВЛЕНО
     sort_available_zones_by_area_and_height.__name__,
     split_available_zone.__name__,
     assert_current_rack_not_intersecting_oz_or_rz.__name__,
