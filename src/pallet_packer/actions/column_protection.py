@@ -337,17 +337,16 @@ def _is_column(occupied_zone: OccupiedZone, reference_book: ReferenceBook) -> bo
 def _calculate_dynamic_rack_distance_for_column(
     column: OccupiedZone,
     reference_book: ReferenceBook,
-    solution: Solution  # ← ДОБАВИЛИ параметр!
+    solution: Solution
 ) -> float:
-    """Calculates dynamic rack distance based on column size and orientation.
+    """Calculates dynamic rack_distance based on column size and orientation.
     
     Logic:
-    1. Choose column dimension based on rack orientation:
-       - Horizontal placement (is_rotated=False): use column HEIGHT
-       - Vertical placement (is_rotated=True): use column WIDTH
-    2. Add 50mm safety margin on each side (+100mm total)
-    3. Round UP to nearest multiple of 50
-    4. Cap at maximum 1100mm
+    1. Choose column dimension based on orientation
+    2. Calculate actual_gap: column + 50mm per side
+    3. Convert to rack_distance: add eps
+    4. Round rack_distance UP to multiple of 50 (jumper sizes!)
+    5. Cap at maximum 1100mm
     
     Args:
         column: The column to calculate distance for
@@ -355,49 +354,63 @@ def _calculate_dynamic_rack_distance_for_column(
         solution: Current solution (needed for is_rotated flag)
     
     Returns:
-        Rack distance in mm (between 150mm and 1100mm, multiple of 50)
+        rack_distance in mm (multiple of 50, max 1100)
     """
     import math
     
     # Step 1: Get column dimensions
     column_bounds = column.contour.bounds
-    column_width = column_bounds[2] - column_bounds[0]   # horizontal size
-    column_height = column_bounds[3] - column_bounds[1]  # vertical size
+    column_width = column_bounds[2] - column_bounds[0]
+    column_height = column_bounds[3] - column_bounds[1]
     
     # Step 2: Choose dimension based on orientation
     if solution.is_rotated:
-        # Vertical placement → racks are left/right → use WIDTH
         column_size = column_width
         orientation_desc = "vertical (rotated)"
     else:
-        # Horizontal placement → racks are top/bottom → use HEIGHT
         column_size = column_height
         orientation_desc = "horizontal"
     
     logger.warning(f"[COLUMN_PROTECTION] Calculating rack_distance:")
-    logger.warning(f"[COLUMN_PROTECTION]   Column size: {column_width:.1f} x {column_height:.1f} mm")
+    logger.warning(f"[COLUMN_PROTECTION]   Column: {column_width:.1f} x {column_height:.1f} mm")
     logger.warning(f"[COLUMN_PROTECTION]   Orientation: {orientation_desc}")
     logger.warning(f"[COLUMN_PROTECTION]   Selected dimension: {column_size:.1f} mm")
     
-    # Step 3: Add safety margins (50mm on each side)
-    SAFETY_MARGIN = 50  # mm per side
-    distance_with_gaps = column_size + 2 * SAFETY_MARGIN
-    logger.warning(f"[COLUMN_PROTECTION]   With safety margins: {distance_with_gaps:.1f} mm")
+    # Step 3: Calculate actual_gap (physical clearance)
+    CLEARANCE = 50  # mm per side (from column to pallet)
+    actual_gap = column_size + 2 * CLEARANCE
+    logger.warning(f"[COLUMN_PROTECTION]   Desired actual_gap: {actual_gap:.1f} mm")
     
-    # Step 4: Round UP to nearest multiple of 50
-    distance_rounded = math.ceil(distance_with_gaps / 50) * 50
-    logger.warning(f"[COLUMN_PROTECTION]   Rounded to multiple of 50: {distance_rounded:.1f} mm")
+    # Step 4: Convert to rack_distance (before rounding)
+    eps = reference_book.double_rack_distance_eps
+    rack_distance_raw = actual_gap + eps
+    logger.warning(f"[COLUMN_PROTECTION]   Raw rack_distance: {actual_gap:.1f} + {eps:.1f} = {rack_distance_raw:.1f} mm")
     
-    # Step 5: Apply maximum limit
-    MAX_RACK_DISTANCE = 1100  # mm
-    rack_distance = min(distance_rounded, MAX_RACK_DISTANCE)
+    # Step 5: Round rack_distance UP to multiple of 50
+    # ⚠️ CRITICAL: We round rack_distance, not actual_gap!
+    # Because jumpers come in 50mm increments (200, 250, 300, ..., 1100)
+    JUMPER_STEP = 50  # mm
+    rack_distance_rounded = math.ceil(rack_distance_raw / JUMPER_STEP) * JUMPER_STEP
+    logger.warning(f"[COLUMN_PROTECTION]   Rounded to jumper size: {rack_distance_rounded:.1f} mm")
     
-    if distance_rounded > MAX_RACK_DISTANCE:
-        logger.warning(f"[COLUMN_PROTECTION]   ⚠️  Capped at maximum: {MAX_RACK_DISTANCE} mm")
+    # Step 6: Apply maximum limit
+    MAX_RACK_DISTANCE = 1100  # mm (max available jumper)
+    rack_distance_final = min(rack_distance_rounded, MAX_RACK_DISTANCE)
     
-    logger.warning(f"[COLUMN_PROTECTION]   Final rack_distance: {rack_distance:.1f} mm")
+    if rack_distance_rounded > MAX_RACK_DISTANCE:
+        logger.warning(f"[COLUMN_PROTECTION]   ⚠️  Exceeds max jumper {MAX_RACK_DISTANCE} mm, capping...")
     
-    return rack_distance
+    # Calculate final actual_gap and clearance
+    actual_gap_final = rack_distance_final - eps
+    clearance_final = (actual_gap_final - column_size) / 2
+    
+    logger.warning(f"[COLUMN_PROTECTION]   ════════════════════════════════")
+    logger.warning(f"[COLUMN_PROTECTION]   ✅ Final rack_distance: {rack_distance_final:.1f} mm")
+    logger.warning(f"[COLUMN_PROTECTION]      → actual_gap: {actual_gap_final:.1f} mm")
+    logger.warning(f"[COLUMN_PROTECTION]      → clearance: {clearance_final:.1f} mm per side")
+    logger.warning(f"[COLUMN_PROTECTION]   ════════════════════════════════")
+    
+    return rack_distance_final
 
 
 def _create_protective_rack_for_column(
