@@ -148,6 +148,39 @@ def set_next_zone(
     logger.warning(f"[DEBUG_NEXT_ZONE] Zone size: {width:.1f} x {height:.1f} mm")
     logger.warning(f"[DEBUG_NEXT_ZONE] ========================================")
 
+def reset_zone_specific_data(
+    _: ReferenceBook,
+    solution: Solution
+) -> None:
+    """Resets zone-specific data when moving to a new zone.
+    
+    This includes:
+    - Protective racks and columns
+    - Free strips information
+    - Last intersected road tracking
+    
+    Args:
+        _ (ReferenceBook): The reference book (not used).
+        solution (Solution): The current solution.
+    """
+    # Clear column protection data
+    solution.columns_in_zone = []
+    solution.protective_racks = []
+    solution.free_strips = []
+    solution.current_strip_idx = 0
+    
+    # Clear tracking data
+    solution.last_intersected_vertical_road = None
+    solution.max_intersected_oz_y = None
+    solution.intersected_special_zone = None
+    
+    # Ensure rotation state is reset
+    if solution.is_rotated:
+        logger.warning("[ZONES] ⚠️ WARNING: Zone transition while rotated! Resetting rotation flag.")
+        solution.is_rotated = False
+    
+    logger.warning("[ZONES] ✅ Reset zone-specific data for new zone")
+
 
 def set_zero_zone(
     _: ReferenceBook,

@@ -45,10 +45,15 @@ def get_main_loop_states() -> dict[str, State]:
             actions.sort_available_zones_by_area_and_height,
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         
-        # === Обработка зоны ===
         f'{Block.MAIN}-SNZ': State(
             actions.set_next_zone,
-            [f'{Block.MAIN}-GCOZARZ'], [f'{Block.MAIN}-SZZ']),
+            [f'{Block.MAIN}-RESET_ZONE_DATA'], [f'{Block.MAIN}-SZZ']),  # ← Изменено!
+
+        # ✅ НОВОЕ: Очистка данных предыдущей зоны
+        f'{Block.MAIN}-RESET_ZONE_DATA': State(
+            actions.reset_zone_specific_data,
+            [f'{Block.MAIN}-GCOZARZ'], ['GFS']),
+
         f'{Block.MAIN}-GCOZARZ': State(
             actions.set_current_occupied_zones_and_road_zones,
             [f'{Block.MAIN}-CBaU'], ['GFS']),
