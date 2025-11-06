@@ -226,6 +226,8 @@ class Solution:
         
         # Maximum Y coordinate of intersected occupied zones (for positioning next rack)
         self.max_intersected_oz_y = None
+
+        self.rack_groups_before_zone = 0
     
     def __repr__(self) -> str:
         """Returns a string representation of the Solution.

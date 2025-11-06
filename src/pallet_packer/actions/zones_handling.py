@@ -72,34 +72,27 @@ def rotate_everything_90_counterclockwise(
         for column in solution.columns_in_zone:
             column.rotate(solution.rot_point, angle)
         
-        # ✅ CRITICAL FIX: Rotate ONLY saved rack groups in CURRENT zone!
-        zone_bounds = available_zone.bounds
+        # ✅ CRITICAL FIX: Rotate ONLY rack groups added in CURRENT zone!
+        # Use the saved index to determine which rack groups were added after rotation
+        start_idx = getattr(solution, 'rack_groups_before_zone', 0)
         
-        for rack_group in solution.saved_rack_groups:
-            # Check if rack_group is in current zone
-            rg_bounds = rack_group.bounds
+        logger.warning(f"[ZONES] Rotating back racks from index {start_idx} to {len(solution.saved_rack_groups)}")
+        
+        for i in range(start_idx, len(solution.saved_rack_groups)):
+            rack_group = solution.saved_rack_groups[i]
             
-            # Check intersection with ROTATED zone bounds
-            # (we just rotated the zone, so we need to check against rotated bounds)
-            rg_outside_zone = (
-                rg_bounds[2] <= zone_bounds[0] or
-                rg_bounds[0] >= zone_bounds[2] or
-                rg_bounds[3] <= zone_bounds[1] or
-                rg_bounds[1] >= zone_bounds[3]
-            )
+            logger.warning(f"[ZONES] Rotating back rack_group {i}: bounds BEFORE = {rack_group.bounds}")
             
-            if not rg_outside_zone:  # Rack is IN current zone
-                rack_group.rotate(angle, solution.rot_point)
-                
-                for rack in rack_group.racks:
-                    normalize_rack_orientation(rack)
-                    
-                logger.warning(f"[ZONES] Rotated rack in current zone: {rack_group.bounds}")
-            else:
-                logger.warning(f"[ZONES] Skipped rack from other zone: {rack_group.bounds}")
+            rack_group.rotate(angle, solution.rot_point)
+            
+            for rack in rack_group.racks:
+                normalize_rack_orientation(rack)
+            
+            logger.warning(f"[ZONES] Rotating back rack_group {i}: bounds AFTER = {rack_group.bounds}")
 
         solution.is_rotated = False
-        logger.warning("[ZONES] Rotated everything 90° counterclockwise and normalized racks in current zone only")
+        logger.warning(f"[ZONES] Rotated {len(solution.saved_rack_groups) - start_idx} rack groups "
+                      f"90° counterclockwise and normalized racks")
 
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
@@ -115,12 +108,15 @@ def set_next_zone(
 
     solution.available_zone_idx += 1
     
-    # DEBUG: Новая зона
+    # ✅ NEW: Remember rack count BEFORE working with this zone
+    solution.rack_groups_before_zone = len(solution.saved_rack_groups)
+    
     new_zone = solution.available_zones[solution.available_zone_idx]
     logger.warning(f"[DEBUG_NEXT_ZONE] ========================================")
     logger.warning(f"[DEBUG_NEXT_ZONE] SWITCHING TO NEXT ZONE")
     logger.warning(f"[DEBUG_NEXT_ZONE] Zone index: {solution.available_zone_idx}/{len(solution.available_zones)}")
     logger.warning(f"[DEBUG_NEXT_ZONE] Zone bounds: {new_zone.bounds}")
+    logger.warning(f"[DEBUG_NEXT_ZONE] Rack groups before zone: {solution.rack_groups_before_zone}")  # ✅ DEBUG
     width = new_zone.bounds[2] - new_zone.bounds[0]
     height = new_zone.bounds[3] - new_zone.bounds[1]
     logger.warning(f"[DEBUG_NEXT_ZONE] Zone size: {width:.1f} x {height:.1f} mm")
@@ -151,6 +147,8 @@ def reset_zone_specific_data(
     solution.last_intersected_vertical_road = None
     solution.max_intersected_oz_y = None
     solution.intersected_special_zone = None
+
+    solution.rack_groups_before_zone = len(solution.saved_rack_groups)
     
     # Ensure rotation state is reset
     if solution.is_rotated:
