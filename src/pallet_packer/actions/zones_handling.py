@@ -59,24 +59,6 @@ def rotate_everything_90_counterclockwise(
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
-        # ✅ DEBUG: Log bounds BEFORE rotation back
-        logger.warning("[DEBUG_ROTATION_BACK] ========================================")
-        logger.warning("[DEBUG_ROTATION_BACK] BEFORE rotation counterclockwise:")
-        logger.warning(f"[DEBUG_ROTATION_BACK] Zone bounds: {available_zone.bounds}")
-        logger.warning(f"[DEBUG_ROTATION_BACK] Total saved_rack_groups: {len(solution.saved_rack_groups)}")
-        
-        for i, rg in enumerate(solution.saved_rack_groups):
-            is_protective = False
-            if rg.racks:
-                first_rack = rg.racks[0]
-                if isinstance(first_rack, DoubleRack) and hasattr(first_rack, 'is_protective'):
-                    is_protective = first_rack.is_protective
-            
-            logger.warning(f"[DEBUG_ROTATION_BACK]   RackGroup {i}: "
-                          f"protective={is_protective}, "
-                          f"bounds={rg.bounds}, "
-                          f"racks_count={len(rg.racks)}")
-        
         # Rotate zone
         available_zone.rotate(solution.rot_point, angle)
         
@@ -90,38 +72,34 @@ def rotate_everything_90_counterclockwise(
         for column in solution.columns_in_zone:
             column.rotate(solution.rot_point, angle)
         
-        # ✅ CRITICAL FIX: Don't rotate current_rack_group separately!
-        # If it was saved, it will be rotated with saved_rack_groups below.
-        # If it wasn't saved, we don't need to rotate it (it will be discarded).
+        # ✅ CRITICAL FIX: Rotate ONLY saved rack groups in CURRENT zone!
+        zone_bounds = available_zone.bounds
         
-        # Rotate ALL saved rack groups (including protective racks!)
         for rack_group in solution.saved_rack_groups:
-            rack_group.rotate(angle, solution.rot_point)
+            # Check if rack_group is in current zone
+            rg_bounds = rack_group.bounds
             
-            for rack in rack_group.racks:
-                normalize_rack_orientation(rack)
-                logger.warning(f"[ZONES] Normalized rack in saved_rack_groups")
-
-        # ✅ DEBUG: Log bounds AFTER rotation back
-        logger.warning("[DEBUG_ROTATION_BACK] AFTER rotation counterclockwise:")
-        logger.warning(f"[DEBUG_ROTATION_BACK] Zone bounds: {available_zone.bounds}")
-        
-        for i, rg in enumerate(solution.saved_rack_groups):
-            is_protective = False
-            if rg.racks:
-                first_rack = rg.racks[0]
-                if isinstance(first_rack, DoubleRack) and hasattr(first_rack, 'is_protective'):
-                    is_protective = first_rack.is_protective
+            # Check intersection with ROTATED zone bounds
+            # (we just rotated the zone, so we need to check against rotated bounds)
+            rg_outside_zone = (
+                rg_bounds[2] <= zone_bounds[0] or
+                rg_bounds[0] >= zone_bounds[2] or
+                rg_bounds[3] <= zone_bounds[1] or
+                rg_bounds[1] >= zone_bounds[3]
+            )
             
-            logger.warning(f"[DEBUG_ROTATION_BACK]   RackGroup {i}: "
-                          f"protective={is_protective}, "
-                          f"bounds={rg.bounds}, "
-                          f"racks_count={len(rg.racks)}")
-        
-        logger.warning("[DEBUG_ROTATION_BACK] ========================================")
+            if not rg_outside_zone:  # Rack is IN current zone
+                rack_group.rotate(angle, solution.rot_point)
+                
+                for rack in rack_group.racks:
+                    normalize_rack_orientation(rack)
+                    
+                logger.warning(f"[ZONES] Rotated rack in current zone: {rack_group.bounds}")
+            else:
+                logger.warning(f"[ZONES] Skipped rack from other zone: {rack_group.bounds}")
 
         solution.is_rotated = False
-        logger.warning("[ZONES] Rotated everything 90° counterclockwise and normalized all racks")
+        logger.warning("[ZONES] Rotated everything 90° counterclockwise and normalized racks in current zone only")
 
 # =============================================================================
 # ZONE NAVIGATION FUNCTIONS
