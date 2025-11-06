@@ -17,7 +17,7 @@ class Sender:
                  port: Optional[Union[int, str]] = None,
                  vhost: Optional[str] = None,
                  credentials: Optional[dict] = None,
-                 heartbeat: int = 1800):
+                 heartbeat: int = 60):
         self.sender_id = str(uuid.uuid4())[:8]
         self.logger = logging.getLogger(f"Sender[{self.sender_id}]")
         
@@ -47,7 +47,8 @@ class Sender:
                 'host': self.host,
                 'port': self.port,
                 'virtualhost': self.vhost,
-                'heartbeat': self.heartbeat
+                'heartbeat': self.heartbeat,
+                'blocked_connection_timeout': 300
             }
             
             if self.credentials:
@@ -76,7 +77,8 @@ class Sender:
             queue_start = time.time()
             self.queue = await self.channel.declare_queue(
                 self.queue_name, 
-                auto_delete=True
+                durable=True,
+                auto_delete=False
             )
             queue_time = time.time() - queue_start
             self.logger.info(f"Queue '{self.queue_name}' declared in {queue_time:.3f}s")
@@ -168,7 +170,7 @@ class MessageHandler:
                  port: Optional[Union[int, str]] = None,
                  vhost: Optional[str] = None,
                  credentials: Optional[dict] = None,
-                 heartbeat: int = 1800):
+                 heartbeat: int = 60):
         self.handler_id = str(uuid.uuid4())[:8]
         self.logger = logging.getLogger(f"MessageHandler[{self.handler_id}]")
         
@@ -205,7 +207,8 @@ class MessageHandler:
                 'host': self.host,
                 'port': self.port,
                 'virtualhost': self.vhost,
-                'heartbeat': self.heartbeat
+                'heartbeat': self.heartbeat,
+                'blocked_connection_timeout': 300 
             }
             
             if self.credentials:
@@ -233,8 +236,9 @@ class MessageHandler:
             self.logger.info(f"Declaring queue: {self.queue_name}")
             queue_start = time.time()
             self.queue = await self.channel.declare_queue(
-                self.queue_name, 
-                auto_delete=True
+                self.queue_name,
+                durable=True, 
+                auto_delete=False
             )
             queue_time = time.time() - queue_start
             self.logger.info(f"Queue '{self.queue_name}' declared in {queue_time:.3f}s")
