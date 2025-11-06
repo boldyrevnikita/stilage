@@ -247,7 +247,7 @@ def split_available_zone(
     ✅ FIXED: Only uses rack groups from CURRENT zone for split calculation.
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
-    MIN_ZONE_SIZE = 5000.0
+    MIN_ZONE_SIZE = 4000.0
     
     if not solution.saved_rack_groups:
         logger.warning("[ZONES] No saved rack groups, skipping split")
