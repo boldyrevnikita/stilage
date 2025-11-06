@@ -244,32 +244,30 @@ def split_available_zone(
 ) -> None:
     """Splits the available zone into two parts.
     
-    ✅ NEW LOGIC WITH PROTECTIVE RACKS:
-    When protective racks exist, split is calculated based on REGULAR racks only,
-    not protective racks. This is because:
-    - Protective racks span the full width of the zone (X-axis)
-    - Regular racks are placed in strips between protective racks
-    - We need to split based on where regular racks end, not protective racks
+    ✅ FIXED: Only uses rack groups from CURRENT zone for split calculation.
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
-    MIN_ZONE_SIZE = 5000.0  # Minimum 5 meters to ensure usable zones
+    MIN_ZONE_SIZE = 5000.0
     
-    # ✅ NEW: Calculate split point from ALL saved rack groups, excluding protective
     if not solution.saved_rack_groups:
         logger.warning("[ZONES] No saved rack groups, skipping split")
         solution.available_zones.pop(solution.available_zone_idx)
         solution.available_zone_idx -= 1
         return
     
-    # Find maximum X and Y from regular (non-protective) racks
-    max_x = available_zone.bounds[0]  # Start from zone left edge
-    max_y = available_zone.bounds[1]  # Start from zone bottom edge
+    # Find maximum X and Y from regular (non-protective) racks IN CURRENT ZONE
+    max_x = available_zone.bounds[0]
+    max_y = available_zone.bounds[1]
     
     has_regular_racks = False
     
-    # ✅ CRITICAL FIX: Only use saved_rack_groups
-    # Don't check current_rack_group - it's either None or already in saved_rack_groups
     for rack_group in solution.saved_rack_groups:
+        # ✅ CRITICAL FIX: Only use rack groups that are IN THE CURRENT ZONE!
+        # Skip rack groups from other zones
+        if not shapely.intersects(rack_group.contour, available_zone.contour):
+            logger.warning(f"[ZONES] Skipping rack from other zone: bounds={rack_group.bounds}")
+            continue
+        
         # Check if this rack group contains protective racks
         is_protective_group = False
         
@@ -284,19 +282,19 @@ def split_available_zone(
             has_regular_racks = True
             max_x = max(max_x, rack_group.bounds[2])
             max_y = max(max_y, rack_group.bounds[3])
-            logger.warning(f"[ZONES] Including regular rack: bounds={rack_group.bounds}")
+            logger.warning(f"[ZONES] Including regular rack from current zone: bounds={rack_group.bounds}")
         else:
             logger.warning(f"[ZONES] Excluding protective rack from split calculation")
     
     # If no regular racks were placed, skip split
     if not has_regular_racks:
-        logger.warning("[ZONES] ⚠️ No regular racks placed, only protective racks exist")
+        logger.warning("[ZONES] ⚠️ No regular racks placed in current zone")
         logger.warning("[ZONES] Skipping split - zone is fully processed")
         solution.available_zones.pop(solution.available_zone_idx)
         solution.available_zone_idx -= 1
         return
     
-    # Calculate split point based on regular racks
+    # Calculate split point based on regular racks IN CURRENT ZONE
     split_point = [max_x, max_y]
     split_point[0] += reference_book.roads_width
     split_point[1] += reference_book.roads_width
@@ -308,7 +306,7 @@ def split_available_zone(
     top_zone_height = available_zone.bounds[3] - split_point[1]
     
     logger.warning(f"[ZONES] ========================================")
-    logger.warning(f"[ZONES] SPLIT ANALYSIS (excluding protective racks)")
+    logger.warning(f"[ZONES] SPLIT ANALYSIS (current zone only)")
     logger.warning(f"[ZONES]   Available zone: {available_zone.bounds}")
     logger.warning(f"[ZONES]   Regular racks max X: {max_x:.1f}mm")
     logger.warning(f"[ZONES]   Regular racks max Y: {max_y:.1f}mm")
