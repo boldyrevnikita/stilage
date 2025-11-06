@@ -734,13 +734,11 @@ def set_next_rack_type_double_or_single_based_on_strip(
     
     is_at_edge = False
     
-    if solution.is_rotated:
-        # ========== VERTICAL PLACEMENT (Y-axis) ==========
-        
-        # ✅ Check first rack IN CURRENT ZONE ONLY
+    # ✅ HELPER FUNCTION: Check if there are regular racks in current zone
+    def has_regular_racks_in_zone():
+        # Check saved rack groups
         start_idx = getattr(solution, 'rack_groups_before_zone', 0)
         
-        has_saved_regular_racks_in_current_zone = False
         for i in range(start_idx, len(solution.saved_rack_groups)):
             rg = solution.saved_rack_groups[i]
             
@@ -756,73 +754,60 @@ def set_next_rack_type_double_or_single_based_on_strip(
             )
             
             if rg_in_current_zone and len(rg.racks) > 0:
-                has_saved_regular_racks_in_current_zone = True
-                break
+                return True
         
-        current_has_racks = (solution.current_rack_group and 
-                           len(solution.current_rack_group.racks) > 0)
+        # ✅ CRITICAL: Also check current_rack_group if it has saved racks
+        # (racks were saved via save_rack but group not yet saved via save_rack_group)
+        if solution.current_rack_group and len(solution.current_rack_group.racks) > 0:
+            # Check if any rack in current_rack_group is not protective
+            for rack in solution.current_rack_group.racks:
+                is_protective = False
+                if isinstance(rack, DoubleRack):
+                    if hasattr(rack, 'is_protective') and rack.is_protective:
+                        is_protective = True
+                if not is_protective:
+                    return True
         
-        is_first_rack_in_zone = (not has_saved_regular_racks_in_current_zone and 
-                                not current_has_racks)
+        return False
+    
+    # ✅ Check if we're building the FIRST rack in the ENTIRE zone
+    # (not just first rack in current RackGroup)
+    has_any_regular_racks = has_regular_racks_in_zone()
+    current_rack_is_first_in_group = (solution.current_rack_group and 
+                                      solution.current_rack_group.current_rack is None)
+    
+    # First rack in zone = no regular racks anywhere AND we're starting new rack
+    is_first_rack_in_zone = (not has_any_regular_racks and current_rack_is_first_in_group)
+    
+    if solution.is_rotated:
+        # ========== VERTICAL PLACEMENT (Y-axis) ==========
         
-        # Check edges
         distance_from_top = zone_bounds[3] - current_position[1]
         is_at_bottom_edge = is_first_rack_in_zone
-        is_at_top_edge = (distance_from_top < space_needed)  # ✅ Убрали is_in_last_strip
+        is_at_top_edge = (distance_from_top < space_needed)
         
         is_at_edge = is_at_bottom_edge or is_at_top_edge
         
         logger.warning(f"[RACK_PLACEMENT] VERTICAL: "
                       f"y={current_position[1]:.1f}, "
-                      f"zone_y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}], "
-                      f"space_needed={space_needed:.1f}, "
                       f"dist_top={distance_from_top:.1f}, "
+                      f"has_regular={has_any_regular_racks}, "
                       f"is_first={is_first_rack_in_zone}, "
                       f"at_edge={is_at_edge}")
     
     else:
         # ========== HORIZONTAL PLACEMENT (X-axis) ==========
         
-        # ✅ Check first rack IN CURRENT ZONE ONLY
-        start_idx = getattr(solution, 'rack_groups_before_zone', 0)
-        
-        has_saved_regular_racks_in_current_zone = False
-        for i in range(start_idx, len(solution.saved_rack_groups)):
-            rg = solution.saved_rack_groups[i]
-            
-            if hasattr(rg, 'is_protective') and rg.is_protective:
-                continue
-            
-            rg_bounds = rg.bounds
-            rg_in_current_zone = not (
-                rg_bounds[2] <= zone_bounds[0] or
-                rg_bounds[0] >= zone_bounds[2] or
-                rg_bounds[3] <= zone_bounds[1] or
-                rg_bounds[1] >= zone_bounds[3]
-            )
-            
-            if rg_in_current_zone and len(rg.racks) > 0:
-                has_saved_regular_racks_in_current_zone = True
-                break
-        
-        current_has_racks = (solution.current_rack_group and 
-                           len(solution.current_rack_group.racks) > 0)
-        
-        is_first_rack_in_zone = (not has_saved_regular_racks_in_current_zone and  # ✅ Исправлено!
-                                not current_has_racks)
-        
-        # Check edges
         distance_from_right = zone_bounds[2] - current_position[0]
         is_at_left_edge = is_first_rack_in_zone
-        is_at_right_edge = (distance_from_right < space_needed)  # ✅ Убрали is_in_last_strip
+        is_at_right_edge = (distance_from_right < space_needed)
         
         is_at_edge = is_at_left_edge or is_at_right_edge
         
         logger.warning(f"[RACK_PLACEMENT] HORIZONTAL: "
                       f"x={current_position[0]:.1f}, "
-                      f"zone_x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
-                      f"space_needed={space_needed:.1f}, "
                       f"dist_right={distance_from_right:.1f}, "
+                      f"has_regular={has_any_regular_racks}, "
                       f"is_first={is_first_rack_in_zone}, "
                       f"at_edge={is_at_edge}")
     
