@@ -711,8 +711,8 @@ def set_next_rack_type_double_or_single_based_on_strip(
     """Automatically chooses rack type based on position in zone.
     
     Rules:
-    1. First rack in zone/strip → Single (edge rule)
-    2. Not enough space for double rack + road after it → Single (edge rule)
+    1. First rack in zone → Single (edge rule)
+    2. Not enough space for double rack + road → Single (edge rule)
     3. Otherwise → Double (center rule)
     """
     
@@ -725,111 +725,114 @@ def set_next_rack_type_double_or_single_based_on_strip(
     available_zone = solution.available_zones[solution.available_zone_idx]
     zone_bounds = available_zone.bounds
     
-    # Calculate double rack width
+    # Calculate dimensions
     pallet = solution.pallets[solution.pallet_idx]
     upright_width = solution.upright_type.width
-    
-    # DoubleRack = rack_1 + rack_distance + rack_2
-    # Single rack width = pallet.length + 2*upright
     single_rack_width = pallet.length + upright_width * 2
-    #double_rack_width = single_rack_width * 2 + reference_book.roads_width
     double_rack_width = single_rack_width * 2
-    
-    # ✅ CRITICAL: Space needed for double rack + road after it
     space_needed = double_rack_width + reference_book.roads_width
     
     is_at_edge = False
     
     if solution.is_rotated:
-        # VERTICAL placement (Y-axis)
+        # ========== VERTICAL PLACEMENT (Y-axis) ==========
         
-        # Check if this is the first rack in the zone
-        has_saved_regular_racks = False
-        for rg in solution.saved_rack_groups:
+        # ✅ Check first rack IN CURRENT ZONE ONLY
+        start_idx = getattr(solution, 'rack_groups_before_zone', 0)
+        
+        has_saved_regular_racks_in_current_zone = False
+        for i in range(start_idx, len(solution.saved_rack_groups)):
+            rg = solution.saved_rack_groups[i]
+            
             if hasattr(rg, 'is_protective') and rg.is_protective:
                 continue
-            if len(rg.racks) > 0:
-                has_saved_regular_racks = True
+            
+            rg_bounds = rg.bounds
+            rg_in_current_zone = not (
+                rg_bounds[2] <= zone_bounds[0] or
+                rg_bounds[0] >= zone_bounds[2] or
+                rg_bounds[3] <= zone_bounds[1] or
+                rg_bounds[1] >= zone_bounds[3]
+            )
+            
+            if rg_in_current_zone and len(rg.racks) > 0:
+                has_saved_regular_racks_in_current_zone = True
                 break
         
         current_has_racks = (solution.current_rack_group and 
                            len(solution.current_rack_group.racks) > 0)
         
-        is_first_rack_in_zone = (not has_saved_regular_racks and not current_has_racks)
+        is_first_rack_in_zone = (not has_saved_regular_racks_in_current_zone and 
+                                not current_has_racks)
         
-        # Distance from current position to zone top edge
+        # Check edges
         distance_from_top = zone_bounds[3] - current_position[1]
-        
-        # At bottom edge: first rack in zone
         is_at_bottom_edge = is_first_rack_in_zone
-        
-        # ✅ At top edge: not enough space for double rack + road after it
-        is_in_last_strip = (solution.free_strips and 
-           solution.current_strip_idx == len(solution.free_strips) - 1)
-        is_at_top_edge = is_in_last_strip and (distance_from_top < space_needed)
+        is_at_top_edge = (distance_from_top < space_needed)  # ✅ Убрали is_in_last_strip
         
         is_at_edge = is_at_bottom_edge or is_at_top_edge
         
-        logger.warning(f"[RACK_PLACEMENT] VERTICAL placement: "
+        logger.warning(f"[RACK_PLACEMENT] VERTICAL: "
                       f"y={current_position[1]:.1f}, "
                       f"zone_y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}], "
-                      f"double_width={double_rack_width:.1f}, "
                       f"space_needed={space_needed:.1f}, "
                       f"dist_top={distance_from_top:.1f}, "
                       f"is_first={is_first_rack_in_zone}, "
-                      f"is_in_last_strip={is_in_last_strip}, "
-                      f"at_bottom_edge={is_at_bottom_edge}, "
-                      f"at_top_edge={is_at_top_edge}, "
                       f"at_edge={is_at_edge}")
+    
     else:
-        # HORIZONTAL placement (X-axis)
+        # ========== HORIZONTAL PLACEMENT (X-axis) ==========
         
-        # Check if this is the first rack in the zone
-        has_saved_regular_racks = False
-        for rg in solution.saved_rack_groups:
+        # ✅ Check first rack IN CURRENT ZONE ONLY
+        start_idx = getattr(solution, 'rack_groups_before_zone', 0)
+        
+        has_saved_regular_racks_in_current_zone = False
+        for i in range(start_idx, len(solution.saved_rack_groups)):
+            rg = solution.saved_rack_groups[i]
+            
             if hasattr(rg, 'is_protective') and rg.is_protective:
                 continue
-            if len(rg.racks) > 0:
-                has_saved_regular_racks = True
+            
+            rg_bounds = rg.bounds
+            rg_in_current_zone = not (
+                rg_bounds[2] <= zone_bounds[0] or
+                rg_bounds[0] >= zone_bounds[2] or
+                rg_bounds[3] <= zone_bounds[1] or
+                rg_bounds[1] >= zone_bounds[3]
+            )
+            
+            if rg_in_current_zone and len(rg.racks) > 0:
+                has_saved_regular_racks_in_current_zone = True
                 break
         
         current_has_racks = (solution.current_rack_group and 
                            len(solution.current_rack_group.racks) > 0)
         
-        is_first_rack_in_zone = (not has_saved_regular_racks and not current_has_racks)
+        is_first_rack_in_zone = (not has_saved_regular_racks_in_current_zone and  # ✅ Исправлено!
+                                not current_has_racks)
         
-        # Distance from current position to zone right edge
+        # Check edges
         distance_from_right = zone_bounds[2] - current_position[0]
-        
-        # At left edge: first rack in zone
         is_at_left_edge = is_first_rack_in_zone
-        
-        # ✅ At right edge: not enough space for double rack + road after it
-        is_in_last_strip = (solution.free_strips and 
-                   solution.current_strip_idx == len(solution.free_strips) - 1)
-        is_at_right_edge = is_in_last_strip and (distance_from_right < space_needed)
+        is_at_right_edge = (distance_from_right < space_needed)  # ✅ Убрали is_in_last_strip
         
         is_at_edge = is_at_left_edge or is_at_right_edge
         
-        logger.warning(f"[RACK_PLACEMENT] HORIZONTAL placement: "
+        logger.warning(f"[RACK_PLACEMENT] HORIZONTAL: "
                       f"x={current_position[0]:.1f}, "
                       f"zone_x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
-                      f"double_width={double_rack_width:.1f}, "
                       f"space_needed={space_needed:.1f}, "
                       f"dist_right={distance_from_right:.1f}, "
                       f"is_first={is_first_rack_in_zone}, "
-                      f"is_in_last_strip={is_in_last_strip}, "
-                      f"at_left_edge={is_at_left_edge}, "
-                      f"at_right_edge={is_at_right_edge}, "
                       f"at_edge={is_at_edge}")
     
     # Determine rack type
     if is_at_edge:
         solution.next_rack_type = Rack
-        logger.warning(f"[RACK_PLACEMENT] ✓ At ZONE EDGE → FORCING SINGLE rack")
+        logger.warning("[RACK_PLACEMENT] ✓ At EDGE → SINGLE rack")
     else:
         solution.next_rack_type = DoubleRack
-        logger.warning(f"[RACK_PLACEMENT] ✓ In ZONE CENTER → FORCING DOUBLE rack")
+        logger.warning("[RACK_PLACEMENT] ✓ In CENTER → DOUBLE rack")
 
 
 def fill_with_frames(
