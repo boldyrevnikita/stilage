@@ -262,9 +262,20 @@ def split_available_zone(
     has_regular_racks = False
     
     for rack_group in solution.saved_rack_groups:
-        # ✅ CRITICAL FIX: Only use rack groups that are IN THE CURRENT ZONE!
-        # Skip rack groups from other zones
-        if not shapely.intersects(rack_group.contour, available_zone.contour):
+        # ✅ CRITICAL FIX: Check if rack_group is in current zone using bounds
+        rg_bounds = rack_group.bounds
+        zone_bounds = available_zone.bounds
+        
+        # Check if rack_group bounds intersect with zone bounds
+        # No intersection if: rg is completely left, right, below, or above zone
+        rg_outside_zone = (
+            rg_bounds[2] <= zone_bounds[0] or  # rack_group right edge <= zone left edge
+            rg_bounds[0] >= zone_bounds[2] or  # rack_group left edge >= zone right edge
+            rg_bounds[3] <= zone_bounds[1] or  # rack_group top edge <= zone bottom edge
+            rg_bounds[1] >= zone_bounds[3]     # rack_group bottom edge >= zone top edge
+        )
+        
+        if rg_outside_zone:
             logger.warning(f"[ZONES] Skipping rack from other zone: bounds={rack_group.bounds}")
             continue
         
