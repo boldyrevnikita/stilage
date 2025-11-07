@@ -711,9 +711,12 @@ def set_next_rack_type_double_or_single_based_on_strip(
     """Automatically chooses rack type based on position in zone.
     
     Rules:
-    1. First rack in zone → Single (edge rule)
-    2. Not enough space for double rack + road → Single (edge rule)
-    3. Otherwise → Double (center rule)
+    1. In MIDDLE strips: ONLY Double racks allowed
+       - If Double doesn't fit → ActionFailure (leave empty)
+    2. In FIRST/LAST strips: 
+       - First rack in zone → Single (edge rule)
+       - Not enough space for double rack + road → Single (edge rule)
+       - Otherwise → Double (center rule)
     """
     
     if solution.current_rack_group is None:
@@ -728,9 +731,71 @@ def set_next_rack_type_double_or_single_based_on_strip(
     # Calculate dimensions
     pallet = solution.pallets[solution.pallet_idx]
     upright_width = solution.upright_type.width
-    single_rack_width = pallet.length + upright_width * 2
+    single_rack_width = pallet.length
     double_rack_width = single_rack_width * 2
     space_needed = double_rack_width + reference_book.roads_width
+    
+    # ========================================
+    # ✅ NEW LOGIC: Determine strip position
+    # ========================================
+    
+    # Определяем положение текущего strip
+    is_in_first_strip = (not solution.free_strips or 
+                         solution.current_strip_idx == 0)
+    is_in_last_strip = (not solution.free_strips or 
+                       solution.current_strip_idx == len(solution.free_strips) - 1)
+    is_in_middle_strip = (solution.free_strips and 
+                         not is_in_first_strip and 
+                         not is_in_last_strip)
+    
+    # ========================================
+    # ✅ MIDDLE STRIP LOGIC: Only Double, or fail
+    # ========================================
+    
+    if is_in_middle_strip:
+        logger.warning(f"[RACK_PLACEMENT] ⚡ In MIDDLE strip ({solution.current_strip_idx}/"
+                      f"{len(solution.free_strips)-1})")
+        
+        # Рассчитываем доступное расстояние
+        if solution.is_rotated:
+            # Vertical placement
+            distance_available = zone_bounds[3] - current_position[1]
+            logger.warning(f"[RACK_PLACEMENT] VERTICAL in middle strip: "
+                          f"y={current_position[1]:.1f}, "
+                          f"distance_available={distance_available:.1f}, "
+                          f"space_needed={space_needed:.1f}")
+        else:
+            # Horizontal placement
+            distance_available = zone_bounds[2] - current_position[0]
+            logger.warning(f"[RACK_PLACEMENT] HORIZONTAL in middle strip: "
+                          f"x={current_position[0]:.1f}, "
+                          f"distance_available={distance_available:.1f}, "
+                          f"space_needed={space_needed:.1f}")
+        
+        # Проверяем: влезает ли Double?
+        if distance_available >= space_needed:
+            # ✅ Double влезает
+            solution.next_rack_type = DoubleRack
+            logger.warning("[RACK_PLACEMENT] ✓ Double rack FITS in middle strip → DOUBLE")
+            return
+        else:
+            # ❌ Double НЕ влезает → НЕ ставим ничего!
+            logger.warning(f"[RACK_PLACEMENT] ✗ Double rack DOESN'T FIT in middle strip "
+                          f"({distance_available:.1f} < {space_needed:.1f}) "
+                          f"→ SKIP (no Single allowed in middle)")
+            raise ActionFailure(
+                f"Not enough space for Double rack in middle strip "
+                f"(need {space_needed:.1f}mm, have {distance_available:.1f}mm). "
+                f"Single racks not allowed in middle strips."
+            )
+    
+    # ========================================
+    # FIRST/LAST STRIP LOGIC: Normal edge logic
+    # ========================================
+    
+    if solution.free_strips:
+        logger.warning(f"[RACK_PLACEMENT] In first/last strip ({solution.current_strip_idx}/"
+                      f"{len(solution.free_strips)-1}) → using normal edge logic")
     
     # ✅ Check if there are any regular racks already placed in zone
     def has_regular_racks_in_zone():
