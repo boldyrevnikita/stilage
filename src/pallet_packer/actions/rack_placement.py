@@ -711,7 +711,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
     """Automatically chooses rack type based on position in zone.
     
     Rules:
-    1. First rack in zone (by coordinate) → Single (edge rule)
+    1. First rack in zone → Single (edge rule)
     2. Not enough space for double rack + road → Single (edge rule)
     3. Otherwise → Double (center rule)
     """
@@ -732,59 +732,68 @@ def set_next_rack_type_double_or_single_based_on_strip(
     double_rack_width = single_rack_width * 2
     space_needed = double_rack_width + reference_book.roads_width
     
-    # ✅ NEW: Tolerance for "at edge" check (1 road width)
-    edge_tolerance = reference_book.roads_width
+    # ✅ Check if there are any regular racks already placed in zone
+    def has_regular_racks_in_zone():
+        start_idx = getattr(solution, 'rack_groups_before_zone', 0)
+        
+        for i in range(start_idx, len(solution.saved_rack_groups)):
+            rg = solution.saved_rack_groups[i]
+            if hasattr(rg, 'is_protective') and rg.is_protective:
+                continue
+            if len(rg.racks) > 0:
+                return True
+        
+        if solution.current_rack_group and len(solution.current_rack_group.racks) > 0:
+            return True
+        
+        return False
     
     is_at_edge = False
     
     if solution.is_rotated:
         # ========== VERTICAL PLACEMENT (Y-axis) ==========
+        # Strips divide zone horizontally, racks go up (along Y)
         
-        # ✅ FIXED: Check position, not "first in group"
-        distance_from_bottom = current_position[1] - zone_bounds[1]
+        # Is this the very first rack in the zone?
+        is_first_rack = not has_regular_racks_in_zone()
+        
+        # Distance to top edge
         distance_from_top = zone_bounds[3] - current_position[1]
         
-        # At BOTTOM edge: close to zone start
-        is_at_bottom_edge = (distance_from_bottom <= edge_tolerance)
-        
-        # At TOP edge: not enough space for double + road
+        # SINGLE if: first rack OR not enough space for double+road
+        is_at_bottom_edge = is_first_rack
         is_at_top_edge = (distance_from_top < space_needed)
         
         is_at_edge = is_at_bottom_edge or is_at_top_edge
         
         logger.warning(f"[RACK_PLACEMENT] VERTICAL: "
                       f"y={current_position[1]:.1f}, "
-                      f"zone_y=[{zone_bounds[1]:.1f}, {zone_bounds[3]:.1f}], "
-                      f"dist_bottom={distance_from_bottom:.1f}, "
+                      f"is_first={is_first_rack}, "
                       f"dist_top={distance_from_top:.1f}, "
-                      f"edge_tolerance={edge_tolerance:.1f}, "
-                      f"at_bottom={is_at_bottom_edge}, "
-                      f"at_top={is_at_top_edge}, "
+                      f"space_needed={space_needed:.1f}, "
                       f"at_edge={is_at_edge}")
     
     else:
         # ========== HORIZONTAL PLACEMENT (X-axis) ==========
+        # Strips divide zone vertically, racks go right (along X)
         
-        # ✅ FIXED: Check position, not "first in group"
-        distance_from_left = current_position[0] - zone_bounds[0]
+        # Is this the very first rack in the zone?
+        is_first_rack = not has_regular_racks_in_zone()
+        
+        # Distance to right edge
         distance_from_right = zone_bounds[2] - current_position[0]
         
-        # At LEFT edge: close to zone start
-        is_at_left_edge = (distance_from_left <= edge_tolerance)
-        
-        # At RIGHT edge: not enough space for double + road
+        # SINGLE if: first rack OR not enough space for double+road
+        is_at_left_edge = is_first_rack
         is_at_right_edge = (distance_from_right < space_needed)
         
         is_at_edge = is_at_left_edge or is_at_right_edge
         
         logger.warning(f"[RACK_PLACEMENT] HORIZONTAL: "
                       f"x={current_position[0]:.1f}, "
-                      f"zone_x=[{zone_bounds[0]:.1f}, {zone_bounds[2]:.1f}], "
-                      f"dist_left={distance_from_left:.1f}, "
+                      f"is_first={is_first_rack}, "
                       f"dist_right={distance_from_right:.1f}, "
-                      f"edge_tolerance={edge_tolerance:.1f}, "
-                      f"at_left={is_at_left_edge}, "
-                      f"at_right={is_at_right_edge}, "
+                      f"space_needed={space_needed:.1f}, "
                       f"at_edge={is_at_edge}")
     
     # Determine rack type
