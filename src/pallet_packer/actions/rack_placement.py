@@ -788,6 +788,71 @@ def set_next_rack_type_double_or_single_based_on_strip(
                 f"(need {space_needed:.1f}mm, have {distance_available:.1f}mm). "
                 f"Single racks not allowed in middle strips."
             )
+
+    # ========================================
+    # ✅ NEW: FIRST STRIP LOGIC - only ONE Single allowed
+    # ========================================
+    
+    if is_in_first_strip:
+        logger.warning(f"[RACK_PLACEMENT] In FIRST strip (0/{len(solution.free_strips)-1 if solution.free_strips else 0})")
+        
+        # Проверяем: есть ли уже regular racks в зоне?
+        def has_regular_racks_in_zone():
+            start_idx = getattr(solution, 'rack_groups_before_zone', 0)
+            
+            for i in range(start_idx, len(solution.saved_rack_groups)):
+                rg = solution.saved_rack_groups[i]
+                if hasattr(rg, 'is_protective') and rg.is_protective:
+                    continue
+                if len(rg.racks) > 0:
+                    return True
+            
+            if solution.current_rack_group and len(solution.current_rack_group.racks) > 0:
+                return True
+            
+            return False
+        
+        is_first_rack_in_zone = not has_regular_racks_in_zone()
+        
+        # Первый rack в зоне → Single
+        if is_first_rack_in_zone:
+            solution.next_rack_type = Rack
+            logger.warning("[RACK_PLACEMENT] ✓ FIRST rack in zone → SINGLE rack")
+            return
+        
+        # НЕ первый rack → только Double (или fail)
+        logger.warning("[RACK_PLACEMENT] NOT first rack in first strip → only DOUBLE allowed")
+        
+        # Рассчитываем доступное расстояние
+        if solution.is_rotated:
+            distance_available = zone_bounds[3] - current_position[1]
+            logger.warning(f"[RACK_PLACEMENT] VERTICAL in first strip: "
+                          f"y={current_position[1]:.1f}, "
+                          f"distance_available={distance_available:.1f}, "
+                          f"space_needed={space_needed:.1f}")
+        else:
+            distance_available = zone_bounds[2] - current_position[0]
+            logger.warning(f"[RACK_PLACEMENT] HORIZONTAL in first strip: "
+                          f"x={current_position[0]:.1f}, "
+                          f"distance_available={distance_available:.1f}, "
+                          f"space_needed={space_needed:.1f}")
+        
+        # Проверяем: влезает ли Double?
+        if distance_available >= space_needed:
+            # ✅ Double влезает
+            solution.next_rack_type = DoubleRack
+            logger.warning("[RACK_PLACEMENT] ✓ Double rack FITS in first strip → DOUBLE")
+            return
+        else:
+            # ❌ Double НЕ влезает → НЕ ставим ничего!
+            logger.warning(f"[RACK_PLACEMENT] ✗ Double rack DOESN'T FIT in first strip "
+                          f"({distance_available:.1f} < {space_needed:.1f}) "
+                          f"→ SKIP (only ONE Single allowed in first strip)")
+            raise ActionFailure(
+                f"Not enough space for Double rack in first strip "
+                f"(need {space_needed:.1f}mm, have {distance_available:.1f}mm). "
+                f"Only the first rack can be Single in first strip."
+            )
     
     # ========================================
     # FIRST/LAST STRIP LOGIC: Normal edge logic
