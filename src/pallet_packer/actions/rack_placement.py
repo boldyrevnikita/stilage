@@ -714,7 +714,8 @@ def set_next_rack_type_double_or_single_based_on_strip(
     1. In MIDDLE strips: ONLY Double racks allowed
        - If Double doesn't fit → ActionFailure (leave empty)
     2. In FIRST strip: 
-       - First rack in zone → Single (edge rule)
+       - If zone came from split → no special "first rack" rule (use normal logic)
+       - Otherwise: First rack in zone → Single (edge rule)
        - All subsequent racks → Double (or fail if doesn't fit)
     3. In LAST strip:
        - Normal edge logic (first rack = Single, last rack = Single if no space)
@@ -843,19 +844,56 @@ def set_next_rack_type_double_or_single_based_on_strip(
             )
     
     # ========================================
-    # FIRST STRIP LOGIC: Only ONE Single allowed
+    # FIRST STRIP LOGIC: Check if zone came from split
     # ========================================
     
     if is_in_first_strip:
         logger.warning(f"[RACK_PLACEMENT] In FIRST strip (0/{len(solution.free_strips)-1 if solution.free_strips else 0})")
         
-        # Check if there are already regular racks in zone
+        # ✅ NEW: Check if zone came from split
+        if solution.zone_came_from_split:
+            logger.warning("[RACK_PLACEMENT] ⚡ Zone came from SPLIT → this is CONTINUATION of previous zone")
+            logger.warning("[RACK_PLACEMENT] Skipping 'first rack = single' rule")
+            
+            # Reset flag (used once)
+            solution.zone_came_from_split = False
+            
+            # Fall through to normal Double logic (check if fits)
+            # Calculate available distance
+            if solution.is_rotated:
+                distance_available = zone_bounds[3] - current_position[1]
+                logger.warning(f"[RACK_PLACEMENT] VERTICAL: "
+                              f"y={current_position[1]:.1f}, "
+                              f"distance_available={distance_available:.1f}, "
+                              f"space_needed={space_needed:.1f}")
+            else:
+                distance_available = zone_bounds[2] - current_position[0]
+                logger.warning(f"[RACK_PLACEMENT] HORIZONTAL: "
+                              f"x={current_position[0]:.1f}, "
+                              f"distance_available={distance_available:.1f}, "
+                              f"space_needed={space_needed:.1f}")
+            
+            # Try to place Double
+            if distance_available >= space_needed:
+                solution.next_rack_type = DoubleRack
+                logger.warning("[RACK_PLACEMENT] ✓ Double rack FITS in continuation zone → DOUBLE")
+                return
+            else:
+                logger.warning(f"[RACK_PLACEMENT] ✗ Double rack DOESN'T FIT "
+                              f"({distance_available:.1f} < {space_needed:.1f}) "
+                              f"→ SKIP (not enough space in continuation)")
+                raise ActionFailure(
+                    f"Not enough space for Double rack in continuation zone "
+                    f"(need {space_needed:.1f}mm, have {distance_available:.1f}mm)."
+                )
+        
+        # Original logic: check if first rack in NEW zone
         is_first_rack_in_zone = not has_regular_racks_in_zone()
         
-        # First rack in zone → Single
+        # First rack in NEW zone → Single
         if is_first_rack_in_zone:
             solution.next_rack_type = Rack
-            logger.warning("[RACK_PLACEMENT] ✓ FIRST rack in zone → SINGLE rack")
+            logger.warning("[RACK_PLACEMENT] ✓ FIRST rack in NEW zone → SINGLE rack")
             return
         
         # NOT first rack → only Double (or fail)

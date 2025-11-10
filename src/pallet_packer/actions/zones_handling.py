@@ -221,6 +221,11 @@ def split_available_zone(
     """Splits the available zone into two parts.
     
     ✅ FIXED: Only uses rack groups from CURRENT zone for split calculation.
+    ✅ FIXED: Sets zone_came_from_split flag for next zone.
+    
+    Args:
+        reference_book (ReferenceBook): The reference book.
+        solution (Solution): The current solution.
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     MIN_ZONE_SIZE = 4000.0
@@ -321,6 +326,11 @@ def split_available_zone(
                     logger.warning(f"[ZONES] ❌ Rejected small zone: {zone_w:.1f} x {zone_h:.1f} mm")
             
             logger.warning(f"[ZONES] Split created {added_count} viable zones")
+            
+            # ✅ NEW: Mark that next zone came from split (it's a continuation)
+            if added_count > 0:
+                solution.zone_came_from_split = True
+                logger.warning("[ZONES] ✅ Set zone_came_from_split=True for continuation zone")
         else:
             logger.warning(f"[ZONES] ⚠️ Split point outside zone bounds, skipping split")
     else:

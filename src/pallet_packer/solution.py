@@ -135,6 +135,9 @@ class Solution:
         
         # Currently intersected obstacle/road (during placement)
         self.intersected_special_zone: OccupiedZone | SpecialRoadZone = None
+
+        self.zone_came_from_split = False  
+        
         
         # =====================================================================
         # NEW: COLUMN PROTECTION (Phase 1)
