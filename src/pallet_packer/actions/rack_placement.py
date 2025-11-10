@@ -862,34 +862,90 @@ def set_next_rack_type_double_or_single_based_on_strip(
         logger.warning(f"[RACK_PLACEMENT] In first/last strip ({solution.current_strip_idx}/"
                       f"{len(solution.free_strips)-1}) → using normal edge logic")
     
-    # ✅ Check if there are any regular racks already placed in zone
+    # # ✅ Check if there are any regular racks already placed in zone
+    # def has_regular_racks_in_zone():
+    #     logger.warning(f"[DEBUG_HAS_RACKS] ========================================")
+    #     logger.warning(f"[DEBUG_HAS_RACKS] Checking has_regular_racks_in_zone")
+    #     logger.warning(f"[DEBUG_HAS_RACKS] rack_groups_before_zone: {getattr(solution, 'rack_groups_before_zone', 0)}")
+    #     logger.warning(f"[DEBUG_HAS_RACKS] len(saved_rack_groups): {len(solution.saved_rack_groups)}")
+    #     start_idx = getattr(solution, 'rack_groups_before_zone', 0)
+        
+    #     # Проверяем сохранённые группы
+    #     for i in range(start_idx, len(solution.saved_rack_groups)):
+    #         rg = solution.saved_rack_groups[i]
+    #         if hasattr(rg, 'is_protective') and rg.is_protective:
+    #             continue
+    #         if len(rg.racks) > 0:
+    #             return True
+        
+    #     # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем ТЕКУЩУЮ группу!
+    #     # Если в ней уже есть хотя бы один rack, значит это НЕ первый rack
+    #     logger.warning(f"[DEBUG_HAS_RACKS] Checking current_rack_group")
+    #     if solution.current_rack_group:
+    #         # Считаем только не-protective racks
+    #         regular_racks_count = 0
+    #         for rack in solution.current_rack_group.racks:
+    #             is_protective = False
+    #             if isinstance(rack, DoubleRack):
+    #                 is_protective = getattr(rack, 'is_protective', False)
+                
+    #             if not is_protective:
+    #                 regular_racks_count += 1
+            
+    #         if regular_racks_count > 0:
+    #             return True
+        
+    #     return False
     def has_regular_racks_in_zone():
+        logger.warning(f"[DEBUG_HAS_RACKS] ========================================")
+        logger.warning(f"[DEBUG_HAS_RACKS] Checking has_regular_racks_in_zone")
+        logger.warning(f"[DEBUG_HAS_RACKS] rack_groups_before_zone: {getattr(solution, 'rack_groups_before_zone', 0)}")
+        logger.warning(f"[DEBUG_HAS_RACKS] len(saved_rack_groups): {len(solution.saved_rack_groups)}")
+        
         start_idx = getattr(solution, 'rack_groups_before_zone', 0)
         
         # Проверяем сохранённые группы
+        logger.warning(f"[DEBUG_HAS_RACKS] Checking saved_rack_groups [{start_idx}:{len(solution.saved_rack_groups)}]")
         for i in range(start_idx, len(solution.saved_rack_groups)):
             rg = solution.saved_rack_groups[i]
+            is_protective = getattr(rg, 'is_protective', False)
+            logger.warning(f"[DEBUG_HAS_RACKS]   saved_rack_groups[{i}]: racks={len(rg.racks)}, protective={is_protective}")
+            
             if hasattr(rg, 'is_protective') and rg.is_protective:
+                logger.warning(f"[DEBUG_HAS_RACKS]     → Skipping (protective)")
                 continue
             if len(rg.racks) > 0:
+                logger.warning(f"[DEBUG_HAS_RACKS]     → Found regular racks! Returning True")
                 return True
         
         # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем ТЕКУЩУЮ группу!
-        # Если в ней уже есть хотя бы один rack, значит это НЕ первый rack
+        logger.warning(f"[DEBUG_HAS_RACKS] Checking current_rack_group")
         if solution.current_rack_group:
+            logger.warning(f"[DEBUG_HAS_RACKS]   current_rack_group exists: racks={len(solution.current_rack_group.racks)}")
+            
             # Считаем только не-protective racks
             regular_racks_count = 0
-            for rack in solution.current_rack_group.racks:
+            for idx, rack in enumerate(solution.current_rack_group.racks):
+                rack_type = type(rack).__name__
                 is_protective = False
                 if isinstance(rack, DoubleRack):
                     is_protective = getattr(rack, 'is_protective', False)
                 
+                logger.warning(f"[DEBUG_HAS_RACKS]     rack[{idx}]: type={rack_type}, protective={is_protective}")
+                
                 if not is_protective:
                     regular_racks_count += 1
             
+            logger.warning(f"[DEBUG_HAS_RACKS]   regular_racks_count: {regular_racks_count}")
+            
             if regular_racks_count > 0:
+                logger.warning(f"[DEBUG_HAS_RACKS]   → Found regular racks in current group! Returning True")
                 return True
+        else:
+            logger.warning(f"[DEBUG_HAS_RACKS]   current_rack_group is None")
         
+        logger.warning(f"[DEBUG_HAS_RACKS]   → No regular racks found. Returning False")
+        logger.warning(f"[DEBUG_HAS_RACKS] ========================================")
         return False
     
     is_at_edge = False

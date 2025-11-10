@@ -1,162 +1,173 @@
-2025-11-10 11:28:17.657 [INFO] [__main__] ============================================================
-2025-11-10 11:28:17.657 [INFO] [__main__] Starting application session: 03d17458
-2025-11-10 11:28:17.657 [INFO] [__main__] Start time: 2025-11-10T11:28:17.657155
-2025-11-10 11:28:17.657 [INFO] [__main__] ============================================================
-2025-11-10 11:28:17.657 [INFO] [__main__] [03d17458] Loading settings...
-2025-11-10 11:28:17.658 [INFO] [__main__] [03d17458] Settings loaded successfully
-2025-11-10 11:28:17.658 [INFO] [__main__] [03d17458] Parsing command line arguments...
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Arguments parsed successfully
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Configuration:
-2025-11-10 11:28:17.659 [INFO] [__main__]    - Host: rabbit.sheldon.necore.ru:5672
-2025-11-10 11:28:17.659 [INFO] [__main__]    - VHost: stillage-api
-2025-11-10 11:28:17.659 [INFO] [__main__]    - Username: stillage-api
-2025-11-10 11:28:17.659 [INFO] [__main__]    - Input Queue: model_task
-2025-11-10 11:28:17.659 [INFO] [__main__]    - Output Queue: model_result
-2025-11-10 11:28:17.659 [INFO] [__main__]    - Process Type: ml
-2025-11-10 11:28:17.659 [INFO] [__main__]    - Heartbeat: 1800s
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Setting up credentials...
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Credentials configured
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Creating Sender...
-2025-11-10 11:28:17.659 [INFO] [Sender[59a9425a]] Initializing Sender: host=rabbit.sheldon.necore.ru:5672, vhost=stillage-api, queue=model_result, routing_key=model_result, heartbeat=1800s
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Sender created in 0.000s
-2025-11-10 11:28:17.659 [INFO] [__main__] [03d17458] Connecting Sender to RabbitMQ...
-2025-11-10 11:28:17.659 [INFO] [Sender[59a9425a]] Starting connection to RabbitMQ...
-2025-11-10 11:28:17.659 [DEBUG] [Sender[59a9425a]] Using credentials for user: stillage-api
-2025-11-10 11:28:17.659 [DEBUG] [Sender[59a9425a]] Connection parameters: {'host': 'rabbit.sheldon.necore.ru', 'port': 5672, 'virtualhost': 'stillage-api', 'heartbeat': 1800, 'blocked_connection_timeout': 300, 'login': 'stillage-api', 'password': 'stillage-api'}
-2025-11-10 11:28:17.659 [INFO] [Sender[59a9425a]] Establishing robust connection...
-2025-11-10 11:28:17.665 [INFO] [Sender[59a9425a]] Connection established in 0.006s
-2025-11-10 11:28:17.665 [INFO] [Sender[59a9425a]] Creating channel...
-2025-11-10 11:28:17.666 [INFO] [Sender[59a9425a]] Channel created in 0.001s
-2025-11-10 11:28:17.666 [INFO] [Sender[59a9425a]] Declaring queue: model_result
-2025-11-10 11:28:17.667 [INFO] [Sender[59a9425a]] Queue 'model_result' declared in 0.000s
-2025-11-10 11:28:17.667 [INFO] [Sender[59a9425a]] Sender fully connected in 0.008s
-2025-11-10 11:28:17.667 [INFO] [__main__] [03d17458] Sender connected in 0.008s
-2025-11-10 11:28:17.667 [INFO] [__main__] [03d17458] Creating MessageHandler for process type: ml
-2025-11-10 11:28:17.667 [INFO] [__main__] [03d17458] Setting up ML message processor...
-2025-11-10 11:28:17.667 [INFO] [MessageHandler[0b33c004]] Initializing MessageHandler: host=rabbit.sheldon.necore.ru:5672, vhost=stillage-api, queue=model_task, heartbeat=1800s
-2025-11-10 11:28:17.667 [INFO] [MessageHandler[0b33c004]] Processor function: process_message_ml
-2025-11-10 11:28:17.667 [INFO] [MessageHandler[0b33c004]] Sender attached: Yes
-2025-11-10 11:28:17.667 [INFO] [__main__] [03d17458] MessageHandler created in 0.000s
-2025-11-10 11:28:17.667 [INFO] [__main__] [03d17458] Connecting MessageHandler to RabbitMQ...
-2025-11-10 11:28:17.667 [INFO] [MessageHandler[0b33c004]] Starting connection to RabbitMQ...
-2025-11-10 11:28:17.667 [DEBUG] [MessageHandler[0b33c004]] Using credentials for user: stillage-api
-2025-11-10 11:28:17.667 [DEBUG] [MessageHandler[0b33c004]] Connection parameters: {'host': 'rabbit.sheldon.necore.ru', 'port': 5672, 'virtualhost': 'stillage-api', 'heartbeat': 1800, 'blocked_connection_timeout': 300, 'login': 'stillage-api', 'password': 'stillage-api'}
-2025-11-10 11:28:17.668 [INFO] [MessageHandler[0b33c004]] Establishing robust connection...
-2025-11-10 11:28:17.670 [INFO] [MessageHandler[0b33c004]] Connection established in 0.002s
-2025-11-10 11:28:17.670 [INFO] [MessageHandler[0b33c004]] Creating channel...
-2025-11-10 11:28:17.671 [INFO] [MessageHandler[0b33c004]] Channel created in 0.001s
-2025-11-10 11:28:17.671 [INFO] [MessageHandler[0b33c004]] Declaring queue: model_task
-2025-11-10 11:28:17.672 [INFO] [MessageHandler[0b33c004]] Queue 'model_task' declared in 0.000s
-2025-11-10 11:28:17.672 [INFO] [MessageHandler[0b33c004]] MessageHandler fully connected in 0.004s
-2025-11-10 11:28:17.672 [INFO] [__main__] [03d17458] MessageHandler connected in 0.004s
-2025-11-10 11:28:17.672 [INFO] [__main__] [03d17458] Total setup time: 0.015s
-2025-11-10 11:28:17.672 [INFO] [__main__] ============================================================
-2025-11-10 11:28:17.672 [INFO] [__main__]  [03d17458] Starting message processing...
-2025-11-10 11:28:17.672 [INFO] [__main__]  Processing type: ml
-2025-11-10 11:28:17.672 [INFO] [__main__]  Listening on queue: model_task
-2025-11-10 11:28:17.672 [INFO] [__main__]  Output queue: model_result
-2025-11-10 11:28:17.672 [INFO] [__main__]  Heartbeat interval: 1800s
-2025-11-10 11:28:17.672 [INFO] [__main__] ============================================================
-2025-11-10 11:28:17.672 [INFO] [__main__]  [03d17458] Entering message receive loop...
-2025-11-10 11:28:17.672 [DEBUG] [MessageHandler[0b33c004]] receive() called - delegating to start_consuming()
-2025-11-10 11:28:17.672 [INFO] [MessageHandler[0b33c004]] Starting message consumption...
-2025-11-10 11:28:17.672 [INFO] [MessageHandler[0b33c004]] Setting up consumer for queue: model_task
-2025-11-10 11:28:17.673 [INFO] [MessageHandler[0b33c004]] Consumer set up in 0.000s
-2025-11-10 11:28:17.673 [INFO] [MessageHandler[0b33c004]] MessageHandler is now consuming messages from 'model_task'...
-2025-11-10 11:28:17.673 [DEBUG] [MessageHandler[0b33c004]] Entering infinite wait loop...
-2025-11-10 11:28:47.695 [INFO] [__main__]  [03d17458] Service is alive, uptime: 30.0s
-2025-11-10 11:29:17.724 [INFO] [__main__]  [03d17458] Service is alive, uptime: 60.1s
-2025-11-10 11:29:29.869 [INFO] [MessageHandler[0b33c004]] Received message [ID: 155e2b5b] (total: 1)
-2025-11-10 11:29:29.869 [DEBUG] [MessageHandler[0b33c004]] Processing message [ID: 155e2b5b]...
-2025-11-10 11:29:29.869 [DEBUG] [MessageHandler[0b33c004]] Message [ID: 155e2b5b] decoded in 0.000s, size: 543 bytes, type: <class 'dict'>
-2025-11-10 11:29:29.869 [INFO] [MessageHandler[0b33c004]] Starting message processor for [ID: 155e2b5b]...
-2025-11-10 11:29:29.869 [DEBUG] [MessageHandler[0b33c004]] Running async processor for [ID: 155e2b5b]
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Starting ML processing for task: a283c833-0a94-41f8-abcb-f8fdbf50d6eb
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Message size: 543 characters
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Printing received message...
+2025-11-10 12:06:15.932 [INFO] [__main__] ============================================================
+2025-11-10 12:06:15.932 [INFO] [__main__] Starting application session: b018ad6b
+2025-11-10 12:06:15.932 [INFO] [__main__] Start time: 2025-11-10T12:06:15.932385
+2025-11-10 12:06:15.932 [INFO] [__main__] ============================================================
+2025-11-10 12:06:15.932 [INFO] [__main__] [b018ad6b] Loading settings...
+2025-11-10 12:06:15.933 [INFO] [__main__] [b018ad6b] Settings loaded successfully
+2025-11-10 12:06:15.933 [INFO] [__main__] [b018ad6b] Parsing command line arguments...
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Arguments parsed successfully
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Configuration:
+2025-11-10 12:06:15.934 [INFO] [__main__]    - Host: rabbit.sheldon.necore.ru:5672
+2025-11-10 12:06:15.934 [INFO] [__main__]    - VHost: stillage-api
+2025-11-10 12:06:15.934 [INFO] [__main__]    - Username: stillage-api
+2025-11-10 12:06:15.934 [INFO] [__main__]    - Input Queue: model_task
+2025-11-10 12:06:15.934 [INFO] [__main__]    - Output Queue: model_result
+2025-11-10 12:06:15.934 [INFO] [__main__]    - Process Type: ml
+2025-11-10 12:06:15.934 [INFO] [__main__]    - Heartbeat: 1800s
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Setting up credentials...
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Credentials configured
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Creating Sender...
+2025-11-10 12:06:15.934 [INFO] [Sender[becbefea]] Initializing Sender: host=rabbit.sheldon.necore.ru:5672, vhost=stillage-api, queue=model_result, routing_key=model_result, heartbeat=1800s
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Sender created in 0.000s
+2025-11-10 12:06:15.934 [INFO] [__main__] [b018ad6b] Connecting Sender to RabbitMQ...
+2025-11-10 12:06:15.934 [INFO] [Sender[becbefea]] Starting connection to RabbitMQ...
+2025-11-10 12:06:15.934 [DEBUG] [Sender[becbefea]] Using credentials for user: stillage-api
+2025-11-10 12:06:15.934 [DEBUG] [Sender[becbefea]] Connection parameters: {'host': 'rabbit.sheldon.necore.ru', 'port': 5672, 'virtualhost': 'stillage-api', 'heartbeat': 1800, 'blocked_connection_timeout': 300, 'login': 'stillage-api', 'password': 'stillage-api'}
+2025-11-10 12:06:15.934 [INFO] [Sender[becbefea]] Establishing robust connection...
+2025-11-10 12:06:15.940 [INFO] [Sender[becbefea]] Connection established in 0.006s
+2025-11-10 12:06:15.940 [INFO] [Sender[becbefea]] Creating channel...
+2025-11-10 12:06:15.942 [INFO] [Sender[becbefea]] Channel created in 0.001s
+2025-11-10 12:06:15.942 [INFO] [Sender[becbefea]] Declaring queue: model_result
+2025-11-10 12:06:15.942 [INFO] [Sender[becbefea]] Queue 'model_result' declared in 0.000s
+2025-11-10 12:06:15.942 [INFO] [Sender[becbefea]] Sender fully connected in 0.008s
+2025-11-10 12:06:15.942 [INFO] [__main__] [b018ad6b] Sender connected in 0.008s
+2025-11-10 12:06:15.942 [INFO] [__main__] [b018ad6b] Creating MessageHandler for process type: ml
+2025-11-10 12:06:15.942 [INFO] [__main__] [b018ad6b] Setting up ML message processor...
+2025-11-10 12:06:15.942 [INFO] [MessageHandler[20ee0474]] Initializing MessageHandler: host=rabbit.sheldon.necore.ru:5672, vhost=stillage-api, queue=model_task, heartbeat=1800s
+2025-11-10 12:06:15.942 [INFO] [MessageHandler[20ee0474]] Processor function: process_message_ml
+2025-11-10 12:06:15.942 [INFO] [MessageHandler[20ee0474]] Sender attached: Yes
+2025-11-10 12:06:15.942 [INFO] [__main__] [b018ad6b] MessageHandler created in 0.000s
+2025-11-10 12:06:15.942 [INFO] [__main__] [b018ad6b] Connecting MessageHandler to RabbitMQ...
+2025-11-10 12:06:15.942 [INFO] [MessageHandler[20ee0474]] Starting connection to RabbitMQ...
+2025-11-10 12:06:15.942 [DEBUG] [MessageHandler[20ee0474]] Using credentials for user: stillage-api
+2025-11-10 12:06:15.943 [DEBUG] [MessageHandler[20ee0474]] Connection parameters: {'host': 'rabbit.sheldon.necore.ru', 'port': 5672, 'virtualhost': 'stillage-api', 'heartbeat': 1800, 'blocked_connection_timeout': 300, 'login': 'stillage-api', 'password': 'stillage-api'}
+2025-11-10 12:06:15.943 [INFO] [MessageHandler[20ee0474]] Establishing robust connection...
+2025-11-10 12:06:15.945 [INFO] [MessageHandler[20ee0474]] Connection established in 0.002s
+2025-11-10 12:06:15.945 [INFO] [MessageHandler[20ee0474]] Creating channel...
+2025-11-10 12:06:15.946 [INFO] [MessageHandler[20ee0474]] Channel created in 0.001s
+2025-11-10 12:06:15.946 [INFO] [MessageHandler[20ee0474]] Declaring queue: model_task
+2025-11-10 12:06:15.947 [INFO] [MessageHandler[20ee0474]] Queue 'model_task' declared in 0.000s
+2025-11-10 12:06:15.947 [INFO] [MessageHandler[20ee0474]] MessageHandler fully connected in 0.004s
+2025-11-10 12:06:15.947 [INFO] [__main__] [b018ad6b] MessageHandler connected in 0.004s
+2025-11-10 12:06:15.947 [INFO] [__main__] [b018ad6b] Total setup time: 0.015s
+2025-11-10 12:06:15.947 [INFO] [__main__] ============================================================
+2025-11-10 12:06:15.947 [INFO] [__main__]  [b018ad6b] Starting message processing...
+2025-11-10 12:06:15.947 [INFO] [__main__]  Processing type: ml
+2025-11-10 12:06:15.947 [INFO] [__main__]  Listening on queue: model_task
+2025-11-10 12:06:15.947 [INFO] [__main__]  Output queue: model_result
+2025-11-10 12:06:15.947 [INFO] [__main__]  Heartbeat interval: 1800s
+2025-11-10 12:06:15.947 [INFO] [__main__] ============================================================
+2025-11-10 12:06:15.947 [INFO] [__main__]  [b018ad6b] Entering message receive loop...
+2025-11-10 12:06:15.947 [DEBUG] [MessageHandler[20ee0474]] receive() called - delegating to start_consuming()
+2025-11-10 12:06:15.947 [INFO] [MessageHandler[20ee0474]] Starting message consumption...
+2025-11-10 12:06:15.947 [INFO] [MessageHandler[20ee0474]] Setting up consumer for queue: model_task
+2025-11-10 12:06:15.948 [INFO] [MessageHandler[20ee0474]] Consumer set up in 0.000s
+2025-11-10 12:06:15.948 [INFO] [MessageHandler[20ee0474]] MessageHandler is now consuming messages from 'model_task'...
+2025-11-10 12:06:15.948 [DEBUG] [MessageHandler[20ee0474]] Entering infinite wait loop...
+2025-11-10 12:06:45.973 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 30.0s
+2025-11-10 12:07:16.004 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 60.1s
+2025-11-10 12:07:46.033 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 90.1s
+2025-11-10 12:08:16.063 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 120.1s
+2025-11-10 12:08:46.091 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 150.1s
+2025-11-10 12:09:16.122 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 180.2s
+2025-11-10 12:09:34.341 [INFO] [MessageHandler[20ee0474]] Received message [ID: 599bac45] (total: 1)
+2025-11-10 12:09:34.341 [DEBUG] [MessageHandler[20ee0474]] Processing message [ID: 599bac45]...
+2025-11-10 12:09:34.341 [DEBUG] [MessageHandler[20ee0474]] Message [ID: 599bac45] decoded in 0.000s, size: 543 bytes, type: <class 'dict'>
+2025-11-10 12:09:34.341 [INFO] [MessageHandler[20ee0474]] Starting message processor for [ID: 599bac45]...
+2025-11-10 12:09:34.341 [DEBUG] [MessageHandler[20ee0474]] Running async processor for [ID: 599bac45]
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Starting ML processing for task: 07851541-ac2e-4b45-a59a-9d7ef934b1e9
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Message size: 543 characters
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Printing received message...
 Message received
 
-{'task_id': 'a283c833-0a94-41f8-abcb-f8fdbf50d6eb', 'file_id': 'b560274c-506e-4de3-a29b-7f5be54cbe04', 'available_zones': [{'boundary': [[11395781.29704532, 3162464.436713734], [11466531.29704532, 3162464.436713734], [11466531.29704532, 3104501.436713734], [11395781.29704532, 3104501.436713734]], 'height': 9000.0, 'orientation': 1, 'id': 12}], 'restricted_zones': [], 'road_zones': [], 'cargos': [{'weight': 500, 'length': 1200, 'width': 800, 'height': 1000, 'quantity': 1000000000, 'id': 14}], 'roads_width': 3000.0, 'roads_height': 4000.0}
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Starting input data validation...
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Input validation completed in 0.000s
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Processing available zones...
-2025-11-10 11:29:29.869 [INFO] [process_ml[350e9561]] Found 1 available zones to process
-2025-11-10 11:29:29.870 [DEBUG] [process_ml[350e9561]] Processing available zone 1/1
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Available zones processed in 0.000s
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Processing road zones...
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Found 0 road zones to process
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Road zones processed in 0.000s
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Processing restricted zones...
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Found 0 restricted zones to process
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Restricted zones processed in 0.000s
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Processing cargos...
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Found 1 cargo types with total quantity: 1000000000
-2025-11-10 11:29:29.870 [DEBUG] [process_ml[350e9561]] Processing cargo 1/1: ID=14, quantity=1000000000
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Cargos processed in 0.000s
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] Setting up reference book...
-2025-11-10 11:29:29.870 [INFO] [process_ml[350e9561]] File ID: b560274c-506e-4de3-a29b-7f5be54cbe04, roads_width: 3000.0, roads_height: 4000.0
-2025-11-10 11:29:29.870 [DEBUG] [process_ml[350e9561]] Set roads_width to 3000.0
-2025-11-10 11:29:29.870 [DEBUG] [process_ml[350e9561]] Set roads_height to 4000.0
-2025-11-10 11:29:29.871 [INFO] [process_ml[350e9561]] Reference book setup completed in 0.000s
-2025-11-10 11:29:29.871 [INFO] [process_ml[350e9561]] Fetching DXF document from S3...
-2025-11-10 11:29:29.873 [DEBUG] [urllib3.connectionpool] Starting new HTTPS connection (1): minio.mlx-dev.necore.ru:443
-2025-11-10 11:29:29.933 [DEBUG] [urllib3.connectionpool] https://minio.mlx-dev.necore.ru:443 "GET /stillage?location= HTTP/1.1" 200 0
-2025-11-10 11:29:29.972 [DEBUG] [urllib3.connectionpool] https://minio.mlx-dev.necore.ru:443 "GET /stillage/dxf/b560274c-506e-4de3-a29b-7f5be54cbe04.dxf HTTP/1.1" 200 3213663
-2025-11-10 11:29:31.219 [INFO] [process_ml[350e9561]] DXF document fetched from S3 in 1.349s
-2025-11-10 11:29:31.220 [INFO] [process_ml[350e9561]] Starting occupied zones scan...
-2025-11-10 11:29:31.220 [INFO] [process_ml[350e9561]] Initial occupied zones count: 0
-2025-11-10 11:29:31.220 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] 🔍 Начало сканирования occupied zones (мин. размер=10.0мм)
-2025-11-10 11:29:32.759 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] Обработано 149 DXF объектов → 11424 геометрий
-2025-11-10 11:29:32.827 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации по зонам: 45 геометрий
-2025-11-10 11:29:32.831 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После конвертации в полигоны: 21 полигонов
-2025-11-10 11:29:32.831 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После удаления пустых: 8 полигонов
-2025-11-10 11:29:32.832 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации малых по площади: 8 полигонов
-2025-11-10 11:29:32.832 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации тонких полигонов: 8 полигонов
-2025-11-10 11:29:32.832 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации пересекающихся: 8 полигонов
-2025-11-10 11:29:32.833 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 1: bounds=(11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.833 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 2: bounds=(11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.833 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 3: bounds=(11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.833 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 4: bounds=(11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.834 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 5: bounds=(11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.834 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 6: bounds=(11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.834 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 7: bounds=(11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.834 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 8: bounds=(11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185), размер=840.0x840.0мм
-2025-11-10 11:29:32.835 [WARNING] [src.occupied_zone_scan] [ZONE_SCAN] ✅ Успешно создано 8 occupied zones
-2025-11-10 11:29:32.835 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] 📊 Статистика зон: ширина 840.0-840.0мм, высота 840.0-840.0мм
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Occupied zones scan completed in 1.615s
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Found 8 additional occupied zones (total: 8)
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Starting cargo packing...
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Packing 1 cargo types into pallets...
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Cargo packing completed in 0.000s
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Generated 1 pallets from 1 cargo types
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Starting pallet packing...
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Packing 1 pallets into available zones...
-2025-11-10 11:29:32.835 [INFO] [process_ml[350e9561]] Available zones: 1, Occupied zones: 8, Road zones: 0
-2025-11-10 11:29:32.835 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
-2025-11-10 11:29:32.835 [INFO] [src.pallet_packer.pallet_packer] STARTING PALLET PACKING WITH COLUMN PROTECTION
-2025-11-10 11:29:32.835 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
-2025-11-10 11:29:32.835 [INFO] [src.pallet_packer.pallet_packer] Input: 1 pallet types, 1 zones, 8 obstacles, 0 road zones
-2025-11-10 11:29:32.835 [INFO] [src.pallet_packer.pallet_packer] Parameters: prune_steps=100, beams_keep=2, min_solutions=5, processes=12
-2025-11-10 11:29:33.520 [INFO] [src.pallet_packer.pallet_packer] Initial solution created and added to cache
-2025-11-10 11:29:33.521 [INFO] [src.pallet_packer.pallet_packer] Starting process 1/12 for pallet packing
-2025-11-10 11:29:33.522 [INFO] [src.pallet_packer.pallet_packer] Starting process 2/12 for pallet packing
-2025-11-10 11:29:33.523 [INFO] [src.pallet_packer.pallet_packer] Starting process 3/12 for pallet packing
-2025-11-10 11:29:33.525 [INFO] [src.pallet_packer.pallet_packer] Starting process 4/12 for pallet packing
-2025-11-10 11:29:33.527 [INFO] [src.pallet_packer.pallet_packer] Starting process 5/12 for pallet packing
-2025-11-10 11:29:33.529 [INFO] [src.pallet_packer.pallet_packer] Starting process 6/12 for pallet packing
-2025-11-10 11:29:33.530 [INFO] [src.pallet_packer.pallet_packer] Starting process 7/12 for pallet packing
-2025-11-10 11:29:33.532 [INFO] [src.pallet_packer.pallet_packer] Starting process 8/12 for pallet packing
-2025-11-10 11:29:33.534 [INFO] [src.pallet_packer.pallet_packer] Starting process 9/12 for pallet packing
-2025-11-10 11:29:33.536 [INFO] [src.pallet_packer.pallet_packer] Starting process 10/12 for pallet packing
-2025-11-10 11:29:33.538 [INFO] [src.pallet_packer.pallet_packer] Starting process 11/12 for pallet packing
-2025-11-10 11:29:33.544 [INFO] [src.pallet_packer.pallet_packer] Starting process 12/12 for pallet packing
+{'task_id': '07851541-ac2e-4b45-a59a-9d7ef934b1e9', 'file_id': 'f38043f2-4a74-4e0f-aa95-62ac9bdfa844', 'available_zones': [{'boundary': [[11395355.29704532, 3163317.436713734], [11466105.29704532, 3163317.436713734], [11466105.29704532, 3104501.436713734], [11395355.29704532, 3104501.436713734]], 'height': 9000.0, 'orientation': 1, 'id': 12}], 'restricted_zones': [], 'road_zones': [], 'cargos': [{'weight': 500, 'length': 1200, 'width': 800, 'height': 1000, 'quantity': 1000000000, 'id': 14}], 'roads_width': 3000.0, 'roads_height': 4000.0}
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Starting input data validation...
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Input validation completed in 0.000s
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Processing available zones...
+2025-11-10 12:09:34.341 [INFO] [process_ml[d003cfca]] Found 1 available zones to process
+2025-11-10 12:09:34.342 [DEBUG] [process_ml[d003cfca]] Processing available zone 1/1
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Available zones processed in 0.000s
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Processing road zones...
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Found 0 road zones to process
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Road zones processed in 0.000s
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Processing restricted zones...
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Found 0 restricted zones to process
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Restricted zones processed in 0.000s
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Processing cargos...
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Found 1 cargo types with total quantity: 1000000000
+2025-11-10 12:09:34.342 [DEBUG] [process_ml[d003cfca]] Processing cargo 1/1: ID=14, quantity=1000000000
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Cargos processed in 0.000s
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Setting up reference book...
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] File ID: f38043f2-4a74-4e0f-aa95-62ac9bdfa844, roads_width: 3000.0, roads_height: 4000.0
+2025-11-10 12:09:34.342 [DEBUG] [process_ml[d003cfca]] Set roads_width to 3000.0
+2025-11-10 12:09:34.342 [DEBUG] [process_ml[d003cfca]] Set roads_height to 4000.0
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Reference book setup completed in 0.000s
+2025-11-10 12:09:34.342 [INFO] [process_ml[d003cfca]] Fetching DXF document from S3...
+2025-11-10 12:09:34.344 [DEBUG] [urllib3.connectionpool] Starting new HTTPS connection (1): minio.mlx-dev.necore.ru:443
+2025-11-10 12:09:34.406 [DEBUG] [urllib3.connectionpool] https://minio.mlx-dev.necore.ru:443 "GET /stillage?location= HTTP/1.1" 200 0
+2025-11-10 12:09:34.429 [DEBUG] [urllib3.connectionpool] https://minio.mlx-dev.necore.ru:443 "GET /stillage/dxf/f38043f2-4a74-4e0f-aa95-62ac9bdfa844.dxf HTTP/1.1" 200 3213663
+2025-11-10 12:09:35.689 [INFO] [process_ml[d003cfca]] DXF document fetched from S3 in 1.346s
+2025-11-10 12:09:35.689 [INFO] [process_ml[d003cfca]] Starting occupied zones scan...
+2025-11-10 12:09:35.689 [INFO] [process_ml[d003cfca]] Initial occupied zones count: 0
+2025-11-10 12:09:35.689 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] 🔍 Начало сканирования occupied zones (мин. размер=10.0мм)
+2025-11-10 12:09:37.224 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] Обработано 149 DXF объектов → 11424 геометрий
+2025-11-10 12:09:37.292 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации по зонам: 179 геометрий
+2025-11-10 12:09:37.323 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После конвертации в полигоны: 168 полигонов
+2025-11-10 12:09:37.324 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После удаления пустых: 100 полигонов
+2025-11-10 12:09:37.324 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации малых по площади: 14 полигонов
+2025-11-10 12:09:37.324 [DEBUG] [src.occupied_zone_scan] [ZONE_FILTER] Отфильтрован тонкий полигон: bounds=(11395633.468751438, 3115581.4367142194, 11395636.45949861, 3126741.4367143665), width=3.0мм, height=11160.0мм
+2025-11-10 12:09:37.324 [DEBUG] [src.occupied_zone_scan] [ZONE_FILTER] Отфильтрован тонкий полигон: bounds=(11395633.468751438, 3127581.4367142194, 11395636.45949861, 3138741.4367143665), width=3.0мм, height=11160.0мм
+2025-11-10 12:09:37.324 [DEBUG] [src.occupied_zone_scan] [ZONE_FILTER] Отфильтрован тонкий полигон: bounds=(11395633.468751438, 3139581.4367142194, 11395636.45949861, 3150741.4367143665), width=3.0мм, height=11160.0мм
+2025-11-10 12:09:37.324 [DEBUG] [src.occupied_zone_scan] [ZONE_FILTER] Отфильтрован тонкий полигон: bounds=(11395633.468751438, 3151581.4367142194, 11395636.45949861, 3162741.4367143665), width=3.0мм, height=11160.0мм
+2025-11-10 12:09:37.324 [DEBUG] [src.occupied_zone_scan] [ZONE_FILTER] Отфильтрован тонкий полигон: bounds=(11395756.459498588, 3162861.436714232, 11418916.459498584, 3162866.580572652), width=23160.0мм, height=5.1мм
+2025-11-10 12:09:37.325 [DEBUG] [src.occupied_zone_scan] [ZONE_FILTER] Отфильтрован тонкий полигон: bounds=(11419756.459498588, 3162861.436714232, 11442916.459498584, 3162866.580572652), width=23160.0мм, height=5.1мм
+2025-11-10 12:09:37.325 [WARNING] [src.occupied_zone_scan] [ZONE_FILTER] ✅ Отфильтровано 6 тонких полигонов (порог: 10.0мм)
+2025-11-10 12:09:37.325 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации тонких полигонов: 8 полигонов
+2025-11-10 12:09:37.325 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] После фильтрации пересекающихся: 8 полигонов
+2025-11-10 12:09:37.325 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 1: bounds=(11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.326 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 2: bounds=(11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.326 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 3: bounds=(11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.326 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 4: bounds=(11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.326 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 5: bounds=(11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.327 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 6: bounds=(11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.327 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 7: bounds=(11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.327 [DEBUG] [src.occupied_zone_scan] [ZONE_SCAN] Создана OccupiedZone 8: bounds=(11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185), размер=840.0x840.0мм
+2025-11-10 12:09:37.327 [WARNING] [src.occupied_zone_scan] [ZONE_SCAN] ✅ Успешно создано 8 occupied zones
+2025-11-10 12:09:37.327 [INFO] [src.occupied_zone_scan] [ZONE_SCAN] 📊 Статистика зон: ширина 840.0-840.0мм, высота 840.0-840.0мм
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Occupied zones scan completed in 1.639s
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Found 8 additional occupied zones (total: 8)
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Starting cargo packing...
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Packing 1 cargo types into pallets...
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Cargo packing completed in 0.000s
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Generated 1 pallets from 1 cargo types
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Starting pallet packing...
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Packing 1 pallets into available zones...
+2025-11-10 12:09:37.328 [INFO] [process_ml[d003cfca]] Available zones: 1, Occupied zones: 8, Road zones: 0
+2025-11-10 12:09:37.328 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
+2025-11-10 12:09:37.328 [INFO] [src.pallet_packer.pallet_packer] STARTING PALLET PACKING WITH COLUMN PROTECTION
+2025-11-10 12:09:37.328 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
+2025-11-10 12:09:37.328 [INFO] [src.pallet_packer.pallet_packer] Input: 1 pallet types, 1 zones, 8 obstacles, 0 road zones
+2025-11-10 12:09:37.328 [INFO] [src.pallet_packer.pallet_packer] Parameters: prune_steps=100, beams_keep=2, min_solutions=5, processes=12
+2025-11-10 12:09:38.025 [INFO] [src.pallet_packer.pallet_packer] Initial solution created and added to cache
+2025-11-10 12:09:38.025 [INFO] [src.pallet_packer.pallet_packer] Starting process 1/12 for pallet packing
+2025-11-10 12:09:38.026 [INFO] [src.pallet_packer.pallet_packer] Starting process 2/12 for pallet packing
+2025-11-10 12:09:38.028 [INFO] [src.pallet_packer.pallet_packer] Starting process 3/12 for pallet packing
+2025-11-10 12:09:38.030 [INFO] [src.pallet_packer.pallet_packer] Starting process 4/12 for pallet packing
+2025-11-10 12:09:38.032 [INFO] [src.pallet_packer.pallet_packer] Starting process 5/12 for pallet packing
+2025-11-10 12:09:38.033 [INFO] [src.pallet_packer.pallet_packer] Starting process 6/12 for pallet packing
+2025-11-10 12:09:38.035 [INFO] [src.pallet_packer.pallet_packer] Starting process 7/12 for pallet packing
+2025-11-10 12:09:38.037 [INFO] [src.pallet_packer.pallet_packer] Starting process 8/12 for pallet packing
+2025-11-10 12:09:38.039 [INFO] [src.pallet_packer.pallet_packer] Starting process 9/12 for pallet packing
+2025-11-10 12:09:38.041 [INFO] [src.pallet_packer.pallet_packer] Starting process 10/12 for pallet packing
+2025-11-10 12:09:38.044 [INFO] [src.pallet_packer.pallet_packer] Starting process 11/12 for pallet packing
+2025-11-10 12:09:38.047 [INFO] [src.pallet_packer.pallet_packer] Starting process 12/12 for pallet packing
 [ZONES] Sorted 1 zones by area and height
 [DEBUG_NEXT_ZONE] ========================================
 [DEBUG_NEXT_ZONE] SWITCHING TO NEXT ZONE
 [DEBUG_NEXT_ZONE] Zone index: 0/1
-[DEBUG_NEXT_ZONE] Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[DEBUG_NEXT_ZONE] Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [DEBUG_NEXT_ZONE] Rack groups before zone: 0
-[DEBUG_NEXT_ZONE] Zone size: 70750.0 x 57963.0 mm
+[DEBUG_NEXT_ZONE] Zone size: 70750.0 x 58816.0 mm
 [DEBUG_NEXT_ZONE] ========================================
 [ZONES] ✅ Reset zone-specific data for new zone
 [ZONES] Cleared protective racks, strips, and current_rack_group for new zone
@@ -259,7 +270,7 @@ Message received
    2. Длина=1850.0 мм, сечение=(100.0, 1.5)
 ================================================================================
 ✅ ИТОГОВЫЙ РЕЗУЛЬТАТ:
-   Выбранная стойка: <src.rack.UprightType object at 0x7fc0b36c6b90>
+   Выбранная стойка: <src.rack.UprightType object at 0x7f2c03302b90>
    Количество полок: 5.0
    Полок на мосту: 3.0
 ================================================================================
@@ -273,7 +284,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -290,9 +301,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3149483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3149483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -310,9 +321,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3152839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3150683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3151639.436714293, 11398657.29704532, 3152839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3152839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3150683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3151639.436714293, 11398231.29704532, 3152839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3150683.4
 [COLUMN_PROTECTION]   Column starts at Y=3150741.4
@@ -381,7 +392,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -398,9 +409,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3137483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3137483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -418,9 +429,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3140839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3138683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3139639.436714293, 11398657.29704532, 3140839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3140839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3138683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3139639.436714293, 11398231.29704532, 3140839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3138683.4
 [COLUMN_PROTECTION]   Column starts at Y=3138741.4
@@ -489,7 +500,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -506,9 +517,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3125483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3125483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -526,9 +537,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3128839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3126683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3127639.436714293, 11398657.29704532, 3128839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3128839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3126683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3127639.436714293, 11398231.29704532, 3128839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3126683.4
 [COLUMN_PROTECTION]   Column starts at Y=3126741.4
@@ -597,7 +608,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -614,9 +625,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3113483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3113483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -634,9 +645,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3116839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3114683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3115639.436714293, 11398657.29704532, 3116839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3116839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3114683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3115639.436714293, 11398231.29704532, 3116839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3114683.4
 [COLUMN_PROTECTION]   Column starts at Y=3114741.4
@@ -705,7 +716,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -722,9 +733,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3113483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3113483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -742,9 +753,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3116839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3114683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3115639.436714293, 11398657.29704532, 3116839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3116839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3114683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3115639.436714293, 11398231.29704532, 3116839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3114683.4
 [COLUMN_PROTECTION]   Column starts at Y=3114741.4
@@ -813,7 +824,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -830,9 +841,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3125483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3125483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -850,9 +861,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3128839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3126683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3127639.436714293, 11398657.29704532, 3128839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3128839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3126683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3127639.436714293, 11398231.29704532, 3128839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3126683.4
 [COLUMN_PROTECTION]   Column starts at Y=3126741.4
@@ -921,7 +932,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -938,9 +949,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3137483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3137483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -958,9 +969,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3140839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3138683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3139639.436714293, 11398657.29704532, 3140839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3140839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3138683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3139639.436714293, 11398231.29704532, 3140839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3138683.4
 [COLUMN_PROTECTION]   Column starts at Y=3138741.4
@@ -1029,7 +1040,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1046,9 +1057,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 57963.0mm
-[COLUMN_PROTECTION]   Available height: 51963.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3149483.436714293)
+[COLUMN_PROTECTION]   Zone height: 58816.0mm
+[COLUMN_PROTECTION]   Available height: 52816.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3149483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1066,9 +1077,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3152839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3150683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3151639.436714293, 11398657.29704532, 3152839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3152839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3150683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3151639.436714293, 11398231.29704532, 3152839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3150683.4
 [COLUMN_PROTECTION]   Column starts at Y=3150741.4
@@ -1148,18 +1159,18 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Deduplication: 8 total → 4 unique
 [COLUMN_PROTECTION] Found 5 free strips
-[COLUMN_PROTECTION] Total free: 20539.0mm of 57963.0mm
+[COLUMN_PROTECTION] Total free: 21392.0mm of 58816.0mm
 [COLUMN_PROTECTION] Set first strip: Y=[3104501.4, 3110483.4], width=5982.0mm
 [RACK_PLACEMENT] Placing rack group in free strip 0: y=[3104501.4, 3110483.4]
 [DEBUG_ZONE] ========================================
 [DEBUG_ZONE] CREATING RACK GROUP
-[DEBUG_ZONE] Zone bounds: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
-[DEBUG_ZONE] Zone size: 70750.0 x 57963.0 mm
-[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395781.29704532, 3104501.436713734)
+[DEBUG_ZONE] Zone bounds: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
+[DEBUG_ZONE] Zone size: 70750.0 x 58816.0 mm
+[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395355.29704532, 3104501.436713734)
 [DEBUG_ZONE] roads_width: 3000.0
 [DEBUG_ZONE] RackGroup AFTER creation:
-[DEBUG_ZONE]   RackGroup.position: (11395781.29704532, 3104501.436713734)
-[DEBUG_ZONE]   RackGroup.bounds: [11395781.29704532, 3104501.436713734, 11395781.29704532, 3104501.436713734]
+[DEBUG_ZONE]   RackGroup.position: (11395355.29704532, 3104501.436713734)
+[DEBUG_ZONE]   RackGroup.bounds: [11395355.29704532, 3104501.436713734, 11395355.29704532, 3104501.436713734]
 [DEBUG_ZONE]   RackGroup size: 0.0 x 0.0 mm
 [DEBUG_ZONE]   X shift from zone start: 0.0 mm
 [DEBUG_ZONE]   X overflow from zone end: -70750.0 mm
@@ -1171,14 +1182,14 @@ Message received
 [DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called
 [DEBUG_FIRST_RACK] Rack type: Rack
 [DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3104501.436713734, 11395781.29704532, 3104501.436713734]
-[DEBUG_FIRST_RACK]   position: (11395781.29704532, 3104501.436713734)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3104501.436713734, 11395355.29704532, 3104501.436713734]
+[DEBUG_FIRST_RACK]   position: (11395355.29704532, 3104501.436713734)
 [DEBUG_FIRST_RACK]   racks count: 0
 [DEBUG_FIRST_RACK]   current_rack: None
 [RACK_PLACEMENT] ✅ Created FIRST rack in group: SINGLE
 [DEBUG_FIRST_RACK] RackGroup AFTER creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3104501.436713734, 11395781.29704532, 3104501.436713734]
-[DEBUG_FIRST_RACK]   New rack bounds: (11395781.29704532, 3104501.436713734, 11398657.29704532, 3105701.436713734)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3104501.436713734, 11395355.29704532, 3104501.436713734]
+[DEBUG_FIRST_RACK]   New rack bounds: (11395355.29704532, 3104501.436713734, 11398231.29704532, 3105701.436713734)
 [DEBUG_FIRST_RACK]   New rack width: 2876.0 mm
 [DEBUG_FIRST_RACK]   Rack type: Rack
 [DEBUG_FIRST_RACK] ========================================
@@ -1186,15 +1197,15 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] FILL_WITH_FRAMES called
 [DEBUG_FILL] Rack BEFORE fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3104501.436713734, 11398657.29704532, 3105701.436713734)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3104501.436713734, 11398231.29704532, 3105701.436713734)
 [DEBUG_FILL]   frames: 1
 [DEBUG_FILL]   section_len: 2788.0 mm
 [RACK_PLACEMENT] Filling within strip 0
-[DEBUG_FILL] Zone X: [11395781.3, 11466531.3]
+[DEBUG_FILL] Zone X: [11395355.3, 11466105.3]
 [DEBUG_FILL] Available X space: 67874.0 mm
 [DEBUG_FILL] Frames to add: 24
 [DEBUG_FILL] Rack AFTER fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3104501.436713734, 11465569.29704532, 3105701.436713734)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3104501.436713734, 11465143.29704532, 3105701.436713734)
 [DEBUG_FILL]   frames: 25
 [DEBUG_FILL]   rack width: 69788.0 mm
 [DEBUG_FILL] Shapely check: inside_zone=True
@@ -1202,7 +1213,7 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] EXITING fill_with_frames
 [DEBUG_FILL] Final rack state:
-[DEBUG_FILL]   Final bounds: (11395781.29704532, 3104501.436713734, 11465569.29704532, 3105701.436713734)
+[DEBUG_FILL]   Final bounds: (11395355.29704532, 3104501.436713734, 11465143.29704532, 3105701.436713734)
 [DEBUG_FILL]   Final frames count: 25
 [DEBUG_FILL]   Final rack width: 69788.0 mm
 [DEBUG_FILL] ========================================
@@ -1210,19 +1221,19 @@ Message received
 [RACK_PLACEMENT] Next rack position set to y=3108701.4
 [RACK_PLACEMENT] In FIRST strip (0/4)
 [RACK_PLACEMENT] NOT first rack in first strip → only DOUBLE allowed
-[RACK_PLACEMENT] HORIZONTAL in first strip: x=11395781.3, distance_available=70750.0, space_needed=5400.0
+[RACK_PLACEMENT] HORIZONTAL in first strip: x=11395355.3, distance_available=70750.0, space_needed=5400.0
 [RACK_PLACEMENT] ✓ Double rack FITS in first strip → DOUBLE
 [DEBUG_RACK] ========================================
 [DEBUG_RACK] CREATE_NEW_RACK called
 [DEBUG_RACK] Rack type: DoubleRack
 [DEBUG_RACK] RackGroup BEFORE creating rack:
-[DEBUG_RACK]   bounds: (11395781.29704532, 3104501.436713734, 11465569.29704532, 3105701.436713734)
-[DEBUG_RACK]   position: (11395781.29704532, 3104501.436713734)
+[DEBUG_RACK]   bounds: (11395355.29704532, 3104501.436713734, 11465143.29704532, 3105701.436713734)
+[DEBUG_RACK]   position: (11395355.29704532, 3104501.436713734)
 [DEBUG_RACK]   racks count: 1
 [RACK_PLACEMENT] Created new double rack
 [DEBUG_RACK] RackGroup AFTER creating rack:
-[DEBUG_RACK]   bounds: (11395781.29704532, 3104501.436713734, 11465569.29704532, 3105701.436713734)
-[DEBUG_RACK]   New rack bounds: (11395781.29704532, 3108701.436713734, 11398657.29704532, 3111157.436713734)
+[DEBUG_RACK]   bounds: (11395355.29704532, 3104501.436713734, 11465143.29704532, 3105701.436713734)
+[DEBUG_RACK]   New rack bounds: (11395355.29704532, 3108701.436713734, 11398231.29704532, 3111157.436713734)
 [DEBUG_RACK]   New rack width: 2876.0 mm
 [DEBUG_RACK] ========================================
 [ZONES] Rack Y=[3108701.4, 3111157.4] exceeds strip Y=[3104501.4, 3110483.4]
@@ -1237,27 +1248,27 @@ Message received
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
-[ZONES] Including regular rack from current zone: bounds=(11395781.29704532, 3104501.436713734, 11465569.29704532, 3105701.436713734)
+[ZONES] Including regular rack from current zone: bounds=(11395355.29704532, 3104501.436713734, 11465143.29704532, 3105701.436713734)
 [ZONES] ========================================
 [ZONES] SPLIT ANALYSIS (current zone only)
-[ZONES]   Available zone: (11395781.29704532, 3104501.436713734, 11466531.29704532, 3162464.436713734)
-[ZONES]   Regular racks max X: 11465569.3mm
+[ZONES]   Available zone: (11395355.29704532, 3104501.436713734, 11466105.29704532, 3163317.436713734)
+[ZONES]   Regular racks max X: 11465143.3mm
 [ZONES]   Regular racks max Y: 3105701.4mm
-[ZONES]   Split point: (11466530.3, 3108700.4)
+[ZONES]   Split point: (11466104.3, 3108700.4)
 [ZONES]   Right zone width: 1.0mm
-[ZONES]   Top zone height: 53764.0mm
+[ZONES]   Top zone height: 54617.0mm
 [ZONES]   Min required: 4000.0mm
 [ZONES] ========================================
-[ZONES] ✅ Added new zone: 70750.0 x 53764.0 mm
+[ZONES] ✅ Added new zone: 70750.0 x 54617.0 mm
 [ZONES] ❌ Rejected small zone: 1.0 x 4199.0 mm
 [ZONES] Split created 1 viable zones
 [ZONES] Sorted 1 zones by area and height
 [DEBUG_NEXT_ZONE] ========================================
 [DEBUG_NEXT_ZONE] SWITCHING TO NEXT ZONE
 [DEBUG_NEXT_ZONE] Zone index: 0/1
-[DEBUG_NEXT_ZONE] Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[DEBUG_NEXT_ZONE] Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [DEBUG_NEXT_ZONE] Rack groups before zone: 9
-[DEBUG_NEXT_ZONE] Zone size: 70750.0 x 53764.0 mm
+[DEBUG_NEXT_ZONE] Zone size: 70750.0 x 54617.0 mm
 [DEBUG_NEXT_ZONE] ========================================
 [ZONES] ✅ Reset zone-specific data for new zone
 [ZONES] Cleared protective racks, strips, and current_rack_group for new zone
@@ -1360,7 +1371,7 @@ Message received
    2. Длина=1850.0 мм, сечение=(100.0, 1.5)
 ================================================================================
 ✅ ИТОГОВЫЙ РЕЗУЛЬТАТ:
-   Выбранная стойка: <src.rack.UprightType object at 0x7fc0b36c6b90>
+   Выбранная стойка: <src.rack.UprightType object at 0x7f2c03302b90>
    Количество полок: 5.0
    Полок на мосту: 3.0
 ================================================================================
@@ -1374,7 +1385,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1391,9 +1402,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3149483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3149483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1411,9 +1422,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3150741.4367143675, 11419756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3152839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3150683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3151639.436714293, 11398657.29704532, 3152839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3152839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3150683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3151639.436714293, 11398231.29704532, 3152839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3150683.4
 [COLUMN_PROTECTION]   Column starts at Y=3150741.4
@@ -1482,7 +1493,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1499,9 +1510,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3137483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3137483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1519,9 +1530,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3138741.4367143675, 11419756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3140839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3138683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3139639.436714293, 11398657.29704532, 3140839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3140839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3138683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3139639.436714293, 11398231.29704532, 3140839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3138683.4
 [COLUMN_PROTECTION]   Column starts at Y=3138741.4
@@ -1590,7 +1601,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1607,9 +1618,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3125483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3125483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1627,9 +1638,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3126741.4367143675, 11419756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3128839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3126683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3127639.436714293, 11398657.29704532, 3128839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3128839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3126683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3127639.436714293, 11398231.29704532, 3128839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3126683.4
 [COLUMN_PROTECTION]   Column starts at Y=3126741.4
@@ -1698,7 +1709,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1715,9 +1726,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3113483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3113483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1735,9 +1746,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11418916.459498586, 3114741.4367143675, 11419756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3116839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3114683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3115639.436714293, 11398657.29704532, 3116839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3116839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3114683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3115639.436714293, 11398231.29704532, 3116839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3114683.4
 [COLUMN_PROTECTION]   Column starts at Y=3114741.4
@@ -1806,7 +1817,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1823,9 +1834,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3113483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3113483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1843,9 +1854,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3114741.4367143675, 11443756.459498586, 3115581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3116839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3113483.436714293, 11398657.29704532, 3114683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3115639.436714293, 11398657.29704532, 3116839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3116839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3113483.436714293, 11398231.29704532, 3114683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3115639.436714293, 11398231.29704532, 3116839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3114683.4
 [COLUMN_PROTECTION]   Column starts at Y=3114741.4
@@ -1914,7 +1925,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -1931,9 +1942,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3125483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3125483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -1951,9 +1962,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3126741.4367143675, 11443756.459498586, 3127581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3128839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3125483.436714293, 11398657.29704532, 3126683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3127639.436714293, 11398657.29704532, 3128839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3128839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3125483.436714293, 11398231.29704532, 3126683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3127639.436714293, 11398231.29704532, 3128839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3126683.4
 [COLUMN_PROTECTION]   Column starts at Y=3126741.4
@@ -2022,7 +2033,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -2039,9 +2050,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3137483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3137483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -2059,9 +2070,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3138741.4367143675, 11443756.459498586, 3139581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3140839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3137483.436714293, 11398657.29704532, 3138683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3139639.436714293, 11398657.29704532, 3140839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3140839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3137483.436714293, 11398231.29704532, 3138683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3139639.436714293, 11398231.29704532, 3140839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3138683.4
 [COLUMN_PROTECTION]   Column starts at Y=3138741.4
@@ -2130,7 +2141,7 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Creating protective rack for column
 [COLUMN_PROTECTION]   Column bounds: (11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185)
-[COLUMN_PROTECTION]   Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[COLUMN_PROTECTION]   Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [COLUMN_PROTECTION] Calculating rack_distance:
 [COLUMN_PROTECTION]   Column: 840.0 x 840.0 mm
 [COLUMN_PROTECTION]   Orientation: horizontal
@@ -2147,9 +2158,9 @@ Message received
 [COLUMN_PROTECTION]   Pallet length: 1200.0mm
 [COLUMN_PROTECTION]   Actual gap: 956.0mm
 [COLUMN_PROTECTION]   Total rack height: 3356.0mm
-[COLUMN_PROTECTION]   Zone height: 53764.0mm
-[COLUMN_PROTECTION]   Available height: 47764.0mm
-[COLUMN_PROTECTION]   Position: (11395781.29704532, 3149483.436714293)
+[COLUMN_PROTECTION]   Zone height: 54617.0mm
+[COLUMN_PROTECTION]   Available height: 48617.0mm
+[COLUMN_PROTECTION]   Position: (11395355.29704532, 3149483.436714293)
 [COLUMN_PROTECTION] Creating DoubleRack with:
 [COLUMN_PROTECTION]   is_protective=True
 [COLUMN_PROTECTION]   protected_column=OccupiedZone(bounds=(11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
@@ -2167,9 +2178,9 @@ Message received
 [COLUMN_PROTECTION]   rack_2.is_protective = True
 [COLUMN_PROTECTION]   rack_2.protected_column = OccupiedZone(bounds=(11442916.459498586, 3150741.4367143675, 11443756.459498586, 3151581.4367142185), area=705600.0, w=840.0, h=840.0, clearance=250.0, is_column=False)
 [COLUMN_PROTECTION]   rack_2.protected_column is not None: True
-[COLUMN_PROTECTION] Rack bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3152839.436714293)
-[COLUMN_PROTECTION]   rack_1 bounds: (11395781.29704532, 3149483.436714293, 11398657.29704532, 3150683.436714293)
-[COLUMN_PROTECTION]   rack_2 bounds: (11395781.29704532, 3151639.436714293, 11398657.29704532, 3152839.436714293)
+[COLUMN_PROTECTION] Rack bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3152839.436714293)
+[COLUMN_PROTECTION]   rack_1 bounds: (11395355.29704532, 3149483.436714293, 11398231.29704532, 3150683.436714293)
+[COLUMN_PROTECTION]   rack_2 bounds: (11395355.29704532, 3151639.436714293, 11398231.29704532, 3152839.436714293)
 [COLUMN_PROTECTION] Checking column position:
 [COLUMN_PROTECTION]   rack_1 ends at Y=3150683.4
 [COLUMN_PROTECTION]   Column starts at Y=3150741.4
@@ -2249,18 +2260,18 @@ Message received
 [COLUMN_PROTECTION] ========================================
 [COLUMN_PROTECTION] Deduplication: 8 total → 4 unique
 [COLUMN_PROTECTION] Found 5 free strips
-[COLUMN_PROTECTION] Total free: 16340.0mm of 53764.0mm
+[COLUMN_PROTECTION] Total free: 17193.0mm of 54617.0mm
 [COLUMN_PROTECTION] Set first strip: Y=[3108700.4, 3110483.4], width=1783.0mm
 [RACK_PLACEMENT] Placing rack group in free strip 0: y=[3108700.4, 3110483.4]
 [DEBUG_ZONE] ========================================
 [DEBUG_ZONE] CREATING RACK GROUP
-[DEBUG_ZONE] Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[DEBUG_ZONE] Zone size: 70750.0 x 53764.0 mm
-[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395781.29704532, 3108700.436713734)
+[DEBUG_ZONE] Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[DEBUG_ZONE] Zone size: 70750.0 x 54617.0 mm
+[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395355.29704532, 3108700.436713734)
 [DEBUG_ZONE] roads_width: 3000.0
 [DEBUG_ZONE] RackGroup AFTER creation:
-[DEBUG_ZONE]   RackGroup.position: (11395781.29704532, 3108700.436713734)
-[DEBUG_ZONE]   RackGroup.bounds: [11395781.29704532, 3108700.436713734, 11395781.29704532, 3108700.436713734]
+[DEBUG_ZONE]   RackGroup.position: (11395355.29704532, 3108700.436713734)
+[DEBUG_ZONE]   RackGroup.bounds: [11395355.29704532, 3108700.436713734, 11395355.29704532, 3108700.436713734]
 [DEBUG_ZONE]   RackGroup size: 0.0 x 0.0 mm
 [DEBUG_ZONE]   X shift from zone start: 0.0 mm
 [DEBUG_ZONE]   X overflow from zone end: -70750.0 mm
@@ -2272,14 +2283,14 @@ Message received
 [DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called
 [DEBUG_FIRST_RACK] Rack type: Rack
 [DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3108700.436713734, 11395781.29704532, 3108700.436713734]
-[DEBUG_FIRST_RACK]   position: (11395781.29704532, 3108700.436713734)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3108700.436713734, 11395355.29704532, 3108700.436713734]
+[DEBUG_FIRST_RACK]   position: (11395355.29704532, 3108700.436713734)
 [DEBUG_FIRST_RACK]   racks count: 0
 [DEBUG_FIRST_RACK]   current_rack: None
 [RACK_PLACEMENT] ✅ Created FIRST rack in group: SINGLE
 [DEBUG_FIRST_RACK] RackGroup AFTER creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3108700.436713734, 11395781.29704532, 3108700.436713734]
-[DEBUG_FIRST_RACK]   New rack bounds: (11395781.29704532, 3108700.436713734, 11398657.29704532, 3109900.436713734)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3108700.436713734, 11395355.29704532, 3108700.436713734]
+[DEBUG_FIRST_RACK]   New rack bounds: (11395355.29704532, 3108700.436713734, 11398231.29704532, 3109900.436713734)
 [DEBUG_FIRST_RACK]   New rack width: 2876.0 mm
 [DEBUG_FIRST_RACK]   Rack type: Rack
 [DEBUG_FIRST_RACK] ========================================
@@ -2287,15 +2298,15 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] FILL_WITH_FRAMES called
 [DEBUG_FILL] Rack BEFORE fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3108700.436713734, 11398657.29704532, 3109900.436713734)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3108700.436713734, 11398231.29704532, 3109900.436713734)
 [DEBUG_FILL]   frames: 1
 [DEBUG_FILL]   section_len: 2788.0 mm
 [RACK_PLACEMENT] Filling within strip 0
-[DEBUG_FILL] Zone X: [11395781.3, 11466531.3]
+[DEBUG_FILL] Zone X: [11395355.3, 11466105.3]
 [DEBUG_FILL] Available X space: 67874.0 mm
 [DEBUG_FILL] Frames to add: 24
 [DEBUG_FILL] Rack AFTER fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3108700.436713734, 11465569.29704532, 3109900.436713734)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3108700.436713734, 11465143.29704532, 3109900.436713734)
 [DEBUG_FILL]   frames: 25
 [DEBUG_FILL]   rack width: 69788.0 mm
 [DEBUG_FILL] Shapely check: inside_zone=True
@@ -2303,7 +2314,7 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] EXITING fill_with_frames
 [DEBUG_FILL] Final rack state:
-[DEBUG_FILL]   Final bounds: (11395781.29704532, 3108700.436713734, 11465569.29704532, 3109900.436713734)
+[DEBUG_FILL]   Final bounds: (11395355.29704532, 3108700.436713734, 11465143.29704532, 3109900.436713734)
 [DEBUG_FILL]   Final frames count: 25
 [DEBUG_FILL]   Final rack width: 69788.0 mm
 [DEBUG_FILL] ========================================
@@ -2315,33 +2326,33 @@ Message received
 [RACK_PLACEMENT] Placing rack group in free strip 1: y=[3119839.4, 3122483.4]
 [DEBUG_ZONE] ========================================
 [DEBUG_ZONE] CREATING RACK GROUP
-[DEBUG_ZONE] Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[DEBUG_ZONE] Zone size: 70750.0 x 53764.0 mm
-[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395781.29704532, 3119839.436714293)
+[DEBUG_ZONE] Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[DEBUG_ZONE] Zone size: 70750.0 x 54617.0 mm
+[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395355.29704532, 3119839.436714293)
 [DEBUG_ZONE] roads_width: 3000.0
 [DEBUG_ZONE] RackGroup AFTER creation:
-[DEBUG_ZONE]   RackGroup.position: (11395781.29704532, 3119839.436714293)
-[DEBUG_ZONE]   RackGroup.bounds: [11395781.29704532, 3119839.436714293, 11395781.29704532, 3119839.436714293]
+[DEBUG_ZONE]   RackGroup.position: (11395355.29704532, 3119839.436714293)
+[DEBUG_ZONE]   RackGroup.bounds: [11395355.29704532, 3119839.436714293, 11395355.29704532, 3119839.436714293]
 [DEBUG_ZONE]   RackGroup size: 0.0 x 0.0 mm
 [DEBUG_ZONE]   X shift from zone start: 0.0 mm
 [DEBUG_ZONE]   X overflow from zone end: -70750.0 mm
 [DEBUG_ZONE]   Fits in zone X: True
 [DEBUG_ZONE] ========================================
 [RACK_PLACEMENT] ⚡ In MIDDLE strip (1/4)
-[RACK_PLACEMENT] HORIZONTAL in middle strip: x=11395781.3, distance_available=70750.0, space_needed=5400.0
+[RACK_PLACEMENT] HORIZONTAL in middle strip: x=11395355.3, distance_available=70750.0, space_needed=5400.0
 [RACK_PLACEMENT] ✓ Double rack FITS in middle strip → DOUBLE
 [DEBUG_FIRST_RACK] ========================================
 [DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called
 [DEBUG_FIRST_RACK] Rack type: DoubleRack
 [DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3119839.436714293, 11395781.29704532, 3119839.436714293]
-[DEBUG_FIRST_RACK]   position: (11395781.29704532, 3119839.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3119839.436714293, 11395355.29704532, 3119839.436714293]
+[DEBUG_FIRST_RACK]   position: (11395355.29704532, 3119839.436714293)
 [DEBUG_FIRST_RACK]   racks count: 0
 [DEBUG_FIRST_RACK]   current_rack: None
 [RACK_PLACEMENT] ✅ Created FIRST rack in group: DOUBLE
 [DEBUG_FIRST_RACK] RackGroup AFTER creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3119839.436714293, 11395781.29704532, 3119839.436714293]
-[DEBUG_FIRST_RACK]   New rack bounds: (11395781.29704532, 3119839.436714293, 11398657.29704532, 3122295.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3119839.436714293, 11395355.29704532, 3119839.436714293]
+[DEBUG_FIRST_RACK]   New rack bounds: (11395355.29704532, 3119839.436714293, 11398231.29704532, 3122295.436714293)
 [DEBUG_FIRST_RACK]   New rack width: 2876.0 mm
 [DEBUG_FIRST_RACK]   Rack type: DoubleRack
 [DEBUG_FIRST_RACK] ========================================
@@ -2349,15 +2360,15 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] FILL_WITH_FRAMES called
 [DEBUG_FILL] Rack BEFORE fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3119839.436714293, 11398657.29704532, 3122295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3119839.436714293, 11398231.29704532, 3122295.436714293)
 [DEBUG_FILL]   frames: 1
 [DEBUG_FILL]   section_len: 2788.0 mm
 [RACK_PLACEMENT] Filling within strip 1
-[DEBUG_FILL] Zone X: [11395781.3, 11466531.3]
+[DEBUG_FILL] Zone X: [11395355.3, 11466105.3]
 [DEBUG_FILL] Available X space: 67874.0 mm
 [DEBUG_FILL] Frames to add: 24
 [DEBUG_FILL] Rack AFTER fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3119839.436714293, 11465569.29704532, 3122295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3119839.436714293, 11465143.29704532, 3122295.436714293)
 [DEBUG_FILL]   frames: 25
 [DEBUG_FILL]   rack width: 69788.0 mm
 [DEBUG_FILL] Shapely check: inside_zone=True
@@ -2365,7 +2376,7 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] EXITING fill_with_frames
 [DEBUG_FILL] Final rack state:
-[DEBUG_FILL]   Final bounds: (11395781.29704532, 3119839.436714293, 11465569.29704532, 3122295.436714293)
+[DEBUG_FILL]   Final bounds: (11395355.29704532, 3119839.436714293, 11465143.29704532, 3122295.436714293)
 [DEBUG_FILL]   Final frames count: 25
 [DEBUG_FILL]   Final rack width: 69788.0 mm
 [DEBUG_FILL] ========================================
@@ -2377,33 +2388,33 @@ Message received
 [RACK_PLACEMENT] Placing rack group in free strip 2: y=[3131839.4, 3134483.4]
 [DEBUG_ZONE] ========================================
 [DEBUG_ZONE] CREATING RACK GROUP
-[DEBUG_ZONE] Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[DEBUG_ZONE] Zone size: 70750.0 x 53764.0 mm
-[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395781.29704532, 3131839.436714293)
+[DEBUG_ZONE] Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[DEBUG_ZONE] Zone size: 70750.0 x 54617.0 mm
+[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395355.29704532, 3131839.436714293)
 [DEBUG_ZONE] roads_width: 3000.0
 [DEBUG_ZONE] RackGroup AFTER creation:
-[DEBUG_ZONE]   RackGroup.position: (11395781.29704532, 3131839.436714293)
-[DEBUG_ZONE]   RackGroup.bounds: [11395781.29704532, 3131839.436714293, 11395781.29704532, 3131839.436714293]
+[DEBUG_ZONE]   RackGroup.position: (11395355.29704532, 3131839.436714293)
+[DEBUG_ZONE]   RackGroup.bounds: [11395355.29704532, 3131839.436714293, 11395355.29704532, 3131839.436714293]
 [DEBUG_ZONE]   RackGroup size: 0.0 x 0.0 mm
 [DEBUG_ZONE]   X shift from zone start: 0.0 mm
 [DEBUG_ZONE]   X overflow from zone end: -70750.0 mm
 [DEBUG_ZONE]   Fits in zone X: True
 [DEBUG_ZONE] ========================================
 [RACK_PLACEMENT] ⚡ In MIDDLE strip (2/4)
-[RACK_PLACEMENT] HORIZONTAL in middle strip: x=11395781.3, distance_available=70750.0, space_needed=5400.0
+[RACK_PLACEMENT] HORIZONTAL in middle strip: x=11395355.3, distance_available=70750.0, space_needed=5400.0
 [RACK_PLACEMENT] ✓ Double rack FITS in middle strip → DOUBLE
 [DEBUG_FIRST_RACK] ========================================
 [DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called
 [DEBUG_FIRST_RACK] Rack type: DoubleRack
 [DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3131839.436714293, 11395781.29704532, 3131839.436714293]
-[DEBUG_FIRST_RACK]   position: (11395781.29704532, 3131839.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3131839.436714293, 11395355.29704532, 3131839.436714293]
+[DEBUG_FIRST_RACK]   position: (11395355.29704532, 3131839.436714293)
 [DEBUG_FIRST_RACK]   racks count: 0
 [DEBUG_FIRST_RACK]   current_rack: None
 [RACK_PLACEMENT] ✅ Created FIRST rack in group: DOUBLE
 [DEBUG_FIRST_RACK] RackGroup AFTER creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3131839.436714293, 11395781.29704532, 3131839.436714293]
-[DEBUG_FIRST_RACK]   New rack bounds: (11395781.29704532, 3131839.436714293, 11398657.29704532, 3134295.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3131839.436714293, 11395355.29704532, 3131839.436714293]
+[DEBUG_FIRST_RACK]   New rack bounds: (11395355.29704532, 3131839.436714293, 11398231.29704532, 3134295.436714293)
 [DEBUG_FIRST_RACK]   New rack width: 2876.0 mm
 [DEBUG_FIRST_RACK]   Rack type: DoubleRack
 [DEBUG_FIRST_RACK] ========================================
@@ -2411,15 +2422,15 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] FILL_WITH_FRAMES called
 [DEBUG_FILL] Rack BEFORE fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3131839.436714293, 11398657.29704532, 3134295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3131839.436714293, 11398231.29704532, 3134295.436714293)
 [DEBUG_FILL]   frames: 1
 [DEBUG_FILL]   section_len: 2788.0 mm
 [RACK_PLACEMENT] Filling within strip 2
-[DEBUG_FILL] Zone X: [11395781.3, 11466531.3]
+[DEBUG_FILL] Zone X: [11395355.3, 11466105.3]
 [DEBUG_FILL] Available X space: 67874.0 mm
 [DEBUG_FILL] Frames to add: 24
 [DEBUG_FILL] Rack AFTER fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3131839.436714293, 11465569.29704532, 3134295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3131839.436714293, 11465143.29704532, 3134295.436714293)
 [DEBUG_FILL]   frames: 25
 [DEBUG_FILL]   rack width: 69788.0 mm
 [DEBUG_FILL] Shapely check: inside_zone=True
@@ -2427,7 +2438,7 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] EXITING fill_with_frames
 [DEBUG_FILL] Final rack state:
-[DEBUG_FILL]   Final bounds: (11395781.29704532, 3131839.436714293, 11465569.29704532, 3134295.436714293)
+[DEBUG_FILL]   Final bounds: (11395355.29704532, 3131839.436714293, 11465143.29704532, 3134295.436714293)
 [DEBUG_FILL]   Final frames count: 25
 [DEBUG_FILL]   Final rack width: 69788.0 mm
 [DEBUG_FILL] ========================================
@@ -2439,33 +2450,33 @@ Message received
 [RACK_PLACEMENT] Placing rack group in free strip 3: y=[3143839.4, 3146483.4]
 [DEBUG_ZONE] ========================================
 [DEBUG_ZONE] CREATING RACK GROUP
-[DEBUG_ZONE] Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[DEBUG_ZONE] Zone size: 70750.0 x 53764.0 mm
-[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395781.29704532, 3143839.436714293)
+[DEBUG_ZONE] Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[DEBUG_ZONE] Zone size: 70750.0 x 54617.0 mm
+[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395355.29704532, 3143839.436714293)
 [DEBUG_ZONE] roads_width: 3000.0
 [DEBUG_ZONE] RackGroup AFTER creation:
-[DEBUG_ZONE]   RackGroup.position: (11395781.29704532, 3143839.436714293)
-[DEBUG_ZONE]   RackGroup.bounds: [11395781.29704532, 3143839.436714293, 11395781.29704532, 3143839.436714293]
+[DEBUG_ZONE]   RackGroup.position: (11395355.29704532, 3143839.436714293)
+[DEBUG_ZONE]   RackGroup.bounds: [11395355.29704532, 3143839.436714293, 11395355.29704532, 3143839.436714293]
 [DEBUG_ZONE]   RackGroup size: 0.0 x 0.0 mm
 [DEBUG_ZONE]   X shift from zone start: 0.0 mm
 [DEBUG_ZONE]   X overflow from zone end: -70750.0 mm
 [DEBUG_ZONE]   Fits in zone X: True
 [DEBUG_ZONE] ========================================
 [RACK_PLACEMENT] ⚡ In MIDDLE strip (3/4)
-[RACK_PLACEMENT] HORIZONTAL in middle strip: x=11395781.3, distance_available=70750.0, space_needed=5400.0
+[RACK_PLACEMENT] HORIZONTAL in middle strip: x=11395355.3, distance_available=70750.0, space_needed=5400.0
 [RACK_PLACEMENT] ✓ Double rack FITS in middle strip → DOUBLE
 [DEBUG_FIRST_RACK] ========================================
 [DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called
 [DEBUG_FIRST_RACK] Rack type: DoubleRack
 [DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3143839.436714293, 11395781.29704532, 3143839.436714293]
-[DEBUG_FIRST_RACK]   position: (11395781.29704532, 3143839.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3143839.436714293, 11395355.29704532, 3143839.436714293]
+[DEBUG_FIRST_RACK]   position: (11395355.29704532, 3143839.436714293)
 [DEBUG_FIRST_RACK]   racks count: 0
 [DEBUG_FIRST_RACK]   current_rack: None
 [RACK_PLACEMENT] ✅ Created FIRST rack in group: DOUBLE
 [DEBUG_FIRST_RACK] RackGroup AFTER creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3143839.436714293, 11395781.29704532, 3143839.436714293]
-[DEBUG_FIRST_RACK]   New rack bounds: (11395781.29704532, 3143839.436714293, 11398657.29704532, 3146295.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3143839.436714293, 11395355.29704532, 3143839.436714293]
+[DEBUG_FIRST_RACK]   New rack bounds: (11395355.29704532, 3143839.436714293, 11398231.29704532, 3146295.436714293)
 [DEBUG_FIRST_RACK]   New rack width: 2876.0 mm
 [DEBUG_FIRST_RACK]   Rack type: DoubleRack
 [DEBUG_FIRST_RACK] ========================================
@@ -2473,15 +2484,15 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] FILL_WITH_FRAMES called
 [DEBUG_FILL] Rack BEFORE fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3143839.436714293, 11398657.29704532, 3146295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3143839.436714293, 11398231.29704532, 3146295.436714293)
 [DEBUG_FILL]   frames: 1
 [DEBUG_FILL]   section_len: 2788.0 mm
 [RACK_PLACEMENT] Filling within strip 3
-[DEBUG_FILL] Zone X: [11395781.3, 11466531.3]
+[DEBUG_FILL] Zone X: [11395355.3, 11466105.3]
 [DEBUG_FILL] Available X space: 67874.0 mm
 [DEBUG_FILL] Frames to add: 24
 [DEBUG_FILL] Rack AFTER fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3143839.436714293, 11465569.29704532, 3146295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3143839.436714293, 11465143.29704532, 3146295.436714293)
 [DEBUG_FILL]   frames: 25
 [DEBUG_FILL]   rack width: 69788.0 mm
 [DEBUG_FILL] Shapely check: inside_zone=True
@@ -2489,7 +2500,7 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] EXITING fill_with_frames
 [DEBUG_FILL] Final rack state:
-[DEBUG_FILL]   Final bounds: (11395781.29704532, 3143839.436714293, 11465569.29704532, 3146295.436714293)
+[DEBUG_FILL]   Final bounds: (11395355.29704532, 3143839.436714293, 11465143.29704532, 3146295.436714293)
 [DEBUG_FILL]   Final frames count: 25
 [DEBUG_FILL]   Final rack width: 69788.0 mm
 [DEBUG_FILL] ========================================
@@ -2497,37 +2508,37 @@ Message received
 [RACK_PLACEMENT] Next rack position 3149295.4 exceeds strip boundary 3146483.4
 [RACK_PLACEMENT] Saved rack group with 1 racks
 [COLUMN_PROTECTION] More strips available: 1 remaining
-[COLUMN_PROTECTION] Set next strip 4: Y=[3155839.4, 3162464.4], width=6625.0mm
-[RACK_PLACEMENT] Placing rack group in free strip 4: y=[3155839.4, 3162464.4]
+[COLUMN_PROTECTION] Set next strip 4: Y=[3155839.4, 3163317.4], width=7478.0mm
+[RACK_PLACEMENT] Placing rack group in free strip 4: y=[3155839.4, 3163317.4]
 [DEBUG_ZONE] ========================================
 [DEBUG_ZONE] CREATING RACK GROUP
-[DEBUG_ZONE] Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[DEBUG_ZONE] Zone size: 70750.0 x 53764.0 mm
-[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395781.29704532, 3155839.436714293)
+[DEBUG_ZONE] Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[DEBUG_ZONE] Zone size: 70750.0 x 54617.0 mm
+[DEBUG_ZONE] Position BEFORE RackGroup creation: (11395355.29704532, 3155839.436714293)
 [DEBUG_ZONE] roads_width: 3000.0
 [DEBUG_ZONE] RackGroup AFTER creation:
-[DEBUG_ZONE]   RackGroup.position: (11395781.29704532, 3155839.436714293)
-[DEBUG_ZONE]   RackGroup.bounds: [11395781.29704532, 3155839.436714293, 11395781.29704532, 3155839.436714293]
+[DEBUG_ZONE]   RackGroup.position: (11395355.29704532, 3155839.436714293)
+[DEBUG_ZONE]   RackGroup.bounds: [11395355.29704532, 3155839.436714293, 11395355.29704532, 3155839.436714293]
 [DEBUG_ZONE]   RackGroup size: 0.0 x 0.0 mm
 [DEBUG_ZONE]   X shift from zone start: 0.0 mm
 [DEBUG_ZONE]   X overflow from zone end: -70750.0 mm
 [DEBUG_ZONE]   Fits in zone X: True
 [DEBUG_ZONE] ========================================
 [RACK_PLACEMENT] In first/last strip (4/4) → using normal edge logic
-[RACK_PLACEMENT] HORIZONTAL: x=11395781.3, is_first=False, dist_right=70750.0, space_needed=5400.0, at_edge=False
+[RACK_PLACEMENT] HORIZONTAL: x=11395355.3, is_first=False, dist_right=70750.0, space_needed=5400.0, at_edge=False
 [RACK_PLACEMENT] ✓ In CENTER → DOUBLE rack
 [DEBUG_FIRST_RACK] ========================================
 [DEBUG_FIRST_RACK] CREATE_FIRST_RACK_IN_GROUP called
 [DEBUG_FIRST_RACK] Rack type: DoubleRack
 [DEBUG_FIRST_RACK] RackGroup BEFORE creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3155839.436714293, 11395781.29704532, 3155839.436714293]
-[DEBUG_FIRST_RACK]   position: (11395781.29704532, 3155839.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3155839.436714293, 11395355.29704532, 3155839.436714293]
+[DEBUG_FIRST_RACK]   position: (11395355.29704532, 3155839.436714293)
 [DEBUG_FIRST_RACK]   racks count: 0
 [DEBUG_FIRST_RACK]   current_rack: None
 [RACK_PLACEMENT] ✅ Created FIRST rack in group: DOUBLE
 [DEBUG_FIRST_RACK] RackGroup AFTER creating rack:
-[DEBUG_FIRST_RACK]   bounds: [11395781.29704532, 3155839.436714293, 11395781.29704532, 3155839.436714293]
-[DEBUG_FIRST_RACK]   New rack bounds: (11395781.29704532, 3155839.436714293, 11398657.29704532, 3158295.436714293)
+[DEBUG_FIRST_RACK]   bounds: [11395355.29704532, 3155839.436714293, 11395355.29704532, 3155839.436714293]
+[DEBUG_FIRST_RACK]   New rack bounds: (11395355.29704532, 3155839.436714293, 11398231.29704532, 3158295.436714293)
 [DEBUG_FIRST_RACK]   New rack width: 2876.0 mm
 [DEBUG_FIRST_RACK]   Rack type: DoubleRack
 [DEBUG_FIRST_RACK] ========================================
@@ -2535,15 +2546,15 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] FILL_WITH_FRAMES called
 [DEBUG_FILL] Rack BEFORE fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3155839.436714293, 11398657.29704532, 3158295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3155839.436714293, 11398231.29704532, 3158295.436714293)
 [DEBUG_FILL]   frames: 1
 [DEBUG_FILL]   section_len: 2788.0 mm
 [RACK_PLACEMENT] Filling within strip 4
-[DEBUG_FILL] Zone X: [11395781.3, 11466531.3]
+[DEBUG_FILL] Zone X: [11395355.3, 11466105.3]
 [DEBUG_FILL] Available X space: 67874.0 mm
 [DEBUG_FILL] Frames to add: 24
 [DEBUG_FILL] Rack AFTER fill:
-[DEBUG_FILL]   bounds: (11395781.29704532, 3155839.436714293, 11465569.29704532, 3158295.436714293)
+[DEBUG_FILL]   bounds: (11395355.29704532, 3155839.436714293, 11465143.29704532, 3158295.436714293)
 [DEBUG_FILL]   frames: 25
 [DEBUG_FILL]   rack width: 69788.0 mm
 [DEBUG_FILL] Shapely check: inside_zone=True
@@ -2551,33 +2562,87 @@ Message received
 [DEBUG_FILL] ========================================
 [DEBUG_FILL] EXITING fill_with_frames
 [DEBUG_FILL] Final rack state:
-[DEBUG_FILL]   Final bounds: (11395781.29704532, 3155839.436714293, 11465569.29704532, 3158295.436714293)
+[DEBUG_FILL]   Final bounds: (11395355.29704532, 3155839.436714293, 11465143.29704532, 3158295.436714293)
 [DEBUG_FILL]   Final frames count: 25
 [DEBUG_FILL]   Final rack width: 69788.0 mm
 [DEBUG_FILL] ========================================
 [RACK_PLACEMENT] Saved rack with 25 frames
 [RACK_PLACEMENT] Next rack position set to y=3161295.4
 [RACK_PLACEMENT] In first/last strip (4/4) → using normal edge logic
-[RACK_PLACEMENT] HORIZONTAL: x=11395781.3, is_first=False, dist_right=70750.0, space_needed=5400.0, at_edge=False
+[RACK_PLACEMENT] HORIZONTAL: x=11395355.3, is_first=False, dist_right=70750.0, space_needed=5400.0, at_edge=False
 [RACK_PLACEMENT] ✓ In CENTER → DOUBLE rack
 [DEBUG_RACK] ========================================
 [DEBUG_RACK] CREATE_NEW_RACK called
 [DEBUG_RACK] Rack type: DoubleRack
 [DEBUG_RACK] RackGroup BEFORE creating rack:
-[DEBUG_RACK]   bounds: (11395781.29704532, 3155839.436714293, 11465569.29704532, 3158295.436714293)
-[DEBUG_RACK]   position: (11395781.29704532, 3155839.436714293)
+[DEBUG_RACK]   bounds: (11395355.29704532, 3155839.436714293, 11465143.29704532, 3158295.436714293)
+[DEBUG_RACK]   position: (11395355.29704532, 3155839.436714293)
 [DEBUG_RACK]   racks count: 1
 [RACK_PLACEMENT] Created new double rack
 [DEBUG_RACK] RackGroup AFTER creating rack:
-[DEBUG_RACK]   bounds: (11395781.29704532, 3155839.436714293, 11465569.29704532, 3158295.436714293)
-[DEBUG_RACK]   New rack bounds: (11395781.29704532, 3161295.436714293, 11398657.29704532, 3163751.436714293)
+[DEBUG_RACK]   bounds: (11395355.29704532, 3155839.436714293, 11465143.29704532, 3158295.436714293)
+[DEBUG_RACK]   New rack bounds: (11395355.29704532, 3161295.436714293, 11398231.29704532, 3163751.436714293)
 [DEBUG_RACK]   New rack width: 2876.0 mm
 [DEBUG_RACK] ========================================
-[ZONES] Rack doesn't fit in zone. Rack bounds: (11395781.29704532, 3161295.436714293, 11398657.29704532, 3163751.436714293), Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[ZONES] Rack doesn't fit in zone. Rack bounds: (11395781.29704532, 3161295.436714293, 11398657.29704532, 3163751.436714293), Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
+[ZONES] Rack doesn't fit in zone. Rack bounds: (11395355.29704532, 3161295.436714293, 11398231.29704532, 3163751.436714293), Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[ZONES] Rack doesn't fit in zone. Rack bounds: (11395355.29704532, 3161295.436714293, 11398231.29704532, 3163751.436714293), Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
 [RACK_PLACEMENT] In LAST strip → Swapped double rack to single rack
-[ZONES] Rack doesn't fit in zone. Rack bounds: (11395781.29704532, 3161295.436714293, 11398657.29704532, 3162495.436714293), Zone bounds: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[RACK_PLACEMENT] Saved rack group with 1 racks
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 2
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 3
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 4
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 5
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 6
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 7
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 8
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 9
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 10
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 11
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 12
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 13
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 14
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 15
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 16
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 17
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 18
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 19
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 20
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 21
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 22
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 23
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 24
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 25
+[ZONES] Rack fits in available zone and strip
+[RACK_PLACEMENT] Added new frame. Total frames: 26
+[ZONES] Rack doesn't fit in zone. Rack bounds: (11395355.29704532, 3161295.436714293, 11467931.29704532, 3162495.436714293), Zone bounds: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[RACK_PLACEMENT] Deleted last frame. Frames: 26 -> 25
+[RACK_PLACEMENT] Saved rack with 25 frames
+[RACK_PLACEMENT] Next rack position 3165495.4 exceeds strip boundary 3163317.4
+[RACK_PLACEMENT] Saved rack group with 2 racks
+[COLUMN_PROTECTION] All strips processed
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
@@ -2586,7 +2651,7 @@ Message received
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
-[ZONES] Skipping rack from other zone: bounds=(11395781.29704532, 3104501.436713734, 11465569.29704532, 3105701.436713734)
+[ZONES] Skipping rack from other zone: bounds=(11395355.29704532, 3104501.436713734, 11465143.29704532, 3105701.436713734)
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
@@ -2595,86 +2660,85 @@ Message received
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
 [ZONES] Excluding protective rack from split calculation
-[ZONES] Including regular rack from current zone: bounds=(11395781.29704532, 3108700.436713734, 11465569.29704532, 3109900.436713734)
-[ZONES] Including regular rack from current zone: bounds=(11395781.29704532, 3119839.436714293, 11465569.29704532, 3122295.436714293)
-[ZONES] Including regular rack from current zone: bounds=(11395781.29704532, 3131839.436714293, 11465569.29704532, 3134295.436714293)
-[ZONES] Including regular rack from current zone: bounds=(11395781.29704532, 3143839.436714293, 11465569.29704532, 3146295.436714293)
-[ZONES] Including regular rack from current zone: bounds=(11395781.29704532, 3155839.436714293, 11465569.29704532, 3158295.436714293)
+[ZONES] Including regular rack from current zone: bounds=(11395355.29704532, 3108700.436713734, 11465143.29704532, 3109900.436713734)
+[ZONES] Including regular rack from current zone: bounds=(11395355.29704532, 3119839.436714293, 11465143.29704532, 3122295.436714293)
+[ZONES] Including regular rack from current zone: bounds=(11395355.29704532, 3131839.436714293, 11465143.29704532, 3134295.436714293)
+[ZONES] Including regular rack from current zone: bounds=(11395355.29704532, 3143839.436714293, 11465143.29704532, 3146295.436714293)
+[ZONES] Including regular rack from current zone: bounds=(11395355.29704532, 3155839.436714293, 11465143.29704532, 3162495.436714293)
 [ZONES] ========================================
 [ZONES] SPLIT ANALYSIS (current zone only)
-[ZONES]   Available zone: (11395781.29704532, 3108700.436713734, 11466531.29704532, 3162464.436713734)
-[ZONES]   Regular racks max X: 11465569.3mm
-[ZONES]   Regular racks max Y: 3158295.4mm
-[ZONES]   Split point: (11466530.3, 3161294.4)
+[ZONES]   Available zone: (11395355.29704532, 3108700.436713734, 11466105.29704532, 3163317.436713734)
+[ZONES]   Regular racks max X: 11465143.3mm
+[ZONES]   Regular racks max Y: 3162495.4mm
+[ZONES]   Split point: (11466104.3, 3163316.4)
 [ZONES]   Right zone width: 1.0mm
-[ZONES]   Top zone height: 1170.0mm
+[ZONES]   Top zone height: 1.0mm
 [ZONES]   Min required: 4000.0mm
 [ZONES] ========================================
 [ZONES] ⚠️ Split skipped - no resulting zones meet minimum size
 [ZONES] Sorted 0 zones by area and height
 [ZONES] Reset to zone 0
-2025-11-10 11:29:39.641 [INFO] [src.pallet_packer.pallet_packer] Process 1/12 has finished
-2025-11-10 11:29:39.926 [INFO] [src.pallet_packer.pallet_packer] Process 2/12 has finished
-2025-11-10 11:29:39.927 [INFO] [src.pallet_packer.pallet_packer] Process 3/12 has finished
-2025-11-10 11:29:39.927 [INFO] [src.pallet_packer.pallet_packer] Process 4/12 has finished
-2025-11-10 11:29:39.927 [INFO] [src.pallet_packer.pallet_packer] Process 5/12 has finished
-2025-11-10 11:29:39.972 [INFO] [src.pallet_packer.pallet_packer] Process 6/12 has finished
-2025-11-10 11:29:39.972 [INFO] [src.pallet_packer.pallet_packer] Process 7/12 has finished
-2025-11-10 11:29:39.973 [INFO] [src.pallet_packer.pallet_packer] Process 8/12 has finished
-2025-11-10 11:29:39.973 [INFO] [src.pallet_packer.pallet_packer] Process 9/12 has finished
-2025-11-10 11:29:39.983 [INFO] [src.pallet_packer.pallet_packer] Process 10/12 has finished
-2025-11-10 11:29:39.983 [INFO] [src.pallet_packer.pallet_packer] Process 11/12 has finished
-2025-11-10 11:29:39.983 [INFO] [src.pallet_packer.pallet_packer] Process 12/12 has finished
-2025-11-10 11:29:40.019 [INFO] [src.pallet_packer.pallet_packer] All processes finished. Total solutions found: 1
-2025-11-10 11:29:40.106 [INFO] [src.pallet_packer.pallet_packer] Best solution score: 15750.0
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer] BEST SOLUTION STATISTICS:
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer]   Total pallets placed: 3750.0
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer]   Total racks: 42
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer]   Total rack groups: 22
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer]   Zone utilization: 112.2%
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer]   Protected columns: 8
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer]   Free strips created: 5
-2025-11-10 11:29:40.107 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
-2025-11-10 11:29:40.107 [INFO] [process_ml[350e9561]] Pallet packing completed in 7.272s
-2025-11-10 11:29:40.107 [INFO] [process_ml[350e9561]] Checking debugger status...
-2025-11-10 11:29:40.108 [INFO] [process_ml[350e9561]] Debugger check completed in 0.000s, active: False
-2025-11-10 11:29:40.108 [INFO] [process_ml[350e9561]] Generating output response...
-2025-11-10 11:29:40.109 [INFO] [process_ml[350e9561]] Output generation completed in 0.002s
-2025-11-10 11:29:40.109 [INFO] [process_ml[350e9561]] Sending successful response...
-2025-11-10 11:29:40.110 [INFO] [process_ml[350e9561]] Response data size: 25994 characters
-2025-11-10 11:29:40.110 [INFO] [Sender[59a9425a]] Preparing to send message [ID: 5c8fcb89]
-2025-11-10 11:29:40.110 [DEBUG] [Sender[59a9425a]] Serializing message [ID: 5c8fcb89]: <class 'dict'>
-2025-11-10 11:29:40.112 [DEBUG] [Sender[59a9425a]] Message [ID: 5c8fcb89] serialized in 0.001s, size: 25994 bytes
-2025-11-10 11:29:40.112 [DEBUG] [Sender[59a9425a]] Creating aio_pika Message [ID: 5c8fcb89]
-2025-11-10 11:29:40.112 [INFO] [Sender[59a9425a]] Publishing message [ID: 5c8fcb89] to routing_key: model_result
-2025-11-10 11:29:40.113 [INFO] [Sender[59a9425a]] Message [ID: 5c8fcb89] sent successfully in 0.002s (publish: 0.001s)
-2025-11-10 11:29:40.113 [INFO] [process_ml[350e9561]] Response sent successfully in 0.003s
-2025-11-10 11:29:40.113 [INFO] [process_ml[350e9561]] Total ML processing time: 10.244s
-2025-11-10 11:29:40.113 [INFO] [process_ml[350e9561]] Printing results...
+2025-11-10 12:09:54.417 [INFO] [src.pallet_packer.pallet_packer] Process 1/12 has finished
+2025-11-10 12:09:54.417 [INFO] [src.pallet_packer.pallet_packer] Process 2/12 has finished
+2025-11-10 12:09:54.417 [INFO] [src.pallet_packer.pallet_packer] Process 3/12 has finished
+2025-11-10 12:09:54.417 [INFO] [src.pallet_packer.pallet_packer] Process 4/12 has finished
+2025-11-10 12:09:54.421 [INFO] [src.pallet_packer.pallet_packer] Process 5/12 has finished
+2025-11-10 12:09:54.421 [INFO] [src.pallet_packer.pallet_packer] Process 6/12 has finished
+2025-11-10 12:09:54.421 [INFO] [src.pallet_packer.pallet_packer] Process 7/12 has finished
+2025-11-10 12:09:54.421 [INFO] [src.pallet_packer.pallet_packer] Process 8/12 has finished
+2025-11-10 12:09:54.445 [INFO] [src.pallet_packer.pallet_packer] Process 9/12 has finished
+2025-11-10 12:09:54.446 [INFO] [src.pallet_packer.pallet_packer] Process 10/12 has finished
+2025-11-10 12:09:54.446 [INFO] [src.pallet_packer.pallet_packer] Process 11/12 has finished
+2025-11-10 12:09:54.446 [INFO] [src.pallet_packer.pallet_packer] Process 12/12 has finished
+2025-11-10 12:09:54.483 [INFO] [src.pallet_packer.pallet_packer] All processes finished. Total solutions found: 1
+2025-11-10 12:09:54.565 [INFO] [src.pallet_packer.pallet_packer] Best solution score: 16125.0
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer] BEST SOLUTION STATISTICS:
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer]   Total pallets placed: 4125.0
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer]   Total racks: 43
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer]   Total rack groups: 22
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer]   Zone utilization: 117.6%
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer]   Protected columns: 8
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer]   Free strips created: 5
+2025-11-10 12:09:54.566 [INFO] [src.pallet_packer.pallet_packer] ================================================================================
+2025-11-10 12:09:54.566 [INFO] [process_ml[d003cfca]] Pallet packing completed in 17.238s
+2025-11-10 12:09:54.566 [INFO] [process_ml[d003cfca]] Checking debugger status...
+2025-11-10 12:09:54.566 [INFO] [process_ml[d003cfca]] Debugger check completed in 0.000s, active: False
+2025-11-10 12:09:54.566 [INFO] [process_ml[d003cfca]] Generating output response...
+2025-11-10 12:09:54.568 [INFO] [process_ml[d003cfca]] Output generation completed in 0.002s
+2025-11-10 12:09:54.568 [INFO] [process_ml[d003cfca]] Sending successful response...
+2025-11-10 12:09:54.569 [INFO] [process_ml[d003cfca]] Response data size: 26892 characters
+2025-11-10 12:09:54.569 [INFO] [Sender[becbefea]] Preparing to send message [ID: a665adb3]
+2025-11-10 12:09:54.569 [DEBUG] [Sender[becbefea]] Serializing message [ID: a665adb3]: <class 'dict'>
+2025-11-10 12:09:54.571 [DEBUG] [Sender[becbefea]] Message [ID: a665adb3] serialized in 0.001s, size: 26892 bytes
+2025-11-10 12:09:54.571 [DEBUG] [Sender[becbefea]] Creating aio_pika Message [ID: a665adb3]
+2025-11-10 12:09:54.571 [INFO] [Sender[becbefea]] Publishing message [ID: a665adb3] to routing_key: model_result
+2025-11-10 12:09:54.571 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 218.6s
+2025-11-10 12:09:54.572 [INFO] [Sender[becbefea]] Message [ID: a665adb3] sent successfully in 0.002s (publish: 0.001s)
+2025-11-10 12:09:54.572 [INFO] [process_ml[d003cfca]] Response sent successfully in 0.003s
+2025-11-10 12:09:54.572 [INFO] [process_ml[d003cfca]] Total ML processing time: 20.231s
+2025-11-10 12:09:54.572 [INFO] [process_ml[d003cfca]] Printing results...
 Results sent
 
-{'task_id': 'a283c833-0a94-41f8-abcb-f8fdbf50d6eb', 'racks': {'14': [{'boundary': [(11395781, 3113483), (11465569, 3113483), (11465569, 3116839), (11395781, 3116839), (11395781, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3113483), (11465569, 3113483), (11465569, 3116839), (11395781, 3116839), (11395781, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3125483), (11465569, 3125483), (11465569, 3128839), (11395781, 3128839), (11395781, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3125483), (11465569, 3125483), (11465569, 3128839), (11395781, 3128839), (11395781, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3137483), (11465569, 3137483), (11465569, 3140839), (11395781, 3140839), (11395781, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3137483), (11465569, 3137483), (11465569, 3140839), (11395781, 3140839), (11395781, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3149483), (11465569, 3149483), (11465569, 3152839), (11395781, 3152839), (11395781, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3149483), (11465569, 3149483), (11465569, 3152839), (11395781, 3152839), (11395781, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3104501), (11465569, 3104501), (11465569, 3105701), (11395781, 3105701), (11395781, 3104501)], 'sections_in_length': 25, 'sections_in_width': 1, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': None}, {'boundary': [(11395781, 3113483), (11465569, 3113483), (11465569, 3116839), (11395781, 3116839), (11395781, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3113483), (11465569, 3113483), (11465569, 3116839), (11395781, 3116839), (11395781, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3125483), (11465569, 3125483), (11465569, 3128839), (11395781, 3128839), (11395781, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3125483), (11465569, 3125483), (11465569, 3128839), (11395781, 3128839), (11395781, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3137483), (11465569, 3137483), (11465569, 3140839), (11395781, 3140839), (11395781, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3137483), (11465569, 3137483), (11465569, 3140839), (11395781, 3140839), (11395781, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3149483), (11465569, 3149483), (11465569, 3152839), (11395781, 3152839), (11395781, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3149483), (11465569, 3149483), (11465569, 3152839), (11395781, 3152839), (11395781, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395781, 3108700), (11465569, 3108700), (11465569, 3109900), (11395781, 3109900), (11395781, 3108700)], 'sections_in_length': 25, 'sections_in_width': 1, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': None}, {'boundary': [(11395781, 3119839), (11465569, 3119839), (11465569, 3122295), (11395781, 3122295), (11395781, 3119839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395781, 3131839), (11465569, 3131839), (11465569, 3134295), (11395781, 3134295), (11395781, 3131839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395781, 3143839), (11465569, 3143839), (11465569, 3146295), (11395781, 3146295), (11395781, 3143839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395781, 3155839), (11465569, 3155839), (11465569, 3158295), (11395781, 3158295), (11395781, 3155839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}]}, 'warnings_and_errors': '', 'success_predict': True}
-2025-11-10 11:29:40.114 [INFO] [process_ml[350e9561]] ==================================================
-2025-11-10 11:29:40.114 [INFO] [process_ml[350e9561]] ML Processing Summary for task: a283c833-0a94-41f8-abcb-f8fdbf50d6eb
-2025-11-10 11:29:40.115 [INFO] [process_ml[350e9561]] Total time: 10.244s
-2025-11-10 11:29:40.115 [INFO] [process_ml[350e9561]] Processed 1 cargo types -> 1 pallets
-2025-11-10 11:29:40.115 [INFO] [process_ml[350e9561]] Used 1 available zones, 8 occupied zones
-2025-11-10 11:29:40.115 [INFO] [process_ml[350e9561]] Success: True
-2025-11-10 11:29:40.115 [INFO] [process_ml[350e9561]] ==================================================
-2025-11-10 11:29:40.115 [INFO] [MessageHandler[0b33c004]] Message [ID: 155e2b5b] processed successfully in 10.247s (processor: 10.246s)
-2025-11-10 11:29:47.732 [INFO] [__main__]  [03d17458] Service is alive, uptime: 90.1s
-2025-11-10 11:30:17.759 [INFO] [__main__]  [03d17458] Service is alive, uptime: 120.1s
-2025-11-10 11:30:47.788 [INFO] [__main__]  [03d17458] Service is alive, uptime: 150.1s
-2025-11-10 11:31:17.794 [INFO] [__main__]  [03d17458] Service is alive, uptime: 180.1s
-2025-11-10 11:31:47.803 [INFO] [__main__]  [03d17458] Service is alive, uptime: 210.1s
-2025-11-10 11:32:17.805 [INFO] [__main__]  [03d17458] Service is alive, uptime: 240.1s
-2025-11-10 11:32:47.835 [INFO] [__main__]  [03d17458] Service is alive, uptime: 270.2s
-2025-11-10 11:33:17.863 [INFO] [__main__]  [03d17458] Service is alive, uptime: 300.2s
-2025-11-10 11:33:47.868 [INFO] [__main__]  [03d17458] Service is alive, uptime: 330.2s
-2025-11-10 11:34:17.883 [INFO] [__main__]  [03d17458] Service is alive, uptime: 360.2s
-2025-11-10 11:34:47.914 [INFO] [__main__]  [03d17458] Service is alive, uptime: 390.2s
-2025-11-10 11:35:17.927 [INFO] [__main__]  [03d17458] Service is alive, uptime: 420.3s
-2025-11-10 11:35:47.956 [INFO] [__main__]  [03d17458] Service is alive, uptime: 450.3s
-2025-11-10 11:36:17.987 [INFO] [__main__]  [03d17458] Service is alive, uptime: 480.3s
-2025-11-10 11:36:48.009 [INFO] [__main__]  [03d17458] Service is alive, uptime: 510.3s
+{'task_id': '07851541-ac2e-4b45-a59a-9d7ef934b1e9', 'racks': {'14': [{'boundary': [(11395355, 3113483), (11465143, 3113483), (11465143, 3116839), (11395355, 3116839), (11395355, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3113483), (11465143, 3113483), (11465143, 3116839), (11395355, 3116839), (11395355, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3125483), (11465143, 3125483), (11465143, 3128839), (11395355, 3128839), (11395355, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3125483), (11465143, 3125483), (11465143, 3128839), (11395355, 3128839), (11395355, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3137483), (11465143, 3137483), (11465143, 3140839), (11395355, 3140839), (11395355, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3137483), (11465143, 3137483), (11465143, 3140839), (11395355, 3140839), (11395355, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3149483), (11465143, 3149483), (11465143, 3152839), (11395355, 3152839), (11395355, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3149483), (11465143, 3149483), (11465143, 3152839), (11395355, 3152839), (11395355, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3104501), (11465143, 3104501), (11465143, 3105701), (11395355, 3105701), (11395355, 3104501)], 'sections_in_length': 25, 'sections_in_width': 1, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': None}, {'boundary': [(11395355, 3113483), (11465143, 3113483), (11465143, 3116839), (11395355, 3116839), (11395355, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3113483), (11465143, 3113483), (11465143, 3116839), (11395355, 3116839), (11395355, 3113483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3125483), (11465143, 3125483), (11465143, 3128839), (11395355, 3128839), (11395355, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3125483), (11465143, 3125483), (11465143, 3128839), (11395355, 3128839), (11395355, 3125483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3137483), (11465143, 3137483), (11465143, 3140839), (11395355, 3140839), (11395355, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3137483), (11465143, 3137483), (11465143, 3140839), (11395355, 3140839), (11395355, 3137483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3149483), (11465143, 3149483), (11465143, 3152839), (11395355, 3152839), (11395355, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3149483), (11465143, 3149483), (11465143, 3152839), (11395355, 3152839), (11395355, 3149483)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 1100}, {'boundary': [(11395355, 3108700), (11465143, 3108700), (11465143, 3109900), (11395355, 3109900), (11395355, 3108700)], 'sections_in_length': 25, 'sections_in_width': 1, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': None}, {'boundary': [(11395355, 3119839), (11465143, 3119839), (11465143, 3122295), (11395355, 3122295), (11395355, 3119839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395355, 3131839), (11465143, 3131839), (11465143, 3134295), (11395355, 3134295), (11395355, 3131839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395355, 3143839), (11465143, 3143839), (11465143, 3146295), (11395355, 3146295), (11395355, 3143839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395355, 3155839), (11465143, 3155839), (11465143, 3158295), (11395355, 3158295), (11395355, 3155839)], 'sections_in_length': 25, 'sections_in_width': 2, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700], [2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': 200}, {'boundary': [(11395355, 3161295), (11465143, 3161295), (11465143, 3162495), (11395355, 3162495), (11395355, 3161295)], 'sections_in_length': 25, 'sections_in_width': 1, 'sections_in_height': 5, 'sections_in_height_special': 3, 'pallet_with_cargo_height': 1145, 'pallet_with_cargo_extra_height': 125, 'beam_height': 100, 'frame_height_eps': 100, 'metric_frame_height': 6950, 'metric_special_frame_height': 6950, 'orientation': 0, 'upright_section': (80, 75, 2.0), 'beam_section': (100, 1.5), 'pallet_size': (800, 1200), 'units': [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]], 'special_units': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 'beam_lengths': [[2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700, 2700]], 'rack_distance': None}]}, 'warnings_and_errors': '', 'success_predict': True}
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] ==================================================
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] ML Processing Summary for task: 07851541-ac2e-4b45-a59a-9d7ef934b1e9
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] Total time: 20.231s
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] Processed 1 cargo types -> 1 pallets
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] Used 1 available zones, 8 occupied zones
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] Success: True
+2025-11-10 12:09:54.574 [INFO] [process_ml[d003cfca]] ==================================================
+2025-11-10 12:09:54.575 [INFO] [MessageHandler[20ee0474]] Message [ID: 599bac45] processed successfully in 20.234s (processor: 20.234s)
+2025-11-10 12:10:24.599 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 248.7s
+2025-11-10 12:10:54.627 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 278.7s
+2025-11-10 12:11:24.656 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 308.7s
+2025-11-10 12:11:54.675 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 338.7s
+2025-11-10 12:12:24.703 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 368.8s
+2025-11-10 12:12:54.733 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 398.8s
+2025-11-10 12:13:24.763 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 428.8s
+2025-11-10 12:13:54.794 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 458.8s
+2025-11-10 12:14:24.824 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 488.9s
+2025-11-10 12:14:54.852 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 518.9s
+2025-11-10 12:15:24.879 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 548.9s
+2025-11-10 12:15:54.895 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 578.9s
+2025-11-10 12:16:24.924 [INFO] [__main__]  [b018ad6b] Service is alive, uptime: 609.0s
