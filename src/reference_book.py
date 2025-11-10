@@ -104,7 +104,7 @@ class ReferenceBook:
         
         # Minimum width of a free strip to be considered for rack placement
         # Strips narrower than this will be left as passages
-        self.min_free_strip_width = 2000.0
+        self.min_free_strip_width = 1200.0
         
         # =====================================================================
         # NEW: COLUMN IDENTIFICATION PARAMETERS
