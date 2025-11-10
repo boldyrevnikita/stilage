@@ -866,6 +866,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
     def has_regular_racks_in_zone():
         start_idx = getattr(solution, 'rack_groups_before_zone', 0)
         
+        # Проверяем сохранённые группы
         for i in range(start_idx, len(solution.saved_rack_groups)):
             rg = solution.saved_rack_groups[i]
             if hasattr(rg, 'is_protective') and rg.is_protective:
@@ -873,8 +874,21 @@ def set_next_rack_type_double_or_single_based_on_strip(
             if len(rg.racks) > 0:
                 return True
         
-        if solution.current_rack_group and len(solution.current_rack_group.racks) > 0:
-            return True
+        # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем ТЕКУЩУЮ группу!
+        # Если в ней уже есть хотя бы один rack, значит это НЕ первый rack
+        if solution.current_rack_group:
+            # Считаем только не-protective racks
+            regular_racks_count = 0
+            for rack in solution.current_rack_group.racks:
+                is_protective = False
+                if isinstance(rack, DoubleRack):
+                    is_protective = getattr(rack, 'is_protective', False)
+                
+                if not is_protective:
+                    regular_racks_count += 1
+            
+            if regular_racks_count > 0:
+                return True
         
         return False
     
