@@ -205,7 +205,8 @@ def analyze_free_strips(
     # Strip below first rack
     first_rack = sorted_racks[0]
     strip_y_min = zone_bounds[1]
-    strip_y_max = first_rack.bounds[1] - reference_book.roads_width
+    strip_y_max = first_rack.bounds[1]
+    #strip_y_max = first_rack.bounds[1] - reference_book.roads_width
     strip_width = strip_y_max - strip_y_min
     
     if strip_width >= reference_book.min_free_strip_width:
