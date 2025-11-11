@@ -64,7 +64,23 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                 geometry_list.append(shapely.geometry.LineString(pts))
         elif type(entity) is ezdxf.entities.LWPolyline:
             vertices = [(p[0], p[1]) for p in entity.vertices_in_wcs()]
-            if entity.is_closed:
+            
+            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем, замкнут ли контур ФАКТИЧЕСКИ
+            # Даже если флаг closed=0, если первая и последняя вершины совпадают,
+            # это фактически замкнутый контур!
+            is_actually_closed = entity.is_closed
+            
+            if not is_actually_closed and len(vertices) >= 3:
+                # Проверяем, совпадают ли первая и последняя точки
+                first = vertices[0]
+                last = vertices[-1]
+                distance = ((first[0] - last[0])**2 + (first[1] - last[1])**2)**0.5
+                
+                # Если расстояние меньше 0.1мм, считаем замкнутым
+                if distance < 0.1:
+                    is_actually_closed = True
+            
+            if is_actually_closed:
                 poly = _safe_polygon(vertices)
                 if poly is not None:
                     geometry_list.append(poly)
@@ -140,6 +156,55 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                                 geometry_list.append(shapely.geometry.LineString(pts))
 
         elif type(entity) is ezdxf.entities.Insert:
+            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обработка INSERT блоков (символов колонн)
+            # 
+            # Проблема: INSERT блоки (Block Reference) разворачиваются в отдельные LINE,
+            # которые после buffer() и union превращаются в большие полигоны.
+            #
+            # Решение: Проверяем размер блока. Если это маленький квадратный блок
+            # (вероятная колонна), создаем полигон из его bounding box вместо
+            # разворачивания в примитивы.
+            
+            try:
+                # Получаем bounding box блока
+                bbox = entity.bounding_box
+                if bbox:
+                    min_x, min_y = bbox.extmin.x, bbox.extmin.y
+                    max_x, max_y = bbox.extmax.x, bbox.extmax.y
+                    width = max_x - min_x
+                    height = max_y - min_y
+                    max_dim = max(width, height)
+                    
+                    # Параметры для определения "маленького квадратного блока"
+                    MIN_BLOCK_SIZE = 400   # мм
+                    MAX_BLOCK_SIZE = 2000  # мм
+                    MAX_BLOCK_ASPECT = 2.0
+                    
+                    # Проверяем, является ли это маленьким квадратным блоком (колонной)
+                    is_small = MIN_BLOCK_SIZE <= max_dim <= MAX_BLOCK_SIZE
+                    is_square = (max_dim / min(width, height) <= MAX_BLOCK_ASPECT 
+                                if min(width, height) > 0 else False)
+                    
+                    if is_small and is_square:
+                        # Это маленький квадратный блок - вероятно, символ колонны!
+                        # Создаем полигон из bounding box вместо разворачивания
+                        vertices = [
+                            (min_x, min_y),
+                            (max_x, min_y),
+                            (max_x, max_y),
+                            (min_x, max_y),
+                            (min_x, min_y)  # Замыкаем
+                        ]
+                        poly = _safe_polygon(vertices)
+                        if poly is not None:
+                            geometry_list.append(poly)
+                            logger.debug(f"[DXF_PARSE] Создан полигон из INSERT блока: "
+                                       f"{width:.1f}×{height:.1f}мм")
+                        continue  # Не разворачиваем блок в примитивы!
+            except Exception as e:
+                logger.debug(f"[DXF_PARSE] Не удалось получить bbox для INSERT: {e}")
+            
+            # Для больших или нестандартных блоков - разворачиваем как раньше
             for v_entity in entity.virtual_entities():
                 q.put(v_entity)
         elif type(entity) is ezdxf.entities.Spline:
