@@ -249,7 +249,7 @@ def get_rack_placement_states() -> dict[str, State]:
         f'{Block.RACK_PLACEMENT}-DD2R': State(
             actions.swap_double_rack_to_single_rack,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
-            [f'{Block.RACK_PLACEMENT}-SRG']),
+            [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']),
         
         # === Сохранение группы стеллажей ===
         f'{Block.RACK_PLACEMENT}-SRG': State(
