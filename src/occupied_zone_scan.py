@@ -64,21 +64,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                 geometry_list.append(shapely.geometry.LineString(pts))
         elif type(entity) is ezdxf.entities.LWPolyline:
             vertices = [(p[0], p[1]) for p in entity.vertices_in_wcs()]
-            
-            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем, замкнут ли контур ФАКТИЧЕСКИ
-            is_actually_closed = entity.is_closed
-            
-            if not is_actually_closed and len(vertices) >= 3:
-                # Проверяем, совпадают ли первая и последняя точки
-                first = vertices[0]
-                last = vertices[-1]
-                distance = ((first[0] - last[0])**2 + (first[1] - last[1])**2)**0.5
-                
-                # Если расстояние меньше 0.1мм, считаем замкнутым
-                if distance < 0.1:
-                    is_actually_closed = True
-            
-            if is_actually_closed:
+            if entity.is_closed:
                 poly = _safe_polygon(vertices)
                 if poly is not None:
                     geometry_list.append(poly)
@@ -154,141 +140,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                                 geometry_list.append(shapely.geometry.LineString(pts))
 
         elif type(entity) is ezdxf.entities.Insert:
-            # ✅ ОБРАБОТКА INSERT блоков с диагностикой
-            try:
-                # Разворачиваем блок в виртуальные объекты
-                virtual_entities = list(entity.virtual_entities())
-                
-                logger.debug(f"[DXF_PARSE] INSERT блок: virtual_entities={len(virtual_entities)}")
-                
-                if not virtual_entities:
-                    logger.debug(f"[DXF_PARSE] INSERT блок пуст, пропускаем")
-                    continue
-                
-                # ✅ ДИАГНОСТИКА: Типы объектов в INSERT блоке
-                entity_types = {}
-                for v_entity in virtual_entities:
-                    entity_type = type(v_entity).__name__
-                    entity_types[entity_type] = entity_types.get(entity_type, 0) + 1
-                
-                logger.warning(f"[DXF_PARSE] 📊 Типы объектов в INSERT блоке:")
-                for etype, count in sorted(entity_types.items(), key=lambda x: -x[1]):
-                    logger.warning(f"[DXF_PARSE]    {etype}: {count}")
-                
-                # Вычисляем bounding box из виртуальных объектов
-                all_coords = []
-                for v_entity in virtual_entities:
-                    try:
-                        # LINE объекты
-                        if type(v_entity) is ezdxf.entities.Line:
-                            all_coords.append((v_entity.dxf.start.x, v_entity.dxf.start.y))
-                            all_coords.append((v_entity.dxf.end.x, v_entity.dxf.end.y))
-                        
-                        # LWPOLYLINE объекты
-                        elif type(v_entity) is ezdxf.entities.LWPolyline:
-                            vertices = [(p[0], p[1]) for p in v_entity.vertices_in_wcs()]
-                            all_coords.extend(vertices)
-                        
-                        # POLYLINE объекты
-                        elif type(v_entity) is ezdxf.entities.Polyline:
-                            vertices = [(p[0], p[1]) for p in v_entity.points_in_wcs()]
-                            all_coords.extend(vertices)
-                        
-                        # ARC объекты
-                        elif type(v_entity) is ezdxf.entities.Arc:
-                            center = v_entity.ocs().to_wcs(v_entity.dxf.center)
-                            radius = v_entity.dxf.radius
-                            # Добавляем начало и конец дуги
-                            start_angle = np.deg2rad(v_entity.dxf.start_angle)
-                            end_angle = np.deg2rad(v_entity.dxf.end_angle)
-                            all_coords.append((center[0] + radius * np.cos(start_angle),
-                                            center[1] + radius * np.sin(start_angle)))
-                            all_coords.append((center[0] + radius * np.cos(end_angle),
-                                            center[1] + radius * np.sin(end_angle)))
-                        
-                        # CIRCLE объекты
-                        elif type(v_entity) is ezdxf.entities.Circle:
-                            center = v_entity.ocs().to_wcs(v_entity.dxf.center)
-                            radius = v_entity.dxf.radius
-                            # Добавляем крайние точки круга
-                            all_coords.extend([
-                                (center[0] - radius, center[1]),
-                                (center[0] + radius, center[1]),
-                                (center[0], center[1] - radius),
-                                (center[0], center[1] + radius)
-                            ])
-                        
-                        # Point объекты
-                        elif type(v_entity) is ezdxf.entities.Point:
-                            loc = v_entity.dxf.location
-                            all_coords.append((loc.x, loc.y))
-                        
-                        # SOLID объекты
-                        elif type(v_entity) is ezdxf.entities.Solid:
-                            vertices = [(point[0], point[1]) for point in v_entity.wcs_vertices()]
-                            all_coords.extend(vertices)
-                            
-                    except Exception as e:
-                        logger.debug(f"[DXF_PARSE] Ошибка извлечения координат из {type(v_entity).__name__}: {e}")
-                        continue
-                
-                logger.warning(f"[DXF_PARSE] INSERT блок: извлечено {len(all_coords)} координат из {len(virtual_entities)} объектов")
-                
-                if len(all_coords) >= 3:
-                    # Вычисляем bounds
-                    xs = [c[0] for c in all_coords]
-                    ys = [c[1] for c in all_coords]
-                    min_x, max_x = min(xs), max(xs)
-                    min_y, max_y = min(ys), max(ys)
-                    width = max_x - min_x
-                    height = max_y - min_y
-                    max_dim = max(width, height)
-                    
-                    logger.debug(f"[DXF_PARSE] INSERT блок: размер {width:.1f}×{height:.1f}мм, "
-                               f"bounds=({min_x:.0f},{min_y:.0f} - {max_x:.0f},{max_y:.0f})")
-                    
-                    # Параметры для определения "маленького квадратного блока"
-                    MIN_BLOCK_SIZE = 400   # мм
-                    MAX_BLOCK_SIZE = 2000  # мм
-                    MAX_BLOCK_ASPECT = 2.0
-                    
-                    # Проверяем, является ли это маленьким квадратным блоком (колонной)
-                    is_small = MIN_BLOCK_SIZE <= max_dim <= MAX_BLOCK_SIZE
-                    is_square = (max_dim / min(width, height) <= MAX_BLOCK_ASPECT 
-                                if min(width, height) > 0 else False)
-                    
-                    logger.debug(f"[DXF_PARSE] INSERT блок: is_small={is_small}, is_square={is_square} "
-                               f"(max_dim={max_dim:.1f}, aspect={(max_dim / min(width, height) if min(width, height) > 0 else 999):.2f})")
-                    
-                    if is_small and is_square:
-                        # Это маленький квадратный блок - вероятно, символ колонны!
-                        # Создаем полигон из bounding box вместо разворачивания в LINE
-                        vertices = [
-                            (min_x, min_y),
-                            (max_x, min_y),
-                            (max_x, max_y),
-                            (min_x, max_y),
-                            (min_x, min_y)  # Замыкаем
-                        ]
-                        poly = _safe_polygon(vertices)
-                        if poly is not None:
-                            geometry_list.append(poly)
-                            logger.warning(f"[DXF_PARSE] ✅ Создан полигон из INSERT блока: "
-                                         f"{width:.1f}×{height:.1f}мм (bounds: {min_x:.0f},{min_y:.0f} - {max_x:.0f},{max_y:.0f})")
-                        else:
-                            logger.warning(f"[DXF_PARSE] ❌ Не удалось создать полигон из INSERT блока")
-                        continue  # Не разворачиваем блок в LINE объекты!
-                    else:
-                        logger.debug(f"[DXF_PARSE] INSERT блок не прошел проверку колонны, разворачиваем в примитивы")
-                else:
-                    logger.debug(f"[DXF_PARSE] INSERT блок: недостаточно координат ({len(all_coords)}), разворачиваем")
-            except Exception as e:
-                logger.warning(f"[DXF_PARSE] Ошибка обработки INSERT: {e}")
-                import traceback
-                logger.debug(traceback.format_exc())
-            
-            # Для больших или нестандартных блоков - разворачиваем в примитивы
-            for v_entity in virtual_entities:
+            for v_entity in entity.virtual_entities():
                 q.put(v_entity)
         elif type(entity) is ezdxf.entities.Spline:
             bspline = entity.construction_tool()
@@ -329,18 +181,16 @@ def filter_primitives(
 def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
-    """✅ ИСПРАВЛЕННАЯ ВЕРСИЯ: Конвертирует примитивы в полигоны БЕЗ объединения маленьких колонн.
+    """Converts a list of Shapely primitives to polygons.
     
-    КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: 
-    1. LineString полностью исключаются (это сетка и вспомогательные линии)
-    2. Маленькие квадратные полигоны (колонны) обрабатываются отдельно
-       и не участвуют в операции union
+    ✅ ДОБАВЛЕНО: Фильтрация LineString для предотвращения объединения сетки в блоки.
     
     Args:
-        primitives (List[shapely.geometry.base.BaseGeometry]): Список примитивов
-        eps (float): Epsilon для buffering
+        primitives (List[shapely.geometry.base.BaseGeometry]): The list of
+            Shapely primitives to convert.
+        eps (float): The epsilon value for buffering.
     Returns:
-        List[shapely.Polygon]: Список полигонов, где колонны остаются отдельными
+        List[shapely.Polygon]: The list of converted Shapely polygons.
     """
 
     def process_polygon(polygon: shapely.Polygon,
@@ -365,183 +215,50 @@ def get_polygons_from_primitives(
             result = polygon.buffer(-eps, join_style=2, cap_style=2)
         return result
 
-    def is_small_square_polygon(prim) -> bool:
-        """Определяет, является ли примитив маленьким квадратным полигоном (колонной).
-        
-        Критерии колонны:
-        - Это полигон (Polygon)
-        - Размер: 500-1500мм (по максимальной стороне)
-        - Форма: aspect ratio <= 1.5 (достаточно квадратная)
-        """
-        if not isinstance(prim, shapely.Polygon):
-            return False
-        
-        bounds = prim.bounds
-        width = bounds[2] - bounds[0]
-        height = bounds[3] - bounds[1]
-        
-        if min(width, height) == 0:
-            return False
-        
-        max_dim = max(width, height)
-        aspect = max_dim / min(width, height)
-        
-        # Параметры для определения колонн
-        MIN_COLUMN_SIZE = 500   # мм
-        MAX_COLUMN_SIZE = 1500  # мм
-        MAX_COLUMN_ASPECT = 1.5  # aspect ratio
-        
-        return (MIN_COLUMN_SIZE <= max_dim <= MAX_COLUMN_SIZE and 
-                aspect <= MAX_COLUMN_ASPECT)
-
     # ========================================================================
-    # ✅ ДИАГНОСТИКА: Что за примитивы попали на обработку?
-    # ========================================================================
-    
-    prim_types = {}
-    linestring_lengths = []
-    polygon_sizes = []
-    
-    for prim in primitives:
-        ptype = type(prim).__name__
-        prim_types[ptype] = prim_types.get(ptype, 0) + 1
-        
-        if isinstance(prim, shapely.LineString):
-            linestring_lengths.append(prim.length)
-        elif isinstance(prim, shapely.Polygon):
-            bounds = prim.bounds
-            width = bounds[2] - bounds[0]
-            height = bounds[3] - bounds[1]
-            max_dim = max(width, height)
-            polygon_sizes.append((max_dim, width, height))
-    
-    logger.warning(f"[ZONE_SCAN] 📊 Типы примитивов ДО фильтрации:")
-    for ptype, count in sorted(prim_types.items(), key=lambda x: -x[1]):
-        logger.warning(f"[ZONE_SCAN]    {ptype}: {count}")
-    
-    if linestring_lengths:
-        avg_len = sum(linestring_lengths) / len(linestring_lengths)
-        logger.warning(f"[ZONE_SCAN] 📏 LineString статистика: "
-                      f"кол-во={len(linestring_lengths)}, "
-                      f"min={min(linestring_lengths):.0f}мм, "
-                      f"max={max(linestring_lengths):.0f}мм, "
-                      f"avg={avg_len:.0f}мм")
-    
-    if polygon_sizes:
-        logger.warning(f"[ZONE_SCAN] 📐 Polygon статистика: кол-во={len(polygon_sizes)}")
-        polygon_sizes_sorted = sorted(polygon_sizes, reverse=True)
-        logger.warning(f"[ZONE_SCAN] Топ-10 самых больших полигонов:")
-        for i, (max_dim, width, height) in enumerate(polygon_sizes_sorted[:10], 1):
-            logger.warning(f"[ZONE_SCAN]    #{i}: {width:.0f}×{height:.0f}мм")
-    
-    # ========================================================================
-    # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убираем ВСЕ LineString ПЕРЕД объединением!
+    # ✅ ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: Фильтруем LineString перед обработкой
     # ========================================================================
     
     filtered_primitives = []
-    filtered_linestrings = 0
-    filtered_other = 0
+    filtered_count = 0
     
     for prim in primitives:
         if isinstance(prim, shapely.LineString):
             # Пропускаем ВСЕ линии - они не несут информации об occupied zones
-            filtered_linestrings += 1
+            filtered_count += 1
             continue
-        elif isinstance(prim, shapely.Polygon):
-            # Только полигоны идут дальше
-            filtered_primitives.append(prim)
-        else:
-            # На всякий случай логируем неожиданные типы
-            filtered_other += 1
-            logger.debug(f"[ZONE_SCAN] Отфильтрован неожиданный тип: {type(prim).__name__}")
+        filtered_primitives.append(prim)
     
-    logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано LineString: {filtered_linestrings}")
-    if filtered_other > 0:
-        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано других типов: {filtered_other}")
-    logger.warning(f"[ZONE_SCAN] ✅ Осталось Polygon для обработки: {len(filtered_primitives)}")
+    if filtered_count > 0:
+        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано {filtered_count} LineString перед объединением")
     
     # ========================================================================
-    # ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Разделяем примитивы на колонны и остальные
+    # Дальше всё как раньше, но работаем с filtered_primitives
     # ========================================================================
-    
-    small_square_primitives = []  # Маленькие колонны - НЕ объединяем!
-    other_primitives = []          # Остальное - объединяем как раньше
-    
-    logger.info(f"[ZONE_SCAN] Анализ {len(filtered_primitives)} примитивов перед объединением...")
-    
-    for prim in filtered_primitives:
-        if is_small_square_polygon(prim):
-            small_square_primitives.append(prim)
-        else:
-            other_primitives.append(prim)
-    
-    logger.warning(f"[ZONE_SCAN] 🎯 Найдено потенциальных колонн (НЕ будут объединены): "
-                  f"{len(small_square_primitives)}")
-    logger.info(f"[ZONE_SCAN] Остальных примитивов (будут объединены): "
-               f"{len(other_primitives)}")
-    
-    # ========================================================================
-    # Обрабатываем маленькие колонны ОТДЕЛЬНО (без union!)
-    # ========================================================================
-    
-    column_polygons = []
-    for prim in small_square_primitives:
-        # Применяем только минимальную обработку
-        processed = process_polygon(prim)
-        if isinstance(processed, shapely.Polygon) and not processed.is_empty:
-            column_polygons.append(processed)
-        elif isinstance(processed, shapely.MultiPolygon):
-            # Если получился MultiPolygon, берем самый большой
-            largest = max(processed.geoms, key=lambda p: p.area)
-            if not largest.is_empty:
-                column_polygons.append(largest)
-    
-    logger.warning(f"[ZONE_SCAN] ✅ Сохранено {len(column_polygons)} отдельных колонн")
-    
-    # ========================================================================
-    # Обрабатываем остальные примитивы КАК РАНЬШЕ (с union)
-    # ========================================================================
-    
-    other_polygons = []
-    
-    if other_primitives:
-        # Применяем buffer ко всем остальным примитивам
-        primitives_processed = []
-        for prim in other_primitives:
-            primitives_processed.append(prim.buffer(
-                eps, join_style=2, cap_style=2))
 
-        # Объединяем только НЕ-колонны
-        gm = shapely.disjoint_subset_union_all(primitives_processed)
+    polygons = []
+    primitives_processed = []
+    for prim in filtered_primitives:  # ← ИЗМЕНЕНО: использует filtered_primitives
+        primitives_processed.append(prim.buffer(
+            eps, join_style=2, cap_style=2))
 
-        # Конвертируем результат в список полигонов
-        q = deque()
-        q.append(gm)
-        while q:
-            gm = q.popleft()
-            if type(gm) is shapely.Polygon:
-                entity = process_polygon(gm)
-                if isinstance(entity, shapely.MultiPolygon):
-                    q.append(entity)
-                else:
-                    if not entity.is_empty:
-                        other_polygons.append(entity)
-            elif type(gm) is shapely.MultiPolygon:
-                for entity in gm.geoms:
-                    q.append(entity)
-        
-        logger.info(f"[ZONE_SCAN] Получено {len(other_polygons)} объединенных полигонов")
+    gm = shapely.disjoint_subset_union_all(primitives_processed)
 
-    # ========================================================================
-    # Объединяем результаты: колонны + остальное
-    # ========================================================================
-    
-    all_polygons = column_polygons + other_polygons
-    
-    logger.warning(f"[ZONE_SCAN] 📊 Итого полигонов: {len(all_polygons)} "
-                  f"({len(column_polygons)} колонн + {len(other_polygons)} других)")
+    q = deque()
+    q.append(gm)
+    while q:
+        gm = q.popleft()
+        if type(gm) is shapely.Polygon:
+            entity = process_polygon(gm)
+            if isinstance(entity, shapely.MultiPolygon):
+                q.append(entity)
+            else:
+                polygons.append(entity)
+        elif type(gm) is shapely.MultiPolygon:
+            for entity in gm.geoms:
+                q.append(entity)
 
-    return all_polygons
+    return polygons
 
 
 def filter_empty_polygons(
@@ -587,13 +304,19 @@ def filter_thin_polygons(
     polygons: list[shapely.Polygon],
     min_dimension_threshold: float = 10.0
 ) -> list[shapely.Polygon]:
-    """Фильтрует очень тонкие полигоны - артефакты DXF.
+    """✅ НОВАЯ ФУНКЦИЯ: Фильтрует очень тонкие полигоны - артефакты DXF.
     
     Эта функция удаляет полигоны, где ширина или высота ниже минимального порога.
+    Такие полигоны обычно являются:
+    - Тонкими линиями из DXF аннотаций
+    - Границами текстовых блоков
+    - Размерными линиями
+    - Другими нефизическими артефактами DXF
     
     Args:
         polygons (list[shapely.Polygon]): Список полигонов для фильтрации
-        min_dimension_threshold (float): Минимальная ширина или высота
+        min_dimension_threshold (float): Минимальная ширина или высота для валидного
+            полигона. По умолчанию 10мм (разумно для складских препятствий)
     
     Returns:
         list[shapely.Polygon]: Отфильтрованный список без тонких артефактов
@@ -603,9 +326,10 @@ def filter_thin_polygons(
     
     for polygon in polygons:
         bounds = polygon.bounds
-        width = bounds[2] - bounds[0]
-        height = bounds[3] - bounds[1]
+        width = bounds[2] - bounds[0]   # max_x - min_x
+        height = bounds[3] - bounds[1]  # max_y - min_y
         
+        # Пропускаем очень тонкие полигоны (скорее всего артефакты DXF)
         if width < min_dimension_threshold or height < min_dimension_threshold:
             logger.debug(f"[ZONE_FILTER] Отфильтрован тонкий полигон: "
                         f"bounds={bounds}, width={width:.1f}мм, height={height:.1f}мм")
@@ -623,7 +347,8 @@ def filter_thin_polygons(
 def filter_elongated_polygons(polygons: list[shapely.Polygon],
                               max_aspect_ratio: float = 10.0) -> list[shapely.Polygon]:
     """
-    Убирает полигоны с aspect ratio выше порога.
+    Убирает полигоны, у которых отношение длинной стороны к короткой
+    превышает max_aspect_ratio.
     """
     result = []
     for poly in polygons:
@@ -681,25 +406,27 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                             roads_width: float,
                             min_zone_dimension: float = 10.0
                             ) -> List[OccupiedZone]:
-    """✅ ИСПРАВЛЕННАЯ ВЕРСИЯ: Сканирует DXF с сохранением отдельных колонн.
+    """✅ УЛУЧШЕННАЯ ФУНКЦИЯ: Сканирует DXF документ на occupied zones с фильтрацией артефактов.
     
-    Теперь маленькие квадратные полигоны (колонны) не объединяются в большие блоки.
+    Теперь включает фильтрацию тонких полигонов для предотвращения создания
+    ложных препятствий из DXF артефактов.
     
     Args:
-        doc (ezdxf.document.Drawing): DXF документ
+        doc (ezdxf.document.Drawing): DXF документ для сканирования
         available_zones (List[AvailableZone]): Список доступных зон
         occupied_zone_clearance (float): Зазор для occupied zones
-        roads_width (float): Ширина дорог
-        min_zone_dimension (float): Минимальный размер валидной зоны
+        roads_width (float): Ширина дорог вокруг occupied zones
+        min_zone_dimension (float): Минимальная ширина или высота для валидной
+            occupied zone. По умолчанию 10мм.
     Returns:
-        List[OccupiedZone]: Список occupied zones с сохранением колонн
+        List[OccupiedZone]: Список найденных occupied zones без артефактов
     """
     logger.info(f"[ZONE_SCAN] 🔍 Начало сканирования occupied zones (мин. размер={min_zone_dimension:.1f}мм)")
     
     occupied_zones = []
     geometries = []
 
-    # Извлекаем геометрии из DXF
+    # Извлекаем все геометрии из DXF
     msp = doc.modelspace()
     entity_count = 0
     for entity in msp:
@@ -712,31 +439,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     geometries = filter_primitives(geometries, available_zones)
     logger.info(f"[ZONE_SCAN] После фильтрации по зонам: {len(geometries)} геометрий")
     
-    # ✅ ДИАГНОСТИКА: Анализ типов и размеров после фильтрации по зонам
-    geom_types = {}
-    geom_polygon_sizes = []
-    for geom in geometries:
-        gtype = type(geom).__name__
-        geom_types[gtype] = geom_types.get(gtype, 0) + 1
-        
-        if isinstance(geom, shapely.Polygon):
-            bounds = geom.bounds
-            width = bounds[2] - bounds[0]
-            height = bounds[3] - bounds[1]
-            max_dim = max(width, height)
-            geom_polygon_sizes.append((max_dim, width, height))
-    
-    logger.warning(f"[ZONE_SCAN] 📊 Типы геометрий после фильтрации по зонам:")
-    for gtype, count in sorted(geom_types.items(), key=lambda x: -x[1]):
-        logger.warning(f"[ZONE_SCAN]    {gtype}: {count}")
-    
-    if geom_polygon_sizes:
-        geom_polygon_sizes.sort(reverse=True)
-        logger.warning(f"[ZONE_SCAN] 📏 Топ-20 полигонов по размеру (после фильтрации по зонам):")
-        for i, (max_dim, width, height) in enumerate(geom_polygon_sizes[:20], 1):
-            logger.warning(f"[ZONE_SCAN]    #{i}: {width:.0f}×{height:.0f}мм (max={max_dim:.0f})")
-    
-    # ✅ КЛЮЧЕВОЕ МЕСТО: get_polygons_from_primitives() теперь НЕ объединяет колонны!
     polygons = get_polygons_from_primitives(geometries)
     logger.info(f"[ZONE_SCAN] После конвертации в полигоны: {len(polygons)} полигонов")
     
@@ -746,6 +448,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     polygons = filter_small_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации малых по площади: {len(polygons)} полигонов")
     
+    # ✅ НОВОЕ: Фильтруем тонкие полигоны (артефакты DXF)
     polygons = filter_thin_polygons(polygons, min_zone_dimension)
     polygons = filter_elongated_polygons(polygons, max_aspect_ratio=10)
     logger.info(f"[ZONE_SCAN] После фильтрации тонких полигонов: {len(polygons)} полигонов")
@@ -753,7 +456,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     polygons = filter_intersecting_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации пересекающихся: {len(polygons)} полигонов")
 
-    # Конвертируем в OccupiedZone
+    # Конвертируем в объекты OccupiedZone
     for i, polygon in enumerate(polygons):
         try:
             bounds = polygon.bounds
@@ -771,15 +474,16 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                         f"bounds={bounds}, размер={width:.1f}x{height:.1f}мм")
                         
         except Exception as e:
-            logger.warning(f"[ZONE_SCAN] ❌ Ошибка создания OccupiedZone {i}: {e}")
+            logger.warning(f"[ZONE_SCAN] ❌ Ошибка создания OccupiedZone из полигона {i}: {e}")
             continue
 
     logger.warning(f"[ZONE_SCAN] ✅ Успешно создано {len(occupied_zones)} occupied zones")
     
-    # Диагностика
+    # Дополнительная диагностика
     if len(occupied_zones) == 0:
         logger.warning("[ZONE_SCAN] ⚠️  ВНИМАНИЕ: Не найдено ни одной occupied zone!")
     else:
+        # Показываем статистику размеров найденных зон
         widths = []
         heights = []
         for zone in occupied_zones:
