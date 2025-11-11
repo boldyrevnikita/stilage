@@ -320,6 +320,25 @@ def filter_thin_polygons(
     
     return filtered_polygons
 
+def filter_elongated_polygons(polygons: list[shapely.Polygon],
+                              max_aspect_ratio: float = 10.0) -> list[shapely.Polygon]:
+    """
+    Убирает полигоны, у которых отношение длинной стороны к короткой
+    превышает max_aspect_ratio.
+    """
+    result = []
+    for poly in polygons:
+        bounds = poly.bounds
+        width = bounds[2] - bounds[0]
+        height = bounds[3] - bounds[1]
+        aspect = max(width, height) / min(width, height)
+        if aspect <= max_aspect_ratio:
+            result.append(poly)
+        else:
+            logger.debug(f"[ZONE_FILTER] Отфильтрован вытянутый полигон: bounds={bounds}, aspect={aspect:.1f}")
+    return result
+
+
 
 def filter_intersecting_polygons(
     polygons: List[shapely.Polygon],
@@ -406,6 +425,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     
     # ✅ НОВОЕ: Фильтруем тонкие полигоны (артефакты DXF)
     polygons = filter_thin_polygons(polygons, min_zone_dimension)
+    polygons = filter_elongated_polygons(polygons, max_aspect_ratio=10)
     logger.info(f"[ZONE_SCAN] После фильтрации тонких полигонов: {len(polygons)} полигонов")
     
     polygons = filter_intersecting_polygons(polygons)
