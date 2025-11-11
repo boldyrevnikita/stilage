@@ -182,10 +182,6 @@ def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
     """Converts a list of Shapely primitives to polygons.
-    
-    ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убирает длинные вытянутые LineString (сетка),
-    но оставляет короткие компактные LineString (контуры колонн).
-    
     Args:
         primitives (List[shapely.geometry.base.BaseGeometry]): The list of
             Shapely primitives to convert.
@@ -216,53 +212,9 @@ def get_polygons_from_primitives(
             result = polygon.buffer(-eps, join_style=2, cap_style=2)
         return result
 
-    # ========================================================================
-    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем ДЛИННЫЕ LineString (сетка), 
-    # но оставляем короткие (контуры колонн ~840мм)
-    # ========================================================================
-    
-    filtered_primitives = []
-    filtered_count = 0
-    kept_linestrings = 0
-    
-    for prim in primitives:
-        if isinstance(prim, shapely.LineString):
-            # Проверяем размер линии через bounding box
-            bounds = prim.bounds
-            width = bounds[2] - bounds[0]
-            height = bounds[3] - bounds[1]
-            max_dim = max(width, height)
-            min_dim = min(width, height)
-            
-            # Вычисляем aspect ratio (вытянутость)
-            aspect = max_dim / min_dim if min_dim > 0 else 999
-            
-            # Фильтруем если:
-            # 1. Длинная линия (> 1500мм) - скорее всего сетка
-            # 2. ИЛИ очень вытянутая (aspect ratio > 10) - линии сетки
-            if max_dim > 1500 or aspect > 10:
-                filtered_count += 1
-                continue
-            
-            # Короткие/компактные линии оставляем (могут быть контурами колонн)
-            kept_linestrings += 1
-            
-        filtered_primitives.append(prim)
-    
-    if filtered_count > 0:
-        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано {filtered_count} длинных/вытянутых LineString "
-                      f"(> 1500мм или aspect > 10)")
-    if kept_linestrings > 0:
-        logger.info(f"[ZONE_SCAN] ✅ Сохранено {kept_linestrings} коротких LineString "
-                   f"(могут быть контурами колонн)")
-    
-    # ========================================================================
-    # Дальше всё как раньше, но работаем с filtered_primitives
-    # ========================================================================
-
     polygons = []
     primitives_processed = []
-    for prim in filtered_primitives:
+    for prim in primitives:
         primitives_processed.append(prim.buffer(
             eps, join_style=2, cap_style=2))
 
@@ -368,26 +320,6 @@ def filter_thin_polygons(
     
     return filtered_polygons
 
-def filter_elongated_polygons(polygons: list[shapely.Polygon],
-                              max_aspect_ratio: float = 10.0) -> list[shapely.Polygon]:
-    """
-    Убирает полигоны, у которых отношение длинной стороны к короткой
-    превышает max_aspect_ratio.
-    """
-    result = []
-    for poly in polygons:
-        bounds = poly.bounds
-        width = bounds[2] - bounds[0]
-        height = bounds[3] - bounds[1]
-        if min(width, height) == 0:
-            continue
-        aspect = max(width, height) / min(width, height)
-        if aspect <= max_aspect_ratio:
-            result.append(poly)
-        else:
-            logger.debug(f"[ZONE_FILTER] Отфильтрован вытянутый полигон: bounds={bounds}, aspect={aspect:.1f}")
-    return result
-
 
 def filter_intersecting_polygons(
     polygons: List[shapely.Polygon],
@@ -474,7 +406,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     
     # ✅ НОВОЕ: Фильтруем тонкие полигоны (артефакты DXF)
     polygons = filter_thin_polygons(polygons, min_zone_dimension)
-    polygons = filter_elongated_polygons(polygons, max_aspect_ratio=10)
     logger.info(f"[ZONE_SCAN] После фильтрации тонких полигонов: {len(polygons)} полигонов")
     
     polygons = filter_intersecting_polygons(polygons)
