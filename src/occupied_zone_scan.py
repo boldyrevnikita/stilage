@@ -183,7 +183,8 @@ def get_polygons_from_primitives(
         eps: float = 1e-9) -> List[shapely.Polygon]:
     """Converts a list of Shapely primitives to polygons.
     
-    ✅ ДОБАВЛЕНО: Фильтрация LineString для предотвращения объединения сетки в блоки.
+    ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убирает длинные вытянутые LineString (сетка),
+    но оставляет короткие компактные LineString (контуры колонн).
     
     Args:
         primitives (List[shapely.geometry.base.BaseGeometry]): The list of
@@ -216,21 +217,44 @@ def get_polygons_from_primitives(
         return result
 
     # ========================================================================
-    # ✅ ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: Фильтруем LineString перед обработкой
+    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем ДЛИННЫЕ LineString (сетка), 
+    # но оставляем короткие (контуры колонн ~840мм)
     # ========================================================================
     
     filtered_primitives = []
     filtered_count = 0
+    kept_linestrings = 0
     
     for prim in primitives:
         if isinstance(prim, shapely.LineString):
-            # Пропускаем ВСЕ линии - они не несут информации об occupied zones
-            filtered_count += 1
-            continue
+            # Проверяем размер линии через bounding box
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            max_dim = max(width, height)
+            min_dim = min(width, height)
+            
+            # Вычисляем aspect ratio (вытянутость)
+            aspect = max_dim / min_dim if min_dim > 0 else 999
+            
+            # Фильтруем если:
+            # 1. Длинная линия (> 1500мм) - скорее всего сетка
+            # 2. ИЛИ очень вытянутая (aspect ratio > 10) - линии сетки
+            if max_dim > 1500 or aspect > 10:
+                filtered_count += 1
+                continue
+            
+            # Короткие/компактные линии оставляем (могут быть контурами колонн)
+            kept_linestrings += 1
+            
         filtered_primitives.append(prim)
     
     if filtered_count > 0:
-        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано {filtered_count} LineString перед объединением")
+        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано {filtered_count} длинных/вытянутых LineString "
+                      f"(> 1500мм или aspect > 10)")
+    if kept_linestrings > 0:
+        logger.info(f"[ZONE_SCAN] ✅ Сохранено {kept_linestrings} коротких LineString "
+                   f"(могут быть контурами колонн)")
     
     # ========================================================================
     # Дальше всё как раньше, но работаем с filtered_primitives
@@ -238,7 +262,7 @@ def get_polygons_from_primitives(
 
     polygons = []
     primitives_processed = []
-    for prim in filtered_primitives:  # ← ИЗМЕНЕНО: использует filtered_primitives
+    for prim in filtered_primitives:
         primitives_processed.append(prim.buffer(
             eps, join_style=2, cap_style=2))
 
