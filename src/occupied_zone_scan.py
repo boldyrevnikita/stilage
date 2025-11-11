@@ -216,6 +216,95 @@ def get_polygons_from_primitives(
         return result
 
     # ========================================================================
+    # ✅ ДЕТАЛЬНАЯ ДИАГНОСТИКА: Логируем ВСЕ примитивы в зоне
+    # ========================================================================
+    
+    logger.warning(f"[ZONE_SCAN] 📋 ПОЛНАЯ ДИАГНОСТИКА ПРИМИТИВОВ В ЗОНЕ")
+    logger.warning(f"[ZONE_SCAN] ════════════════════════════════════════════════════════")
+    
+    linestring_list = []
+    polygon_list = []
+    other_list = []
+    
+    for idx, prim in enumerate(primitives, 1):
+        if isinstance(prim, shapely.LineString):
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            max_dim = max(width, height)
+            min_dim = min(width, height)
+            aspect = max_dim / min_dim if min_dim > 0 else 999
+            linestring_list.append({
+                'idx': idx,
+                'width': width,
+                'height': height,
+                'max_dim': max_dim,
+                'min_dim': min_dim,
+                'aspect': aspect,
+                'bounds': bounds
+            })
+        elif isinstance(prim, shapely.Polygon):
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            area = prim.area
+            polygon_list.append({
+                'idx': idx,
+                'width': width,
+                'height': height,
+                'area': area,
+                'bounds': bounds
+            })
+        else:
+            other_list.append({'idx': idx, 'type': type(prim).__name__})
+    
+    logger.warning(f"[ZONE_SCAN] 📊 Всего примитивов: {len(primitives)}")
+    logger.warning(f"[ZONE_SCAN]    LineString: {len(linestring_list)}")
+    logger.warning(f"[ZONE_SCAN]    Polygon: {len(polygon_list)}")
+    logger.warning(f"[ZONE_SCAN]    Другие: {len(other_list)}")
+    logger.warning(f"[ZONE_SCAN] ────────────────────────────────────────────────────────")
+    
+    # Показываем ВСЕ LineString с сортировкой по размеру
+    if linestring_list:
+        linestring_list.sort(key=lambda x: x['max_dim'])
+        
+        logger.warning(f"[ZONE_SCAN] 📏 ВСЕ {len(linestring_list)} LineString (от меньшего к большему):")
+        for item in linestring_list:
+            # Определяем, что это могло бы быть
+            category = ""
+            if 700 <= item['max_dim'] <= 950 and item['min_dim'] < 10:
+                category = "🎯 КОЛОННА (700-950мм)"
+            elif item['max_dim'] > 1500:
+                category = "🗑️ ДЛИННАЯ (>1500мм)"
+            elif item['aspect'] > 10:
+                category = "🗑️ ВЫТЯНУТАЯ (aspect>10)"
+            elif item['max_dim'] < 700 and item['min_dim'] < 10:
+                category = "❓ МАЛЕНЬКАЯ (<700мм)"
+            else:
+                category = "✅ СОХРАНИТСЯ"
+            
+            logger.warning(
+                f"[ZONE_SCAN]    #{item['idx']:3d}: "
+                f"{item['width']:7.1f}×{item['height']:7.1f}мм | "
+                f"max={item['max_dim']:7.1f} min={item['min_dim']:7.1f} "
+                f"aspect={item['aspect']:6.1f} | {category}"
+            )
+    
+    # Показываем ВСЕ Polygon
+    if polygon_list:
+        polygon_list.sort(key=lambda x: x['area'], reverse=True)
+        
+        logger.warning(f"[ZONE_SCAN] 📐 ВСЕ {len(polygon_list)} Polygon (от большего к меньшему):")
+        for item in polygon_list:
+            logger.warning(
+                f"[ZONE_SCAN]    #{item['idx']:3d}: "
+                f"{item['width']:7.1f}×{item['height']:7.1f}мм | "
+                f"площадь={item['area']:10.1f}мм²"
+            )
+    
+    logger.warning(f"[ZONE_SCAN] ════════════════════════════════════════════════════════")
+
+    # ========================================================================
     # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка),
     # но сохраняем стороны колонн (линии ~840мм)
     # ========================================================================
@@ -226,6 +315,7 @@ def get_polygons_from_primitives(
     kept_column_sides = 0
     filtered_by_length = 0
     filtered_by_aspect = 0
+    filtered_by_small = 0
     
     for prim in primitives:
         if isinstance(prim, shapely.LineString):
@@ -273,7 +363,7 @@ def get_polygons_from_primitives(
     logger.warning(f"[ZONE_SCAN]    Отфильтровано по длине (> 1500мм): {filtered_by_length}")
     logger.warning(f"[ZONE_SCAN]    Отфильтровано по aspect (> 10): {filtered_by_aspect}")
     logger.warning(f"[ZONE_SCAN]    ИТОГО отфильтровано: {filtered_count}")
-    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено сторон колонн: {kept_column_sides}")
+    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено сторон колонн (700-950мм): {kept_column_sides}")
     logger.warning(f"[ZONE_SCAN]    ✅ Сохранено других LineString: {kept_linestrings - kept_column_sides}")
 
     # ========================================================================
@@ -303,6 +393,7 @@ def get_polygons_from_primitives(
                 q.append(entity)
 
     return polygons
+
 
 
 def filter_empty_polygons(
