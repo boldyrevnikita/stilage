@@ -168,20 +168,73 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                     logger.debug(f"[DXF_PARSE] INSERT блок пуст, пропускаем")
                     continue
                 
+                entity_types = {}
+                for v_entity in virtual_entities:
+                    entity_type = type(v_entity).__name__
+                    entity_types[entity_type] = entity_types.get(entity_type, 0) + 1
+                
+                logger.warning(f"[DXF_PARSE] 📊 Типы объектов в INSERT блоке:")
+                for etype, count in sorted(entity_types.items(), key=lambda x: -x[1]):
+                    logger.warning(f"[DXF_PARSE]    {etype}: {count}")
+
                 # Вычисляем bounding box из виртуальных объектов
                 all_coords = []
                 for v_entity in virtual_entities:
-                    if hasattr(v_entity, 'dxf'):
-                        # Для LINE объектов
-                        if hasattr(v_entity.dxf, 'start'):
+                    try:
+                        # LINE объекты
+                        if type(v_entity) is ezdxf.entities.Line:
                             all_coords.append((v_entity.dxf.start.x, v_entity.dxf.start.y))
-                        if hasattr(v_entity.dxf, 'end'):
                             all_coords.append((v_entity.dxf.end.x, v_entity.dxf.end.y))
-                        # Для точек
-                        if hasattr(v_entity.dxf, 'location'):
-                            all_coords.append((v_entity.dxf.location.x, v_entity.dxf.location.y))
-                
-                logger.debug(f"[DXF_PARSE] INSERT блок: извлечено {len(all_coords)} координат")
+                        
+                        # LWPOLYLINE объекты
+                        elif type(v_entity) is ezdxf.entities.LWPolyline:
+                            vertices = [(p[0], p[1]) for p in v_entity.vertices_in_wcs()]
+                            all_coords.extend(vertices)
+                        
+                        # POLYLINE объекты
+                        elif type(v_entity) is ezdxf.entities.Polyline:
+                            vertices = [(p[0], p[1]) for p in v_entity.points_in_wcs()]
+                            all_coords.extend(vertices)
+                        
+                        # ARC объекты
+                        elif type(v_entity) is ezdxf.entities.Arc:
+                            center = v_entity.ocs().to_wcs(v_entity.dxf.center)
+                            radius = v_entity.dxf.radius
+                            # Добавляем начало и конец дуги
+                            start_angle = np.deg2rad(v_entity.dxf.start_angle)
+                            end_angle = np.deg2rad(v_entity.dxf.end_angle)
+                            all_coords.append((center[0] + radius * np.cos(start_angle),
+                                            center[1] + radius * np.sin(start_angle)))
+                            all_coords.append((center[0] + radius * np.cos(end_angle),
+                                            center[1] + radius * np.sin(end_angle)))
+                        
+                        # CIRCLE объекты
+                        elif type(v_entity) is ezdxf.entities.Circle:
+                            center = v_entity.ocs().to_wcs(v_entity.dxf.center)
+                            radius = v_entity.dxf.radius
+                            # Добавляем крайние точки круга
+                            all_coords.extend([
+                                (center[0] - radius, center[1]),
+                                (center[0] + radius, center[1]),
+                                (center[0], center[1] - radius),
+                                (center[0], center[1] + radius)
+                            ])
+                        
+                        # Point объекты
+                        elif type(v_entity) is ezdxf.entities.Point:
+                            loc = v_entity.dxf.location
+                            all_coords.append((loc.x, loc.y))
+                        
+                        # SOLID объекты
+                        elif type(v_entity) is ezdxf.entities.Solid:
+                            vertices = [(point[0], point[1]) for point in v_entity.wcs_vertices()]
+                            all_coords.extend(vertices)
+                            
+                    except Exception as e:
+                        logger.debug(f"[DXF_PARSE] Ошибка извлечения координат из {type(v_entity).__name__}: {e}")
+                        continue
+
+                    logger.warning(f"[DXF_PARSE] INSERT блок: извлечено {len(all_coords)} координат из {len(virtual_entities)} объектов")
                 
                 if len(all_coords) >= 3:
                     # Вычисляем bounds
@@ -237,7 +290,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                 logger.debug(traceback.format_exc())
             
             # Для больших или нестандартных блоков - разворачиваем в примитивы
-            for v_entity in entity.virtual_entities():
+            for v_entity in virtual_entities:
                 q.put(v_entity)
         elif type(entity) is ezdxf.entities.Spline:
             bspline = entity.construction_tool()
