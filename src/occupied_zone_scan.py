@@ -157,18 +157,15 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
 
         elif type(entity) is ezdxf.entities.Insert:
             # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обработка INSERT блоков (символов колонн)
-            # 
-            # Проблема: INSERT блоки (Block Reference) разворачиваются в отдельные LINE,
-            # которые после buffer() и union превращаются в большие полигоны.
-            #
-            # Решение: Разворачиваем блок в примитивы и вычисляем bounds из них.
-            # Если это маленький квадратный блок, создаем полигон из bounds.
             
             try:
                 # Разворачиваем блок в виртуальные объекты
                 virtual_entities = list(entity.virtual_entities())
                 
+                logger.debug(f"[DXF_PARSE] INSERT блок: virtual_entities={len(virtual_entities)}")
+                
                 if not virtual_entities:
+                    logger.debug(f"[DXF_PARSE] INSERT блок пуст, пропускаем")
                     continue
                 
                 # Вычисляем bounding box из виртуальных объектов
@@ -184,6 +181,8 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                         if hasattr(v_entity.dxf, 'location'):
                             all_coords.append((v_entity.dxf.location.x, v_entity.dxf.location.y))
                 
+                logger.debug(f"[DXF_PARSE] INSERT блок: извлечено {len(all_coords)} координат")
+                
                 if len(all_coords) >= 3:
                     # Вычисляем bounds
                     xs = [c[0] for c in all_coords]
@@ -194,6 +193,9 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                     height = max_y - min_y
                     max_dim = max(width, height)
                     
+                    logger.debug(f"[DXF_PARSE] INSERT блок: размер {width:.1f}×{height:.1f}мм, "
+                               f"bounds=({min_x:.0f},{min_y:.0f} - {max_x:.0f},{max_y:.0f})")
+                    
                     # Параметры для определения "маленького квадратного блока"
                     MIN_BLOCK_SIZE = 400   # мм
                     MAX_BLOCK_SIZE = 2000  # мм
@@ -203,6 +205,9 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                     is_small = MIN_BLOCK_SIZE <= max_dim <= MAX_BLOCK_SIZE
                     is_square = (max_dim / min(width, height) <= MAX_BLOCK_ASPECT 
                                 if min(width, height) > 0 else False)
+                    
+                    logger.debug(f"[DXF_PARSE] INSERT блок: is_small={is_small}, is_square={is_square} "
+                               f"(max_dim={max_dim:.1f}, aspect={(max_dim / min(width, height) if min(width, height) > 0 else 999):.2f})")
                     
                     if is_small and is_square:
                         # Это маленький квадратный блок - вероятно, символ колонны!
@@ -219,9 +224,17 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                             geometry_list.append(poly)
                             logger.warning(f"[DXF_PARSE] ✅ Создан полигон из INSERT блока: "
                                          f"{width:.1f}×{height:.1f}мм (bounds: {min_x:.0f},{min_y:.0f} - {max_x:.0f},{max_y:.0f})")
+                        else:
+                            logger.warning(f"[DXF_PARSE] ❌ Не удалось создать полигон из INSERT блока")
                         continue  # Не разворачиваем блок в LINE объекты!
+                    else:
+                        logger.debug(f"[DXF_PARSE] INSERT блок не прошел проверку колонны, разворачиваем в примитивы")
+                else:
+                    logger.debug(f"[DXF_PARSE] INSERT блок: недостаточно координат ({len(all_coords)}), разворачиваем")
             except Exception as e:
-                logger.debug(f"[DXF_PARSE] Ошибка обработки INSERT: {e}")
+                logger.warning(f"[DXF_PARSE] Ошибка обработки INSERT: {e}")
+                import traceback
+                logger.debug(traceback.format_exc())
             
             # Для больших или нестандартных блоков - разворачиваем в примитивы
             for v_entity in entity.virtual_entities():
