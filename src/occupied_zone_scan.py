@@ -66,8 +66,6 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
             vertices = [(p[0], p[1]) for p in entity.vertices_in_wcs()]
             
             # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем, замкнут ли контур ФАКТИЧЕСКИ
-            # Даже если флаг closed=0, если первая и последняя вершины совпадают,
-            # это фактически замкнутый контур!
             is_actually_closed = entity.is_closed
             
             if not is_actually_closed and len(vertices) >= 3:
@@ -156,8 +154,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                                 geometry_list.append(shapely.geometry.LineString(pts))
 
         elif type(entity) is ezdxf.entities.Insert:
-            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Обработка INSERT блоков (символов колонн)
-            
+            # ✅ ОБРАБОТКА INSERT блоков с диагностикой
             try:
                 # Разворачиваем блок в виртуальные объекты
                 virtual_entities = list(entity.virtual_entities())
@@ -168,6 +165,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                     logger.debug(f"[DXF_PARSE] INSERT блок пуст, пропускаем")
                     continue
                 
+                # ✅ ДИАГНОСТИКА: Типы объектов в INSERT блоке
                 entity_types = {}
                 for v_entity in virtual_entities:
                     entity_type = type(v_entity).__name__
@@ -176,7 +174,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                 logger.warning(f"[DXF_PARSE] 📊 Типы объектов в INSERT блоке:")
                 for etype, count in sorted(entity_types.items(), key=lambda x: -x[1]):
                     logger.warning(f"[DXF_PARSE]    {etype}: {count}")
-
+                
                 # Вычисляем bounding box из виртуальных объектов
                 all_coords = []
                 for v_entity in virtual_entities:
@@ -233,8 +231,8 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                     except Exception as e:
                         logger.debug(f"[DXF_PARSE] Ошибка извлечения координат из {type(v_entity).__name__}: {e}")
                         continue
-
-                    logger.warning(f"[DXF_PARSE] INSERT блок: извлечено {len(all_coords)} координат из {len(virtual_entities)} объектов")
+                
+                logger.warning(f"[DXF_PARSE] INSERT блок: извлечено {len(all_coords)} координат из {len(virtual_entities)} объектов")
                 
                 if len(all_coords) >= 3:
                     # Вычисляем bounds
@@ -333,8 +331,10 @@ def get_polygons_from_primitives(
         eps: float = 1e-9) -> List[shapely.Polygon]:
     """✅ ИСПРАВЛЕННАЯ ВЕРСИЯ: Конвертирует примитивы в полигоны БЕЗ объединения маленьких колонн.
     
-    КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Маленькие квадратные полигоны (колонны) обрабатываются отдельно
-    и не участвуют в операции union, чтобы не объединяться в большие блоки.
+    КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: 
+    1. LineString полностью исключаются (это сетка и вспомогательные линии)
+    2. Маленькие квадратные полигоны (колонны) обрабатываются отдельно
+       и не участвуют в операции union
     
     Args:
         primitives (List[shapely.geometry.base.BaseGeometry]): Список примитивов
@@ -395,15 +395,81 @@ def get_polygons_from_primitives(
                 aspect <= MAX_COLUMN_ASPECT)
 
     # ========================================================================
+    # ✅ ДИАГНОСТИКА: Что за примитивы попали на обработку?
+    # ========================================================================
+    
+    prim_types = {}
+    linestring_lengths = []
+    polygon_sizes = []
+    
+    for prim in primitives:
+        ptype = type(prim).__name__
+        prim_types[ptype] = prim_types.get(ptype, 0) + 1
+        
+        if isinstance(prim, shapely.LineString):
+            linestring_lengths.append(prim.length)
+        elif isinstance(prim, shapely.Polygon):
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            max_dim = max(width, height)
+            polygon_sizes.append((max_dim, width, height))
+    
+    logger.warning(f"[ZONE_SCAN] 📊 Типы примитивов ДО фильтрации:")
+    for ptype, count in sorted(prim_types.items(), key=lambda x: -x[1]):
+        logger.warning(f"[ZONE_SCAN]    {ptype}: {count}")
+    
+    if linestring_lengths:
+        avg_len = sum(linestring_lengths) / len(linestring_lengths)
+        logger.warning(f"[ZONE_SCAN] 📏 LineString статистика: "
+                      f"кол-во={len(linestring_lengths)}, "
+                      f"min={min(linestring_lengths):.0f}мм, "
+                      f"max={max(linestring_lengths):.0f}мм, "
+                      f"avg={avg_len:.0f}мм")
+    
+    if polygon_sizes:
+        logger.warning(f"[ZONE_SCAN] 📐 Polygon статистика: кол-во={len(polygon_sizes)}")
+        polygon_sizes_sorted = sorted(polygon_sizes, reverse=True)
+        logger.warning(f"[ZONE_SCAN] Топ-10 самых больших полигонов:")
+        for i, (max_dim, width, height) in enumerate(polygon_sizes_sorted[:10], 1):
+            logger.warning(f"[ZONE_SCAN]    #{i}: {width:.0f}×{height:.0f}мм")
+    
+    # ========================================================================
+    # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убираем ВСЕ LineString ПЕРЕД объединением!
+    # ========================================================================
+    
+    filtered_primitives = []
+    filtered_linestrings = 0
+    filtered_other = 0
+    
+    for prim in primitives:
+        if isinstance(prim, shapely.LineString):
+            # Пропускаем ВСЕ линии - они не несут информации об occupied zones
+            filtered_linestrings += 1
+            continue
+        elif isinstance(prim, shapely.Polygon):
+            # Только полигоны идут дальше
+            filtered_primitives.append(prim)
+        else:
+            # На всякий случай логируем неожиданные типы
+            filtered_other += 1
+            logger.debug(f"[ZONE_SCAN] Отфильтрован неожиданный тип: {type(prim).__name__}")
+    
+    logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано LineString: {filtered_linestrings}")
+    if filtered_other > 0:
+        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано других типов: {filtered_other}")
+    logger.warning(f"[ZONE_SCAN] ✅ Осталось Polygon для обработки: {len(filtered_primitives)}")
+    
+    # ========================================================================
     # ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Разделяем примитивы на колонны и остальные
     # ========================================================================
     
     small_square_primitives = []  # Маленькие колонны - НЕ объединяем!
     other_primitives = []          # Остальное - объединяем как раньше
     
-    logger.info(f"[ZONE_SCAN] Анализ {len(primitives)} примитивов перед объединением...")
+    logger.info(f"[ZONE_SCAN] Анализ {len(filtered_primitives)} примитивов перед объединением...")
     
-    for prim in primitives:
+    for prim in filtered_primitives:
         if is_small_square_polygon(prim):
             small_square_primitives.append(prim)
         else:
@@ -645,6 +711,30 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     # Применяем все фильтры последовательно
     geometries = filter_primitives(geometries, available_zones)
     logger.info(f"[ZONE_SCAN] После фильтрации по зонам: {len(geometries)} геометрий")
+    
+    # ✅ ДИАГНОСТИКА: Анализ типов и размеров после фильтрации по зонам
+    geom_types = {}
+    geom_polygon_sizes = []
+    for geom in geometries:
+        gtype = type(geom).__name__
+        geom_types[gtype] = geom_types.get(gtype, 0) + 1
+        
+        if isinstance(geom, shapely.Polygon):
+            bounds = geom.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            max_dim = max(width, height)
+            geom_polygon_sizes.append((max_dim, width, height))
+    
+    logger.warning(f"[ZONE_SCAN] 📊 Типы геометрий после фильтрации по зонам:")
+    for gtype, count in sorted(geom_types.items(), key=lambda x: -x[1]):
+        logger.warning(f"[ZONE_SCAN]    {gtype}: {count}")
+    
+    if geom_polygon_sizes:
+        geom_polygon_sizes.sort(reverse=True)
+        logger.warning(f"[ZONE_SCAN] 📏 Топ-20 полигонов по размеру (после фильтрации по зонам):")
+        for i, (max_dim, width, height) in enumerate(geom_polygon_sizes[:20], 1):
+            logger.warning(f"[ZONE_SCAN]    #{i}: {width:.0f}×{height:.0f}мм (max={max_dim:.0f})")
     
     # ✅ КЛЮЧЕВОЕ МЕСТО: get_polygons_from_primitives() теперь НЕ объединяет колонны!
     polygons = get_polygons_from_primitives(geometries)
