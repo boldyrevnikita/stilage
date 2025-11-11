@@ -195,7 +195,11 @@ def filter_primitives(
 def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
-    """Converts a list of Shapely primitives to polygons."""
+    """Converts a list of Shapely primitives to polygons.
+    
+    ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убирает длинные/вытянутые LineString (сетка),
+    но сохраняет стороны колонн (линии ~840мм).
+    """
 
     def process_polygon(polygon: shapely.Polygon,
                         centroid_threshold: float = 300
@@ -212,74 +216,14 @@ def get_polygons_from_primitives(
         return result
 
     # ========================================================================
-    # ✅ ДИАГНОСТИКА: Что за примитивы ПЕРЕД фильтрацией?
-    # ========================================================================
-    
-    prim_types_before = {}
-    linestring_details = []
-    polygon_details = []
-    
-    for prim in primitives:
-        ptype = type(prim).__name__
-        prim_types_before[ptype] = prim_types_before.get(ptype, 0) + 1
-        
-        if isinstance(prim, shapely.LineString):
-            bounds = prim.bounds
-            width = bounds[2] - bounds[0]
-            height = bounds[3] - bounds[1]
-            max_dim = max(width, height)
-            min_dim = min(width, height)
-            aspect = max_dim / min_dim if min_dim > 0 else 999
-            linestring_details.append({
-                'width': width,
-                'height': height,
-                'max_dim': max_dim,
-                'aspect': aspect
-            })
-        elif isinstance(prim, shapely.Polygon):
-            bounds = prim.bounds
-            width = bounds[2] - bounds[0]
-            height = bounds[3] - bounds[1]
-            polygon_details.append({'width': width, 'height': height})
-    
-    logger.warning(f"[ZONE_SCAN] 📊 ПЕРЕД фильтрацией LineString:")
-    for ptype, count in sorted(prim_types_before.items(), key=lambda x: -x[1]):
-        logger.warning(f"[ZONE_SCAN]    {ptype}: {count}")
-    
-    if linestring_details:
-        logger.warning(f"[ZONE_SCAN] 📏 Детали LineString (всего {len(linestring_details)}):")
-        # Сортируем по max_dim
-        linestring_details.sort(key=lambda x: x['max_dim'])
-        
-        # Показываем первые 10 самых маленьких
-        logger.warning(f"[ZONE_SCAN] 🔹 10 САМЫХ МАЛЕНЬКИХ LineString:")
-        for i, details in enumerate(linestring_details[:10], 1):
-            logger.warning(f"[ZONE_SCAN]    #{i}: "
-                          f"{details['width']:.1f}×{details['height']:.1f}мм, "
-                          f"max={details['max_dim']:.1f}мм, "
-                          f"aspect={details['aspect']:.1f}")
-        
-        # Показываем последние 10 самых больших
-        if len(linestring_details) > 10:
-            logger.warning(f"[ZONE_SCAN] 🔹 10 САМЫХ БОЛЬШИХ LineString:")
-            for i, details in enumerate(linestring_details[-10:], len(linestring_details)-9):
-                logger.warning(f"[ZONE_SCAN]    #{i}: "
-                              f"{details['width']:.1f}×{details['height']:.1f}мм, "
-                              f"max={details['max_dim']:.1f}мм, "
-                              f"aspect={details['aspect']:.1f}")
-    
-    if polygon_details:
-        logger.warning(f"[ZONE_SCAN] 📐 Детали Polygon (всего {len(polygon_details)}):")
-        for i, details in enumerate(polygon_details[:10], 1):
-            logger.warning(f"[ZONE_SCAN]    #{i}: {details['width']:.1f}×{details['height']:.1f}мм")
-
-    # ========================================================================
-    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка)
+    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка),
+    # но сохраняем стороны колонн (линии ~840мм)
     # ========================================================================
     
     filtered_primitives = []
     filtered_count = 0
     kept_linestrings = 0
+    kept_column_sides = 0
     filtered_by_length = 0
     filtered_by_aspect = 0
     
@@ -292,7 +236,19 @@ def get_polygons_from_primitives(
             min_dim = min(width, height)
             aspect = max_dim / min_dim if min_dim > 0 else 999
             
-            # Фильтруем если длинная ИЛИ вытянутая
+            # ✅ КРИТИЧЕСКОЕ ИСКЛЮЧЕНИЕ: Линии ~840мм (стороны колонн) НЕ фильтруем!
+            # Проверяем, является ли это стороной колонны (700-950мм, одна сторона близка к 0)
+            is_column_side = (700 <= max_dim <= 950) and (min_dim < 10)
+            
+            if is_column_side:
+                kept_column_sides += 1
+                kept_linestrings += 1
+                logger.debug(f"[ZONE_FILTER] LineString СОХРАНЕН (сторона колонны): "
+                           f"{width:.1f}×{height:.1f}мм, max={max_dim:.1f}мм")
+                filtered_primitives.append(prim)
+                continue
+            
+            # Фильтруем длинные ИЛИ вытянутые (НЕ колонны)
             if max_dim > 1500:
                 filtered_by_length += 1
                 filtered_count += 1
@@ -306,7 +262,7 @@ def get_polygons_from_primitives(
                            f"{width:.1f}×{height:.1f}мм, aspect={aspect:.1f}")
                 continue
             
-            # Короткие/компактные линии оставляем
+            # Остальные короткие/компактные линии оставляем
             kept_linestrings += 1
             logger.debug(f"[ZONE_FILTER] LineString СОХРАНЕН: "
                         f"{width:.1f}×{height:.1f}мм, max={max_dim:.1f}мм, aspect={aspect:.1f}")
@@ -317,8 +273,8 @@ def get_polygons_from_primitives(
     logger.warning(f"[ZONE_SCAN]    Отфильтровано по длине (> 1500мм): {filtered_by_length}")
     logger.warning(f"[ZONE_SCAN]    Отфильтровано по aspect (> 10): {filtered_by_aspect}")
     logger.warning(f"[ZONE_SCAN]    ИТОГО отфильтровано: {filtered_count}")
-    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено LineString: {kept_linestrings}")
-    logger.warning(f"[ZONE_SCAN]    ✅ Polygon (не фильтруются): {len(polygon_details)}")
+    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено сторон колонн: {kept_column_sides}")
+    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено других LineString: {kept_linestrings - kept_column_sides}")
 
     # ========================================================================
     # Дальше всё как раньше
@@ -392,19 +348,11 @@ def filter_thin_polygons(
     polygons: list[shapely.Polygon],
     min_dimension_threshold: float = 10.0
 ) -> list[shapely.Polygon]:
-    """✅ НОВАЯ ФУНКЦИЯ: Фильтрует очень тонкие полигоны - артефакты DXF.
-    
-    Эта функция удаляет полигоны, где ширина или высота ниже минимального порога.
-    Такие полигоны обычно являются:
-    - Тонкими линиями из DXF аннотаций
-    - Границами текстовых блоков
-    - Размерными линиями
-    - Другими нефизическими артефактами DXF
+    """Фильтрует очень тонкие полигоны - артефакты DXF.
     
     Args:
         polygons (list[shapely.Polygon]): Список полигонов для фильтрации
-        min_dimension_threshold (float): Минимальная ширина или высота для валидного
-            полигона. По умолчанию 10мм (разумно для складских препятствий)
+        min_dimension_threshold (float): Минимальная ширина или высота
     
     Returns:
         list[shapely.Polygon]: Отфильтрованный список без тонких артефактов
@@ -414,8 +362,8 @@ def filter_thin_polygons(
     
     for polygon in polygons:
         bounds = polygon.bounds
-        width = bounds[2] - bounds[0]   # max_x - min_x
-        height = bounds[3] - bounds[1]  # max_y - min_y
+        width = bounds[2] - bounds[0]
+        height = bounds[3] - bounds[1]
         
         # Пропускаем очень тонкие полигоны (скорее всего артефакты DXF)
         if width < min_dimension_threshold or height < min_dimension_threshold:
@@ -508,10 +456,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                             roads_width: float,
                             min_zone_dimension: float = 10.0
                             ) -> List[OccupiedZone]:
-    """✅ УЛУЧШЕННАЯ ФУНКЦИЯ: Сканирует DXF документ на occupied zones с фильтрацией артефактов.
-    
-    Теперь включает фильтрацию тонких полигонов для предотвращения создания
-    ложных препятствий из DXF артефактов.
+    """Сканирует DXF документ на occupied zones с фильтрацией артефактов.
     
     Args:
         doc (ezdxf.document.Drawing): DXF документ для сканирования
@@ -521,7 +466,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
         min_zone_dimension (float): Минимальная ширина или высота для валидной
             occupied zone. По умолчанию 10мм.
     Returns:
-        List[OccupiedZone]: Список найденных occupied zones без артефактов
+        List[OccupiedZone]: Список найденных occupied zones
     """
     logger.info(f"[ZONE_SCAN] 🔍 Начало сканирования occupied zones (мин. размер={min_zone_dimension:.1f}мм)")
     
@@ -550,9 +495,9 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     polygons = filter_small_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации малых по площади: {len(polygons)} полигонов")
     
-    # ✅ КЛЮЧЕВОЕ: Фильтруем тонкие И вытянутые полигоны
+    # ✅ Фильтруем тонкие И вытянутые полигоны
     polygons = filter_thin_polygons(polygons, min_zone_dimension)
-    polygons = filter_elongated_polygons(polygons, max_aspect_ratio=5.0)  # ← Строже чем было (было 10)
+    polygons = filter_elongated_polygons(polygons, max_aspect_ratio=5.0)
     logger.info(f"[ZONE_SCAN] После фильтрации тонких/вытянутых полигонов: {len(polygons)} полигонов")
     
     polygons = filter_intersecting_polygons(polygons)
@@ -585,7 +530,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     if len(occupied_zones) == 0:
         logger.warning("[ZONE_SCAN] ⚠️  ВНИМАНИЕ: Не найдено ни одной occupied zone!")
     else:
-        # Показываем статистику размеров найденных зон
         widths = []
         heights = []
         for zone in occupied_zones:
