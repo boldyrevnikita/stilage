@@ -161,16 +161,35 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
             # Проблема: INSERT блоки (Block Reference) разворачиваются в отдельные LINE,
             # которые после buffer() и union превращаются в большие полигоны.
             #
-            # Решение: Проверяем размер блока. Если это маленький квадратный блок
-            # (вероятная колонна), создаем полигон из его bounding box вместо
-            # разворачивания в примитивы.
+            # Решение: Разворачиваем блок в примитивы и вычисляем bounds из них.
+            # Если это маленький квадратный блок, создаем полигон из bounds.
             
             try:
-                # Получаем bounding box блока
-                bbox = entity.bounding_box
-                if bbox:
-                    min_x, min_y = bbox.extmin.x, bbox.extmin.y
-                    max_x, max_y = bbox.extmax.x, bbox.extmax.y
+                # Разворачиваем блок в виртуальные объекты
+                virtual_entities = list(entity.virtual_entities())
+                
+                if not virtual_entities:
+                    continue
+                
+                # Вычисляем bounding box из виртуальных объектов
+                all_coords = []
+                for v_entity in virtual_entities:
+                    if hasattr(v_entity, 'dxf'):
+                        # Для LINE объектов
+                        if hasattr(v_entity.dxf, 'start'):
+                            all_coords.append((v_entity.dxf.start.x, v_entity.dxf.start.y))
+                        if hasattr(v_entity.dxf, 'end'):
+                            all_coords.append((v_entity.dxf.end.x, v_entity.dxf.end.y))
+                        # Для точек
+                        if hasattr(v_entity.dxf, 'location'):
+                            all_coords.append((v_entity.dxf.location.x, v_entity.dxf.location.y))
+                
+                if len(all_coords) >= 3:
+                    # Вычисляем bounds
+                    xs = [c[0] for c in all_coords]
+                    ys = [c[1] for c in all_coords]
+                    min_x, max_x = min(xs), max(xs)
+                    min_y, max_y = min(ys), max(ys)
                     width = max_x - min_x
                     height = max_y - min_y
                     max_dim = max(width, height)
@@ -187,7 +206,7 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                     
                     if is_small and is_square:
                         # Это маленький квадратный блок - вероятно, символ колонны!
-                        # Создаем полигон из bounding box вместо разворачивания
+                        # Создаем полигон из bounding box вместо разворачивания в LINE
                         vertices = [
                             (min_x, min_y),
                             (max_x, min_y),
@@ -198,13 +217,13 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                         poly = _safe_polygon(vertices)
                         if poly is not None:
                             geometry_list.append(poly)
-                            logger.debug(f"[DXF_PARSE] Создан полигон из INSERT блока: "
-                                       f"{width:.1f}×{height:.1f}мм")
-                        continue  # Не разворачиваем блок в примитивы!
+                            logger.warning(f"[DXF_PARSE] ✅ Создан полигон из INSERT блока: "
+                                         f"{width:.1f}×{height:.1f}мм (bounds: {min_x:.0f},{min_y:.0f} - {max_x:.0f},{max_y:.0f})")
+                        continue  # Не разворачиваем блок в LINE объекты!
             except Exception as e:
-                logger.debug(f"[DXF_PARSE] Не удалось получить bbox для INSERT: {e}")
+                logger.debug(f"[DXF_PARSE] Ошибка обработки INSERT: {e}")
             
-            # Для больших или нестандартных блоков - разворачиваем как раньше
+            # Для больших или нестандартных блоков - разворачиваем в примитивы
             for v_entity in entity.virtual_entities():
                 q.put(v_entity)
         elif type(entity) is ezdxf.entities.Spline:
