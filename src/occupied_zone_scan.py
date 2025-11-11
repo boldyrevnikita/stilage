@@ -195,30 +195,11 @@ def filter_primitives(
 def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
-    """Converts a list of Shapely primitives to polygons.
-    
-    ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убирает длинные/вытянутые LineString (сетка),
-    но оставляет Polygon (колонны уже преобразованы в Polygon в dxf_entity_to_shapely).
-    
-    Args:
-        primitives (List[shapely.geometry.base.BaseGeometry]): The list of
-            Shapely primitives to convert.
-        eps (float): The epsilon value for buffering.
-    Returns:
-        List[shapely.Polygon]: The list of converted Shapely polygons.
-    """
+    """Converts a list of Shapely primitives to polygons."""
 
     def process_polygon(polygon: shapely.Polygon,
                         centroid_threshold: float = 300
                         ) -> shapely.Polygon:
-        """Processes a polygon to ensure it is valid and returns a
-        processed polygon.
-        Args:
-            polygon (shapely.Polygon): The polygon to process.
-            centroid_threshold (float): The threshold for centroid distance.
-        Returns:
-            shapely.Polygon: The processed polygon.
-        """
         convex_hull = polygon.convex_hull
         centroid_distance = (
             abs(polygon.centroid.x - convex_hull.centroid.x)
@@ -231,46 +212,116 @@ def get_polygons_from_primitives(
         return result
 
     # ========================================================================
-    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка)
-    # Короткие компактные LineString оставляем на случай, если они нужны
+    # ✅ ДИАГНОСТИКА: Что за примитивы ПЕРЕД фильтрацией?
     # ========================================================================
     
-    filtered_primitives = []
-    filtered_count = 0
-    kept_linestrings = 0
+    prim_types_before = {}
+    linestring_details = []
+    polygon_details = []
     
     for prim in primitives:
+        ptype = type(prim).__name__
+        prim_types_before[ptype] = prim_types_before.get(ptype, 0) + 1
+        
         if isinstance(prim, shapely.LineString):
-            # Проверяем размер линии через bounding box
             bounds = prim.bounds
             width = bounds[2] - bounds[0]
             height = bounds[3] - bounds[1]
             max_dim = max(width, height)
             min_dim = min(width, height)
-            
-            # Вычисляем aspect ratio (вытянутость)
+            aspect = max_dim / min_dim if min_dim > 0 else 999
+            linestring_details.append({
+                'width': width,
+                'height': height,
+                'max_dim': max_dim,
+                'aspect': aspect
+            })
+        elif isinstance(prim, shapely.Polygon):
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            polygon_details.append({'width': width, 'height': height})
+    
+    logger.warning(f"[ZONE_SCAN] 📊 ПЕРЕД фильтрацией LineString:")
+    for ptype, count in sorted(prim_types_before.items(), key=lambda x: -x[1]):
+        logger.warning(f"[ZONE_SCAN]    {ptype}: {count}")
+    
+    if linestring_details:
+        logger.warning(f"[ZONE_SCAN] 📏 Детали LineString (всего {len(linestring_details)}):")
+        # Сортируем по max_dim
+        linestring_details.sort(key=lambda x: x['max_dim'])
+        
+        # Показываем первые 10 самых маленьких
+        logger.warning(f"[ZONE_SCAN] 🔹 10 САМЫХ МАЛЕНЬКИХ LineString:")
+        for i, details in enumerate(linestring_details[:10], 1):
+            logger.warning(f"[ZONE_SCAN]    #{i}: "
+                          f"{details['width']:.1f}×{details['height']:.1f}мм, "
+                          f"max={details['max_dim']:.1f}мм, "
+                          f"aspect={details['aspect']:.1f}")
+        
+        # Показываем последние 10 самых больших
+        if len(linestring_details) > 10:
+            logger.warning(f"[ZONE_SCAN] 🔹 10 САМЫХ БОЛЬШИХ LineString:")
+            for i, details in enumerate(linestring_details[-10:], len(linestring_details)-9):
+                logger.warning(f"[ZONE_SCAN]    #{i}: "
+                              f"{details['width']:.1f}×{details['height']:.1f}мм, "
+                              f"max={details['max_dim']:.1f}мм, "
+                              f"aspect={details['aspect']:.1f}")
+    
+    if polygon_details:
+        logger.warning(f"[ZONE_SCAN] 📐 Детали Polygon (всего {len(polygon_details)}):")
+        for i, details in enumerate(polygon_details[:10], 1):
+            logger.warning(f"[ZONE_SCAN]    #{i}: {details['width']:.1f}×{details['height']:.1f}мм")
+
+    # ========================================================================
+    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка)
+    # ========================================================================
+    
+    filtered_primitives = []
+    filtered_count = 0
+    kept_linestrings = 0
+    filtered_by_length = 0
+    filtered_by_aspect = 0
+    
+    for prim in primitives:
+        if isinstance(prim, shapely.LineString):
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            max_dim = max(width, height)
+            min_dim = min(width, height)
             aspect = max_dim / min_dim if min_dim > 0 else 999
             
-            # Фильтруем если:
-            # 1. Длинная линия (> 1500мм) - скорее всего сетка
-            # 2. ИЛИ очень вытянутая (aspect ratio > 10) - линии сетки
-            if max_dim > 1500 or aspect > 10:
+            # Фильтруем если длинная ИЛИ вытянутая
+            if max_dim > 1500:
+                filtered_by_length += 1
                 filtered_count += 1
+                logger.debug(f"[ZONE_FILTER] LineString отфильтрован (длина): "
+                           f"{width:.1f}×{height:.1f}мм, max={max_dim:.1f}мм")
+                continue
+            elif aspect > 10:
+                filtered_by_aspect += 1
+                filtered_count += 1
+                logger.debug(f"[ZONE_FILTER] LineString отфильтрован (aspect): "
+                           f"{width:.1f}×{height:.1f}мм, aspect={aspect:.1f}")
                 continue
             
             # Короткие/компактные линии оставляем
             kept_linestrings += 1
+            logger.debug(f"[ZONE_FILTER] LineString СОХРАНЕН: "
+                        f"{width:.1f}×{height:.1f}мм, max={max_dim:.1f}мм, aspect={aspect:.1f}")
             
         filtered_primitives.append(prim)
     
-    if filtered_count > 0:
-        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано {filtered_count} длинных/вытянутых LineString "
-                      f"(> 1500мм или aspect > 10)")
-    if kept_linestrings > 0:
-        logger.info(f"[ZONE_SCAN] ✅ Сохранено {kept_linestrings} коротких LineString")
+    logger.warning(f"[ZONE_SCAN] 🗑️  Фильтрация LineString:")
+    logger.warning(f"[ZONE_SCAN]    Отфильтровано по длине (> 1500мм): {filtered_by_length}")
+    logger.warning(f"[ZONE_SCAN]    Отфильтровано по aspect (> 10): {filtered_by_aspect}")
+    logger.warning(f"[ZONE_SCAN]    ИТОГО отфильтровано: {filtered_count}")
+    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено LineString: {kept_linestrings}")
+    logger.warning(f"[ZONE_SCAN]    ✅ Polygon (не фильтруются): {len(polygon_details)}")
 
     # ========================================================================
-    # Дальше всё как раньше, но работаем с filtered_primitives
+    # Дальше всё как раньше
     # ========================================================================
 
     polygons = []
