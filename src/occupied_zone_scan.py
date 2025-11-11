@@ -328,7 +328,7 @@ def get_polygons_from_primitives(
             
             # ✅ КРИТИЧЕСКОЕ ИСКЛЮЧЕНИЕ: Линии ~840мм (стороны колонн) НЕ фильтруем!
             # Проверяем, является ли это стороной колонны (700-950мм, одна сторона близка к 0)
-            is_column_side = (700 <= max_dim <= 950) and (min_dim < 10)
+            is_column_side = (150 <= max_dim <= 1000) and (min_dim < 10)
             
             if is_column_side:
                 kept_column_sides += 1
