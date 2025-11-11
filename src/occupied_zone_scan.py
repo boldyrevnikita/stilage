@@ -64,7 +64,21 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
                 geometry_list.append(shapely.geometry.LineString(pts))
         elif type(entity) is ezdxf.entities.LWPolyline:
             vertices = [(p[0], p[1]) for p in entity.vertices_in_wcs()]
-            if entity.is_closed:
+            
+            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем, замкнут ли контур ФАКТИЧЕСКИ
+            is_actually_closed = entity.is_closed
+            
+            if not is_actually_closed and len(vertices) >= 3:
+                # Проверяем, совпадают ли первая и последняя точки
+                first = vertices[0]
+                last = vertices[-1]
+                distance = ((first[0] - last[0])**2 + (first[1] - last[1])**2)**0.5
+                
+                # Если расстояние меньше 0.1мм, считаем замкнутым
+                if distance < 0.1:
+                    is_actually_closed = True
+            
+            if is_actually_closed:
                 poly = _safe_polygon(vertices)
                 if poly is not None:
                     geometry_list.append(poly)
@@ -182,6 +196,10 @@ def get_polygons_from_primitives(
     primitives: List[shapely.geometry.base.BaseGeometry],
         eps: float = 1e-9) -> List[shapely.Polygon]:
     """Converts a list of Shapely primitives to polygons.
+    
+    ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убирает длинные/вытянутые LineString (сетка),
+    но оставляет Polygon (колонны уже преобразованы в Polygon в dxf_entity_to_shapely).
+    
     Args:
         primitives (List[shapely.geometry.base.BaseGeometry]): The list of
             Shapely primitives to convert.
@@ -212,9 +230,52 @@ def get_polygons_from_primitives(
             result = polygon.buffer(-eps, join_style=2, cap_style=2)
         return result
 
+    # ========================================================================
+    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка)
+    # Короткие компактные LineString оставляем на случай, если они нужны
+    # ========================================================================
+    
+    filtered_primitives = []
+    filtered_count = 0
+    kept_linestrings = 0
+    
+    for prim in primitives:
+        if isinstance(prim, shapely.LineString):
+            # Проверяем размер линии через bounding box
+            bounds = prim.bounds
+            width = bounds[2] - bounds[0]
+            height = bounds[3] - bounds[1]
+            max_dim = max(width, height)
+            min_dim = min(width, height)
+            
+            # Вычисляем aspect ratio (вытянутость)
+            aspect = max_dim / min_dim if min_dim > 0 else 999
+            
+            # Фильтруем если:
+            # 1. Длинная линия (> 1500мм) - скорее всего сетка
+            # 2. ИЛИ очень вытянутая (aspect ratio > 10) - линии сетки
+            if max_dim > 1500 or aspect > 10:
+                filtered_count += 1
+                continue
+            
+            # Короткие/компактные линии оставляем
+            kept_linestrings += 1
+            
+        filtered_primitives.append(prim)
+    
+    if filtered_count > 0:
+        logger.warning(f"[ZONE_SCAN] 🗑️  Отфильтровано {filtered_count} длинных/вытянутых LineString "
+                      f"(> 1500мм или aspect > 10)")
+    if kept_linestrings > 0:
+        logger.info(f"[ZONE_SCAN] ✅ Сохранено {kept_linestrings} коротких LineString")
+
+    # ========================================================================
+    # Дальше всё как раньше, но работаем с filtered_primitives
+    # ========================================================================
+
     polygons = []
     primitives_processed = []
-    for prim in primitives:
+    for prim in filtered_primitives:
         primitives_processed.append(prim.buffer(
             eps, join_style=2, cap_style=2))
 
@@ -321,6 +382,40 @@ def filter_thin_polygons(
     return filtered_polygons
 
 
+def filter_elongated_polygons(polygons: list[shapely.Polygon],
+                              max_aspect_ratio: float = 5.0) -> list[shapely.Polygon]:
+    """
+    Убирает полигоны, у которых отношение длинной стороны к короткой
+    превышает max_aspect_ratio.
+    
+    Это удаляет артефакты вроде длинных пунктирных линий сетки,
+    но сохраняет квадратные колонны.
+    """
+    result = []
+    filtered_count = 0
+    
+    for poly in polygons:
+        bounds = poly.bounds
+        width = bounds[2] - bounds[0]
+        height = bounds[3] - bounds[1]
+        if min(width, height) == 0:
+            continue
+        aspect = max(width, height) / min(width, height)
+        if aspect <= max_aspect_ratio:
+            result.append(poly)
+        else:
+            logger.debug(f"[ZONE_FILTER] Отфильтрован вытянутый полигон: "
+                        f"bounds={bounds}, aspect={aspect:.1f}, "
+                        f"размер={width:.1f}x{height:.1f}мм")
+            filtered_count += 1
+    
+    if filtered_count > 0:
+        logger.warning(f"[ZONE_FILTER] ✅ Отфильтровано {filtered_count} вытянутых полигонов "
+                      f"(aspect > {max_aspect_ratio})")
+    
+    return result
+
+
 def filter_intersecting_polygons(
     polygons: List[shapely.Polygon],
         intersection_percentage: float = 0.99) -> List[shapely.Polygon]:
@@ -404,9 +499,10 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     polygons = filter_small_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации малых по площади: {len(polygons)} полигонов")
     
-    # ✅ НОВОЕ: Фильтруем тонкие полигоны (артефакты DXF)
+    # ✅ КЛЮЧЕВОЕ: Фильтруем тонкие И вытянутые полигоны
     polygons = filter_thin_polygons(polygons, min_zone_dimension)
-    logger.info(f"[ZONE_SCAN] После фильтрации тонких полигонов: {len(polygons)} полигонов")
+    polygons = filter_elongated_polygons(polygons, max_aspect_ratio=5.0)  # ← Строже чем было (было 10)
+    logger.info(f"[ZONE_SCAN] После фильтрации тонких/вытянутых полигонов: {len(polygons)} полигонов")
     
     polygons = filter_intersecting_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации пересекающихся: {len(polygons)} полигонов")
