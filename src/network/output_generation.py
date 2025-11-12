@@ -8,23 +8,27 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[int]]]:
+def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[int]]:
     """Вычисляет наличие перемычек для стеллажа.
+    
+    Логика:
+    - Каждый элемент [x, y] описывает один фрейм (deck)
+    - x: 1 = есть перемычка ДО фрейма (слева/снизу), 0 = пересекает колонну
+    - y: 1 = есть перемычка ПОСЛЕ фрейма (справа/сверху), 0 = пересекает колонну
+    
+    Возвращает один массив для всех фреймов обоих под-стеллажей.
     """
-    import shapely
     from shapely.geometry import LineString
     
+    # Простые случаи - одинарный стеллаж или без защитной колонны
     if not isinstance(rack, DoubleRack):
-        num_sections = len(rack)
-        return [[[1, 1] for _ in range(num_sections + 1)]]
+        num_decks = len(rack.decks)
+        return [[1, 1] for _ in range(num_decks)]
     
     if not rack.is_protective or rack.protected_column is None:
-        num_sections_1 = len(rack.rack_1)
-        num_sections_2 = len(rack.rack_2)
-        return [
-            [[1, 1] for _ in range(num_sections_1 + 1)],
-            [[1, 1] for _ in range(num_sections_2 + 1)]
-        ]
+        num_decks_1 = len(rack.rack_1.decks)
+        num_decks_2 = len(rack.rack_2.decks)
+        return [[1, 1] for _ in range(num_decks_1 + num_decks_2)]
     
     logger.warning(f"[JUMPER_CALC] ════════════════════════════════════════════════════════")
     logger.warning(f"[JUMPER_CALC] Calculating jumper presence for PROTECTIVE rack")
@@ -39,11 +43,13 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
     logger.warning(f"[JUMPER_CALC] rack_2 bounds: {rack_2_bounds}")
     logger.warning(f"[JUMPER_CALC] column bounds: {column_bounds}")
     
+    # Центры под-стеллажей
     rack_1_center_x = (rack_1_bounds[0] + rack_1_bounds[2]) / 2
     rack_2_center_x = (rack_2_bounds[0] + rack_2_bounds[2]) / 2
     rack_1_center_y = (rack_1_bounds[1] + rack_1_bounds[3]) / 2
     rack_2_center_y = (rack_2_bounds[1] + rack_2_bounds[3]) / 2
     
+    # Определение ориентации
     x_diff = abs(rack_1_center_x - rack_2_center_x)
     y_diff = abs(rack_1_center_y - rack_2_center_y)
     
@@ -53,101 +59,95 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
     logger.warning(f"[JUMPER_CALC] rack_2 center: ({rack_2_center_x:.1f}, {rack_2_center_y:.1f})")
     logger.warning(f"[JUMPER_CALC] X difference: {x_diff:.1f}, Y difference: {y_diff:.1f}")
     logger.warning(f"[JUMPER_CALC] Racks side-by-side on X: {racks_side_by_side_on_x}")
-    logger.warning(f"[JUMPER_CALC] → Jumpers orientation: {'HORIZONTAL (along X)' if racks_side_by_side_on_x else 'VERTICAL (along Y)'}")
+    logger.warning(f"[JUMPER_CALC] → Jumpers orientation: {'VERTICAL (along Y)' if racks_side_by_side_on_x else 'HORIZONTAL (along X)'}")
     
+    # Буфер для колонны
     column_buffer = column.contour.buffer(10)
     
     result = []
     
+    # Обрабатываем оба под-стеллажа
     for rack_idx, subrack in enumerate([rack.rack_1, rack.rack_2]):
-        subrack_jumpers = []
-        
         num_decks = len(subrack.decks)
-        num_jumpers = num_decks + 1  
         
-        logger.warning(f"[JUMPER_CALC] Processing rack_{rack_idx + 1} with {num_decks} decks → {num_jumpers} jumpers")
+        logger.warning(f"[JUMPER_CALC] Processing rack_{rack_idx + 1} with {num_decks} decks")
         
-        for jumper_idx in range(num_jumpers):
-            if jumper_idx == 0:
-                if racks_side_by_side_on_x:
-                    jumper_coord = subrack.decks[0].bounds[1] 
-                else:
-                    jumper_coord = subrack.decks[0].bounds[0]  
-            elif jumper_idx == num_decks:
-                if racks_side_by_side_on_x:
-                    jumper_coord = subrack.decks[-1].bounds[3]  
-                else:
-                    jumper_coord = subrack.decks[-1].bounds[2]  
-            else:
-                if racks_side_by_side_on_x:
-                    jumper_coord = subrack.decks[jumper_idx].bounds[1]  
-                else:
-                    jumper_coord = subrack.decks[jumper_idx].bounds[0]  
+        # Итерируемся по каждому фрейму
+        for deck_idx, deck in enumerate(subrack.decks):
+            deck_bounds = deck.bounds  # (min_x, min_y, max_x, max_y)
             
+            # Определяем координаты перемычек ДО и ПОСЛЕ фрейма
             if racks_side_by_side_on_x:
+                # Стеллажи ГОРИЗОНТАЛЬНО → Перемычки ВЕРТИКАЛЬНЫЕ (вдоль Y)
                 
-                jumper_y = jumper_coord
+                # Координаты X для перемычек (границы фрейма)
+                jumper_before_x = deck_bounds[0]  # Левая граница фрейма
+                jumper_after_x = deck_bounds[2]   # Правая граница фрейма
                 
-                if rack_1_center_x < rack_2_center_x:
-                    jumper_x_start = rack_1_bounds[2]  
-                    jumper_x_end = rack_2_bounds[0]    
+                # Y координаты (от одного стеллажа к другому)
+                if rack_1_center_y < rack_2_center_y:
+                    jumper_y_start = rack_1_bounds[3]  # Верхний край rack_1
+                    jumper_y_end = rack_2_bounds[1]    # Нижний край rack_2
                 else:
-                    jumper_x_start = rack_2_bounds[2]  
-                    jumper_x_end = rack_1_bounds[0]    
+                    jumper_y_start = rack_2_bounds[3]  # Верхний край rack_2
+                    jumper_y_end = rack_1_bounds[1]    # Нижний край rack_1
                 
-                jumper_x_mid = (jumper_x_start + jumper_x_end) / 2
-                
-                left_jumper_line = LineString([
-                    (jumper_x_start, jumper_y),
-                    (jumper_x_mid, jumper_y)
+                # Линия перемычки ДО фрейма
+                jumper_before_line = LineString([
+                    (jumper_before_x, jumper_y_start),
+                    (jumper_before_x, jumper_y_end)
                 ])
                 
-                right_jumper_line = LineString([
-                    (jumper_x_mid, jumper_y),
-                    (jumper_x_end, jumper_y)
+                # Линия перемычки ПОСЛЕ фрейма
+                jumper_after_line = LineString([
+                    (jumper_after_x, jumper_y_start),
+                    (jumper_after_x, jumper_y_end)
                 ])
                 
             else:
+                # Стеллажи ВЕРТИКАЛЬНО → Перемычки ГОРИЗОНТАЛЬНЫЕ (вдоль X)
                 
-                jumper_x = jumper_coord
+                # Координаты Y для перемычек (границы фрейма)
+                jumper_before_y = deck_bounds[1]  # Нижняя граница фрейма
+                jumper_after_y = deck_bounds[3]   # Верхняя граница фрейма
                 
-                if rack_1_center_y < rack_2_center_y:
-                    jumper_y_start = rack_1_bounds[3]  
-                    jumper_y_end = rack_2_bounds[1]    
+                # X координаты (от одного стеллажа к другому)
+                if rack_1_center_x < rack_2_center_x:
+                    jumper_x_start = rack_1_bounds[2]  # Правый край rack_1
+                    jumper_x_end = rack_2_bounds[0]    # Левый край rack_2
                 else:
-                    jumper_y_start = rack_2_bounds[3]
-                    jumper_y_end = rack_1_bounds[1]    
+                    jumper_x_start = rack_2_bounds[2]  # Правый край rack_2
+                    jumper_x_end = rack_1_bounds[0]    # Левый край rack_1
                 
-                jumper_y_mid = (jumper_y_start + jumper_y_end) / 2
-                
-                left_jumper_line = LineString([
-                    (jumper_x, jumper_y_start),
-                    (jumper_x, jumper_y_mid)
+                # Линия перемычки ДО фрейма
+                jumper_before_line = LineString([
+                    (jumper_x_start, jumper_before_y),
+                    (jumper_x_end, jumper_before_y)
                 ])
                 
-                right_jumper_line = LineString([
-                    (jumper_x, jumper_y_mid),
-                    (jumper_x, jumper_y_end)
+                # Линия перемычки ПОСЛЕ фрейма
+                jumper_after_line = LineString([
+                    (jumper_x_start, jumper_after_y),
+                    (jumper_x_end, jumper_after_y)
                 ])
             
-            left_intersects = left_jumper_line.intersects(column_buffer)
-            right_intersects = right_jumper_line.intersects(column_buffer)
+            # Проверяем пересечения с колонной
+            before_intersects = jumper_before_line.intersects(column_buffer)
+            after_intersects = jumper_after_line.intersects(column_buffer)
             
-            left_present = 0 if left_intersects else 1
-            right_present = 0 if right_intersects else 1
+            # Если пересекает - 0, иначе - 1
+            left_present = 0 if before_intersects else 1
+            right_present = 0 if after_intersects else 1
             
-            subrack_jumpers.append([left_present, right_present])
+            result.append([left_present, right_present])
             
-            if left_intersects or right_intersects:
-                logger.warning(
-                    f"[JUMPER_CALC]   rack_{rack_idx + 1} jumper {jumper_idx}: "
-                    f"left={left_present}, right={right_present} "
-                    f"(column intersection detected)"
-                )
-        
-        result.append(subrack_jumpers)
+            logger.warning(
+                f"[JUMPER_CALC]   rack_{rack_idx + 1} deck {deck_idx}: "
+                f"[{left_present}, {right_present}] "
+                f"{'(INTERSECTS)' if (before_intersects or after_intersects) else '(OK)'}"
+            )
     
-    logger.warning(f"[JUMPER_CALC] Final jumper matrix: {result}")
+    logger.warning(f"[JUMPER_CALC] Final jumper list (total {len(result)} decks): {result}")
     logger.warning(f"[JUMPER_CALC] ════════════════════════════════════════════════════════")
     
     return result
@@ -158,20 +158,15 @@ def generate_output(solution: Solution,
                     task_id: str,
                     warnings_and_errors: str,
                     success_predict: bool) -> ModelOutput:
-    """Generates the output for the pallet packing solution.
-    Args:
-        solution (Solution): The solution containing the pallet packing state.
-        reference_book (ReferenceBook): The reference book containing
-            business logic related information.
-        task_id (str): The task ID for the output.
-        warnings_and_errors (str): Warnings and errors encountered during
-            the solution generation.
-        success_predict (bool): Whether the prediction was successful.
-    Returns:
-        ModelOutput: Output of the pallet packing model.
-    """
+    """Generates the output for the pallet packing solution."""
     if solution is None or getattr(solution, "saved_rack_groups", None) in (None, []):
-        return ModelOutput(task_id=task_id,racks={},warnings_and_errors=(warnings_and_errors or "No valid solution produced by solver"),success_predict=False)
+        return ModelOutput(
+            task_id=task_id,
+            racks={},
+            warnings_and_errors=(warnings_and_errors or "No valid solution produced by solver"),
+            success_predict=False
+        )
+    
     racks = defaultdict(list)
     for rack_group in solution.saved_rack_groups:
         for rack in rack_group.racks:
