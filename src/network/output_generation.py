@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[int]]]:
     """Вычисляет наличие перемычек для стеллажа.
     
-    Для защитных стеллажей (protective DoubleRack) проверяет пересечения перемычек с колонной.
-    Для обычных стеллажей все перемычки присутствуют.
+    ✅ ИСПРАВЛЕНО: Правильное определение ориентации перемычек на основе
+    расположения rack_1 и rack_2, а не флага is_rotated.
     """
     import shapely
     from shapely.geometry import LineString
@@ -31,7 +31,6 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
     
     logger.warning(f"[JUMPER_CALC] ════════════════════════════════════════════════════════")
     logger.warning(f"[JUMPER_CALC] Calculating jumper presence for PROTECTIVE rack")
-    logger.warning(f"[JUMPER_CALC] is_rotated: {is_rotated}")
     
     column = rack.protected_column
     column_bounds = column.contour.bounds
@@ -43,7 +42,24 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
     logger.warning(f"[JUMPER_CALC] rack_2 bounds: {rack_2_bounds}")
     logger.warning(f"[JUMPER_CALC] column bounds: {column_bounds}")
     
-    column_buffer = column.contour.buffer(10)  
+    # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Определяем ориентацию по расположению racks
+    rack_1_center_x = (rack_1_bounds[0] + rack_1_bounds[2]) / 2
+    rack_2_center_x = (rack_2_bounds[0] + rack_2_bounds[2]) / 2
+    rack_1_center_y = (rack_1_bounds[1] + rack_1_bounds[3]) / 2
+    rack_2_center_y = (rack_2_bounds[1] + rack_2_bounds[3]) / 2
+    
+    x_diff = abs(rack_1_center_x - rack_2_center_x)
+    y_diff = abs(rack_1_center_y - rack_2_center_y)
+    
+    racks_side_by_side_on_x = (x_diff > y_diff)
+    
+    logger.warning(f"[JUMPER_CALC] rack_1 center: ({rack_1_center_x:.1f}, {rack_1_center_y:.1f})")
+    logger.warning(f"[JUMPER_CALC] rack_2 center: ({rack_2_center_x:.1f}, {rack_2_center_y:.1f})")
+    logger.warning(f"[JUMPER_CALC] X difference: {x_diff:.1f}, Y difference: {y_diff:.1f}")
+    logger.warning(f"[JUMPER_CALC] Racks side-by-side on X: {racks_side_by_side_on_x}")
+    logger.warning(f"[JUMPER_CALC] → Jumpers orientation: {'HORIZONTAL (along X)' if racks_side_by_side_on_x else 'VERTICAL (along Y)'}")
+    
+    column_buffer = column.contour.buffer(10)
     
     result = []
     
@@ -55,13 +71,26 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
         for deck_idx, deck in enumerate(subrack.decks):
             deck_bounds = deck.bounds
             
-            if is_rotated:
+            if racks_side_by_side_on_x:
+                # ═══════════════════════════════════════════════════════════
+                # Racks РЯДОМ ПО X → Перемычки ГОРИЗОНТАЛЬНЫЕ (вдоль X)
+                # ═══════════════════════════════════════════════════════════
+                
+                # Y-координата перемычек (центр deck по Y)
                 jumper_y = (deck_bounds[1] + deck_bounds[3]) / 2
                 
-                jumper_x_start = rack_1_bounds[2]  
-                jumper_x_end = rack_2_bounds[0]    
+                # X-координаты: определяем какой rack левее
+                if rack_1_center_x < rack_2_center_x:
+                    # rack_1 слева, rack_2 справа
+                    jumper_x_start = rack_1_bounds[2]  # Правый край rack_1
+                    jumper_x_end = rack_2_bounds[0]    # Левый край rack_2
+                else:
+                    # rack_2 слева, rack_1 справа
+                    jumper_x_start = rack_2_bounds[2]  # Правый край rack_2
+                    jumper_x_end = rack_1_bounds[0]    # Левый край rack_1
                 
                 jumper_x_mid = (jumper_x_start + jumper_x_end) / 2
+                
                 left_jumper_line = LineString([
                     (jumper_x_start, jumper_y),
                     (jumper_x_mid, jumper_y)
@@ -73,12 +102,25 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
                 ])
                 
             else:
+                # ═══════════════════════════════════════════════════════════
+                # Racks РЯДОМ ПО Y → Перемычки ВЕРТИКАЛЬНЫЕ (вдоль Y)
+                # ═══════════════════════════════════════════════════════════
+                
+                # X-координата перемычек (центр deck по X)
                 jumper_x = (deck_bounds[0] + deck_bounds[2]) / 2
                 
-                jumper_y_start = rack_1_bounds[3]  
-                jumper_y_end = rack_2_bounds[1]    
+                # Y-координаты: определяем какой rack выше
+                if rack_1_center_y < rack_2_center_y:
+                    # rack_1 ниже, rack_2 выше
+                    jumper_y_start = rack_1_bounds[3]  # Верхний край rack_1
+                    jumper_y_end = rack_2_bounds[1]    # Нижний край rack_2
+                else:
+                    # rack_2 ниже, rack_1 выше
+                    jumper_y_start = rack_2_bounds[3]  # Верхний край rack_2
+                    jumper_y_end = rack_1_bounds[1]    # Нижний край rack_1
                 
                 jumper_y_mid = (jumper_y_start + jumper_y_end) / 2
+                
                 left_jumper_line = LineString([
                     (jumper_x, jumper_y_start),
                     (jumper_x, jumper_y_mid)
@@ -89,6 +131,7 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
                     (jumper_x, jumper_y_end)
                 ])
             
+            # Проверяем пересечения с колонной
             left_intersects = left_jumper_line.intersects(column_buffer)
             right_intersects = right_jumper_line.intersects(column_buffer)
             
@@ -110,6 +153,7 @@ def calculate_jumper_presence(rack, is_rotated: bool = False) -> list[list[list[
     logger.warning(f"[JUMPER_CALC] ════════════════════════════════════════════════════════")
     
     return result
+
 
 def generate_output(solution: Solution,
                     reference_book: ReferenceBook,
