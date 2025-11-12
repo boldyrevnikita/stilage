@@ -1,13 +1,3 @@
-"""
-Actions for rack placement in the pallet packing system.
-
-This module contains functions for creating, positioning, and managing
-racks during the pallet packing process.
-
-✅ FIXED: Added reset of last_intersected_vertical_road in place_horizontal_rack_group
-to ensure each new RackGroup can independently create bridges for road zones.
-"""
-
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import RackGroup, DoubleRack, Rack
@@ -40,23 +30,17 @@ def place_horizontal_rack_group(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
 
-    # ✅ CRITICAL FIX: Reset last_intersected_vertical_road for each new RackGroup!
-    # This ensures that each new rack in each strip can create bridges independently
     solution.last_intersected_vertical_road = None
 
-    # Determine starting position
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
-        # NEW: Place in current free strip
         current_strip = solution.free_strips[solution.current_strip_idx]
         position = (available_zone.bounds[0], current_strip['y_min'])
         logger.warning(f"[RACK_PLACEMENT] Placing rack group in free strip {solution.current_strip_idx}: "
                    f"y=[{current_strip['y_min']:.1f}, {current_strip['y_max']:.1f}]")
     else:
-        # Fallback to original logic (no protective racks)
         position = available_zone.bounds[:2]
         logger.warning(f"[RACK_PLACEMENT] Placing rack group at zone corner: {position}")
 
-    # DEBUG LOGS BEFORE
     logger.warning(f"[DEBUG_ZONE] ========================================")
     logger.warning(f"[DEBUG_ZONE] CREATING RACK GROUP")
     logger.warning(f"[DEBUG_ZONE] Zone bounds: {available_zone.bounds}")
@@ -78,7 +62,6 @@ def place_horizontal_rack_group(
         frame_height_eps=reference_book.frame_height_eps
     )
 
-    # DEBUG LOGS AFTER
     logger.warning(f"[DEBUG_ZONE] RackGroup AFTER creation:")
     logger.warning(f"[DEBUG_ZONE]   RackGroup.position: {rack_group.position}")
     logger.warning(f"[DEBUG_ZONE]   RackGroup.bounds: {rack_group.bounds}")
@@ -170,7 +153,6 @@ def set_next_rack_position_higher_default(
 
     solution.current_rack_group.next_rack_placement = nr_position
     
-    # NEW: Check if we exceeded the current free strip
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
         current_strip = solution.free_strips[solution.current_strip_idx]
         if nr_position[1] > current_strip['y_max']:
@@ -228,7 +210,6 @@ def place_new_double_rack(
 
     current_rack_group = solution.current_rack_group
     
-    # DEBUG: BEFORE creating rack
     logger.warning(f"[DEBUG_RACK] ========================================")
     logger.warning(f"[DEBUG_RACK] PLACE_NEW_DOUBLE_RACK called")
     logger.warning(f"[DEBUG_RACK] RackGroup BEFORE place_double_rack:")
@@ -238,7 +219,6 @@ def place_new_double_rack(
     
     current_rack_group.place_double_rack()
     
-    # DEBUG: AFTER creating rack
     new_rack = current_rack_group.current_rack
     logger.warning(f"[DEBUG_RACK] RackGroup AFTER place_double_rack:")
     logger.warning(f"[DEBUG_RACK]   bounds: {current_rack_group.bounds}")
@@ -247,7 +227,6 @@ def place_new_double_rack(
     logger.warning(f"[DEBUG_RACK]   New rack width: {rack_width:.1f} mm")
     logger.warning(f"[DEBUG_RACK] ========================================")
     
-    # NEW: Check intersection with protective racks
     for protective_rack in solution.protective_racks:
         if new_rack.intersects(protective_rack.contour):
             logger.warning("[RACK_PLACEMENT] New double rack intersects with protective rack")
@@ -264,7 +243,7 @@ def swap_double_rack_to_single_rack(
     
     Takes only the first half (rack_1) of the double rack and discards the second half.
     
-    ✅ NEW: Only swaps if we're in the LAST strip! Otherwise raises ActionFailure.
+    Only swaps if we're in the LAST strip! Otherwise raises ActionFailure.
     
     Args:
         _ (ReferenceBook): The reference book (not used).
@@ -280,7 +259,6 @@ def swap_double_rack_to_single_rack(
             "Current rack is not a DoubleRack, cannot swap to single rack."
         )
     
-    # ✅ NEW: Check if we're in the last strip
     is_in_last_strip = (solution.free_strips and 
                        solution.current_strip_idx == len(solution.free_strips) - 1)
     
@@ -290,7 +268,6 @@ def swap_double_rack_to_single_rack(
                       f"Moving to next strip instead of swapping.")
         raise ActionFailure("Double rack doesn't fit in current strip (not last strip)")
     
-    # Only swap if in last strip
     current_rack_group.current_rack = current_rack_group.current_rack.rack_1
     logger.warning("[RACK_PLACEMENT] In LAST strip → Swapped double rack to single rack")
 
@@ -420,7 +397,6 @@ def create_new_rack(
 
     solution.last_intersected_vertical_road = None
 
-    # DEBUG: BEFORE creating rack
     logger.warning(f"[DEBUG_RACK] ========================================")
     logger.warning(f"[DEBUG_RACK] CREATE_NEW_RACK called")
     logger.warning(f"[DEBUG_RACK] Rack type: {solution.next_rack_type.__name__}")
@@ -438,7 +414,6 @@ def create_new_rack(
     else:
         raise TypeError("Unknown rack type in current rack group")
     
-    # DEBUG: AFTER creating rack
     new_rack = current_rack_group.current_rack
     logger.warning(f"[DEBUG_RACK] RackGroup AFTER creating rack:")
     logger.warning(f"[DEBUG_RACK]   bounds: {current_rack_group.bounds}")
@@ -447,7 +422,6 @@ def create_new_rack(
     logger.warning(f"[DEBUG_RACK]   New rack width: {rack_width:.1f} mm")
     logger.warning(f"[DEBUG_RACK] ========================================")
     
-    # NEW: Check intersection with protective racks
     for protective_rack in solution.protective_racks:
         if new_rack.intersects(protective_rack.contour):
             logger.warning("[RACK_PLACEMENT] New rack intersects with protective rack")
@@ -484,20 +458,17 @@ def create_first_rack_in_group(
     logger.warning(f"[DEBUG_FIRST_RACK]   racks count: {len(current_rack_group.racks)}")
     logger.warning(f"[DEBUG_FIRST_RACK]   current_rack: {current_rack_group.current_rack}")
     
-    # Create rack based on next_rack_type
     if solution.next_rack_type is Rack:
         current_rack_group.place_single_rack()
-        logger.warning("[RACK_PLACEMENT] ✅ Created FIRST rack in group: SINGLE")
+        logger.warning("[RACK_PLACEMENT] Created FIRST rack in group: SINGLE")
     elif solution.next_rack_type is DoubleRack:
         current_rack_group.place_double_rack()
-        logger.warning("[RACK_PLACEMENT] ✅ Created FIRST rack in group: DOUBLE")
+        logger.warning("[RACK_PLACEMENT] Created FIRST rack in group: DOUBLE")
     else:
-        # Fallback to single rack if type not set
-        logger.warning("[RACK_PLACEMENT] ⚠️ next_rack_type not set, defaulting to SINGLE")
+        logger.warning("[RACK_PLACEMENT] next_rack_type not set, defaulting to SINGLE")
         current_rack_group.place_single_rack()
         logger.warning("[RACK_PLACEMENT] Created FIRST rack in group: SINGLE (fallback)")
     
-    # DEBUG: AFTER creating rack
     new_rack = current_rack_group.current_rack
     logger.warning(f"[DEBUG_FIRST_RACK] RackGroup AFTER creating rack:")
     logger.warning(f"[DEBUG_FIRST_RACK]   bounds: {current_rack_group.bounds}")
@@ -507,7 +478,6 @@ def create_first_rack_in_group(
     logger.warning(f"[DEBUG_FIRST_RACK]   Rack type: {type(new_rack).__name__}")
     logger.warning(f"[DEBUG_FIRST_RACK] ========================================")
     
-    # NEW: Check intersection with protective racks
     for protective_rack in solution.protective_racks:
         if new_rack.intersects(protective_rack.contour):
             logger.warning("[RACK_PLACEMENT] First rack intersects with protective rack")
@@ -737,10 +707,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
     double_rack_width = single_rack_width * 2
     space_needed = double_rack_width + reference_book.roads_width
     
-    # ========================================
-    # ✅ UNIFIED FUNCTION: Check if there are regular racks in zone
-    # ========================================
-    
     def has_regular_racks_in_zone():
         """Checks if there are any regular (non-protective) racks already placed in this zone."""
         logger.warning(f"[DEBUG_HAS_RACKS] ========================================")
@@ -750,7 +716,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
         
         start_idx = getattr(solution, 'rack_groups_before_zone', 0)
         
-        # Check saved groups
         logger.warning(f"[DEBUG_HAS_RACKS] Checking saved_rack_groups [{start_idx}:{len(solution.saved_rack_groups)}]")
         for i in range(start_idx, len(solution.saved_rack_groups)):
             rg = solution.saved_rack_groups[i]
@@ -764,12 +729,10 @@ def set_next_rack_type_double_or_single_based_on_strip(
                 logger.warning(f"[DEBUG_HAS_RACKS]     → Found regular racks! Returning True")
                 return True
         
-        # Check current group
         logger.warning(f"[DEBUG_HAS_RACKS] Checking current_rack_group")
         if solution.current_rack_group:
             logger.warning(f"[DEBUG_HAS_RACKS]   current_rack_group exists: racks={len(solution.current_rack_group.racks)}")
             
-            # Count only non-protective racks
             regular_racks_count = 0
             for idx, rack in enumerate(solution.current_rack_group.racks):
                 rack_type = type(rack).__name__
@@ -794,10 +757,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
         logger.warning(f"[DEBUG_HAS_RACKS] ========================================")
         return False
     
-    # ========================================
-    # Determine strip position
-    # ========================================
-    
     is_in_first_strip = (not solution.free_strips or 
                          solution.current_strip_idx == 0)
     is_in_last_strip = (not solution.free_strips or 
@@ -806,15 +765,10 @@ def set_next_rack_type_double_or_single_based_on_strip(
                          not is_in_first_strip and 
                          not is_in_last_strip)
     
-    # ========================================
-    # MIDDLE STRIP LOGIC: Only Double, or fail
-    # ========================================
-    
     if is_in_middle_strip:
-        logger.warning(f"[RACK_PLACEMENT] ⚡ In MIDDLE strip ({solution.current_strip_idx}/"
+        logger.warning(f"[RACK_PLACEMENT] In MIDDLE strip ({solution.current_strip_idx}/"
                       f"{len(solution.free_strips)-1})")
         
-        # Calculate available distance
         if solution.is_rotated:
             distance_available = zone_bounds[3] - current_position[1]
             logger.warning(f"[RACK_PLACEMENT] VERTICAL in middle strip: "
@@ -827,8 +781,7 @@ def set_next_rack_type_double_or_single_based_on_strip(
                           f"x={current_position[0]:.1f}, "
                           f"distance_available={distance_available:.1f}, "
                           f"space_needed={space_needed:.1f}")
-        
-        # Check if Double fits
+    
         if distance_available >= space_needed:
             solution.next_rack_type = DoubleRack
             logger.warning("[RACK_PLACEMENT] ✓ Double rack FITS in middle strip → DOUBLE")
@@ -843,23 +796,15 @@ def set_next_rack_type_double_or_single_based_on_strip(
                 f"Single racks not allowed in middle strips."
             )
     
-    # ========================================
-    # FIRST STRIP LOGIC: Check if zone came from split
-    # ========================================
-    
     if is_in_first_strip:
         logger.warning(f"[RACK_PLACEMENT] In FIRST strip (0/{len(solution.free_strips)-1 if solution.free_strips else 0})")
         
-        # ✅ NEW: Check if zone came from split
         if solution.zone_came_from_split:
-            logger.warning("[RACK_PLACEMENT] ⚡ Zone came from SPLIT → this is CONTINUATION of previous zone")
+            logger.warning("[RACK_PLACEMENT] Zone came from SPLIT → this is CONTINUATION of previous zone")
             logger.warning("[RACK_PLACEMENT] Skipping 'first rack = single' rule")
             
-            # Reset flag (used once)
             solution.zone_came_from_split = False
             
-            # Fall through to normal Double logic (check if fits)
-            # Calculate available distance
             if solution.is_rotated:
                 distance_available = zone_bounds[3] - current_position[1]
                 logger.warning(f"[RACK_PLACEMENT] VERTICAL: "
@@ -873,7 +818,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
                               f"distance_available={distance_available:.1f}, "
                               f"space_needed={space_needed:.1f}")
             
-            # Try to place Double
             if distance_available >= space_needed:
                 solution.next_rack_type = DoubleRack
                 logger.warning("[RACK_PLACEMENT] ✓ Double rack FITS in continuation zone → DOUBLE")
@@ -887,19 +831,15 @@ def set_next_rack_type_double_or_single_based_on_strip(
                     f"(need {space_needed:.1f}mm, have {distance_available:.1f}mm)."
                 )
         
-        # Original logic: check if first rack in NEW zone
         is_first_rack_in_zone = not has_regular_racks_in_zone()
         
-        # First rack in NEW zone → Single
         if is_first_rack_in_zone:
             solution.next_rack_type = Rack
             logger.warning("[RACK_PLACEMENT] ✓ FIRST rack in NEW zone → SINGLE rack")
             return
         
-        # NOT first rack → only Double (or fail)
         logger.warning("[RACK_PLACEMENT] NOT first rack in first strip → only DOUBLE allowed")
         
-        # Calculate available distance
         if solution.is_rotated:
             distance_available = zone_bounds[3] - current_position[1]
             logger.warning(f"[RACK_PLACEMENT] VERTICAL in first strip: "
@@ -913,7 +853,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
                           f"distance_available={distance_available:.1f}, "
                           f"space_needed={space_needed:.1f}")
         
-        # Check if Double fits
         if distance_available >= space_needed:
             solution.next_rack_type = DoubleRack
             logger.warning("[RACK_PLACEMENT] ✓ Double rack FITS in first strip → DOUBLE")
@@ -928,17 +867,12 @@ def set_next_rack_type_double_or_single_based_on_strip(
                 f"Only the first rack can be Single in first strip."
             )
     
-    # ========================================
-    # LAST STRIP LOGIC: Normal edge logic
-    # ========================================
-    
     logger.warning(f"[RACK_PLACEMENT] In LAST strip ({solution.current_strip_idx}/"
                   f"{len(solution.free_strips)-1 if solution.free_strips else 0}) → using normal edge logic")
     
     is_at_edge = False
     
     if solution.is_rotated:
-        # VERTICAL PLACEMENT (Y-axis)
         is_first_rack = not has_regular_racks_in_zone()
         distance_from_top = zone_bounds[3] - current_position[1]
         
@@ -953,7 +887,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"space_needed={space_needed:.1f}, "
                       f"at_edge={is_at_edge}")
     else:
-        # HORIZONTAL PLACEMENT (X-axis)
         is_first_rack = not has_regular_racks_in_zone()
         distance_from_right = zone_bounds[2] - current_position[0]
         
@@ -968,7 +901,6 @@ def set_next_rack_type_double_or_single_based_on_strip(
                       f"space_needed={space_needed:.1f}, "
                       f"at_edge={is_at_edge}")
     
-    # Determine rack type
     if is_at_edge:
         solution.next_rack_type = Rack
         logger.warning("[RACK_PLACEMENT] ✓ At EDGE → SINGLE rack")
@@ -1000,7 +932,6 @@ def fill_with_frames(
 
     section_len = rack.beam_type.length + rack.upright_type.width
     
-    # DEBUG: BEFORE fill
     logger.warning(f"[DEBUG_FILL] ========================================")
     logger.warning(f"[DEBUG_FILL] FILL_WITH_FRAMES called")
     logger.warning(f"[DEBUG_FILL] Rack BEFORE fill:")
@@ -1008,15 +939,11 @@ def fill_with_frames(
     logger.warning(f"[DEBUG_FILL]   frames: {len(rack)}")
     logger.warning(f"[DEBUG_FILL]   section_len: {section_len:.1f} mm")
     
-    # Determine maximum length based on zone or strip
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
-        # NEW: Use current strip boundary
         current_strip = solution.free_strips[solution.current_strip_idx]
-        # Strips are defined by Y boundaries, X is still zone-wide
         max_len_bbox = az.contour.bounds[2] - rack.contour.bounds[2]
         logger.warning(f"[RACK_PLACEMENT] Filling within strip {solution.current_strip_idx}")
     else:
-        # Original behavior
         max_len_bbox = az.contour.bounds[2] - rack.contour.bounds[2]
     
     frames_count = max(0, int(max_len_bbox // section_len))
@@ -1027,20 +954,17 @@ def fill_with_frames(
 
     rack.add_multiple_frames(frames_count)
 
-    # DEBUG: AFTER fill
     logger.warning(f"[DEBUG_FILL] Rack AFTER fill:")
     logger.warning(f"[DEBUG_FILL]   bounds: {rack.bounds}")
     logger.warning(f"[DEBUG_FILL]   frames: {len(rack)}")
     rack_width = rack.bounds[2] - rack.bounds[0]
     logger.warning(f"[DEBUG_FILL]   rack width: {rack_width:.1f} mm")
 
-    # Verify rack fits in zone
     inside = shapely.covers(az.contour, rack.contour)
     logger.warning(f"[DEBUG_FILL] Shapely check: inside_zone={inside}")
     logger.warning(f"[RACK_PLACEMENT] After fill: frames={len(rack)}, inside_zone={inside}")
 
     if not inside:
-        # Remove frames until it fits
         overflow_count = 0
         logger.warning(f"[DEBUG_FILL] OVERFLOW DETECTED! Starting to remove frames...")
         while not shapely.covers(az.contour, rack.contour) and len(rack) > 0:
@@ -1051,7 +975,6 @@ def fill_with_frames(
         logger.warning(f"[RACK_PLACEMENT] Overflow detected, removed {overflow_count} frames")
         raise ActionFailure("Rack overflowed zone during fill_with_frames")
     
-    # CRITICAL LOGS AT END
     logger.warning(f"[DEBUG_FILL] ========================================")
     logger.warning(f"[DEBUG_FILL] EXITING fill_with_frames")
     logger.warning(f"[DEBUG_FILL] Final rack state:")

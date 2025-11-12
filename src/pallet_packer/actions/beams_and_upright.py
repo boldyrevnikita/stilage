@@ -172,14 +172,14 @@ def _find_suitable_upright_type(
             - float: The maximum number of shelves that can be
                 placed in a bridge.
     """
-    logger.warning("\n🏗️  ВЫБОР СТОЙКИ:")
+    logger.warning("\n ВЫБОР СТОЙКИ:")
     logger.warning(f"   Входные данные:")
     logger.warning(f"      Высота зоны: {available_zone.height} мм")
     logger.warning(f"      frame_height_eps: {reference_book.frame_height_eps} мм")
     logger.warning(f"      available_zone.height % 500 = {available_zone.height % 500}")
     
     available_height = available_zone.height - max(reference_book.frame_height_eps, available_zone.height % 500)
-    logger.warning(f"   📏 Доступная высота: {available_height} мм")
+    logger.warning(f"   Доступная высота: {available_height} мм")
 
     pallet_extra_space = reference_book.frame_height2pallet_extra_space[-1][1]
     logger.warning(f"\n   Определение extra_space:")
@@ -188,19 +188,19 @@ def _find_suitable_upright_type(
         logger.warning(f"      Если высота <= {frame_height}: extra_space = {extra_space}")
         if available_height <= frame_height:
             pallet_extra_space = extra_space
-            logger.warning(f"   ✅ Выбрано: pallet_extra_space = {pallet_extra_space} мм")
+            logger.warning(f"   Выбрано: pallet_extra_space = {pallet_extra_space} мм")
             break
 
-    logger.warning(f"\n   📊 Расчет высоты полки:")
+    logger.warning(f"\n   Расчет высоты полки:")
     logger.warning(f"      pallet.height = {pallet.height} мм")
     logger.warning(f"      pallet_extra_space = {pallet_extra_space} мм")
     logger.warning(f"      beam_type.height = {beam_type.beam_section[0]} мм")
     
     shelf_height = pallet.height + pallet_extra_space + beam_type.beam_section[0]
-    logger.warning(f"   📦 shelf_height = {pallet.height} + {pallet_extra_space} + {beam_type.beam_section[0]} = {shelf_height} мм")
+    logger.warning(f"   shelf_height = {pallet.height} + {pallet_extra_space} + {beam_type.beam_section[0]} = {shelf_height} мм")
     
     max_shelfs = available_height // shelf_height
-    logger.warning(f"   🔢 max_shelfs = {available_height} // {shelf_height} = {max_shelfs}")
+    logger.warning(f"   max_shelfs = {available_height} // {shelf_height} = {max_shelfs}")
 
     if max_shelfs == 0:
         raise ActionFailure(
@@ -210,19 +210,18 @@ def _find_suitable_upright_type(
     max_shelfs_bridge = ((available_height - reference_book.roads_height)
                          // shelf_height)
     max_shelfs_bridge = max(0, max_shelfs_bridge)
-    logger.warning(f"   🌉 max_shelfs_bridge = {max_shelfs_bridge}")
+    logger.warning(f"   max_shelfs_bridge = {max_shelfs_bridge}")
 
     shelf_load_kg = pallet.weight * beam_type.max_shelf_load_capacity_pallets
     max_frame_load_kg = shelf_load_kg * max_shelfs
     
-    logger.warning(f"\n   💪 Расчет нагрузки:")
+    logger.warning(f"\n    Расчет нагрузки:")
     logger.warning(f"      shelf_load_kg = {pallet.weight} × {beam_type.max_shelf_load_capacity_pallets} = {shelf_load_kg} кг")
     logger.warning(f"      max_frame_load_kg = {shelf_load_kg} × {max_shelfs} = {max_frame_load_kg} кг")
     
-    # Initialize upright_type to avoid 'referenced before assignment' error
     upright_type: UprightType | None = None
     
-    logger.warning(f"\n   🔍 ПОИСК ПОДХОДЯЩЕЙ СТОЙКИ:")
+    logger.warning(f"\n   ПОИСК ПОДХОДЯЩЕЙ СТОЙКИ:")
     logger.warning(f"      Требования: max_shelf_height >= {shelf_height}, max_frame_load >= {max_frame_load_kg}")
     
     iteration = 0
@@ -231,11 +230,9 @@ def _find_suitable_upright_type(
         logger.warning(f"\n      --- Итерация #{iteration} ---")
         logger.warning(f"      Текущие параметры: max_shelfs={max_shelfs}, max_frame_load_kg={max_frame_load_kg}")
         
-        # Search for suitable upright by shelf height and frame load capacity
         for ut_idx, ut in enumerate(reference_book.upright_types):
             if ut_idx < 3 or (ut.max_shelf_height >= shelf_height and
                 ut.max_frame_load_capacity_kg >= max_frame_load_kg):
-                # Печатаем первые 3 стойки всегда, остальные только если подходят
                 match = (ut.max_shelf_height >= shelf_height and
                         ut.max_frame_load_capacity_kg >= max_frame_load_kg)
                 symbol = "✅" if match else "❌"
@@ -249,12 +246,11 @@ def _find_suitable_upright_type(
             if (ut.max_shelf_height >= shelf_height and
                 ut.max_frame_load_capacity_kg >= max_frame_load_kg):
                 upright_type = ut
-                logger.warning(f"      ✅ НАЙДЕНА подходящая стойка!")
+                logger.warning(f"      НАЙДЕНА подходящая стойка!")
                 break
         
         if upright_type is None:
-            # Reduce number of shelves and recalculate load
-            logger.warning(f"      ⚠️  Стойка не найдена, уменьшаем количество полок")
+            logger.warning(f"      Стойка не найдена, уменьшаем количество полок")
             max_shelfs -= 1
             max_shelfs_bridge = min(max_shelfs_bridge, max_shelfs)
             max_frame_load_kg -= shelf_load_kg
@@ -265,7 +261,7 @@ def _find_suitable_upright_type(
             "No suitable upright type found for the given pallet."
         )
 
-    logger.warning(f"\n   ✅ ВЫБРАНА СТОЙКА:")
+    logger.warning(f"\n   ВЫБРАНА СТОЙКА:")
     logger.warning(f"      ID: {upright_type.upright_type_id}")
     logger.warning(f"      Сечение: {upright_type.upright_section}")
     logger.warning(f"      Max высота полки: {upright_type.max_shelf_height} мм")
@@ -274,11 +270,11 @@ def _find_suitable_upright_type(
     logger.warning(f"      Max высота рамы: {upright_type.max_rack_height} мм")
 
     frame_height = shelf_height * max_shelfs + reference_book.frame_height_eps
-    logger.warning(f"\n   📐 Проверка высоты рамы:")
+    logger.warning(f"\n   Проверка высоты рамы:")
     logger.warning(f"      frame_height = {shelf_height} × {max_shelfs} + {reference_book.frame_height_eps} = {frame_height} мм")
     
     if frame_height < upright_type.min_rack_height:
-        logger.warning(f"   ❌ ОШИБКА: {frame_height} < {upright_type.min_rack_height} (min_rack_height)")
+        logger.warning(f"   ОШИБКА: {frame_height} < {upright_type.min_rack_height} (min_rack_height)")
         raise ActionFailure(
             "No suitable upright type found for the given pallet, "
             "since frame height is less than minimum available rack height"
@@ -287,30 +283,29 @@ def _find_suitable_upright_type(
     adjustment_count = 0
     while frame_height > upright_type.max_rack_height:
         adjustment_count += 1
-        logger.warning(f"   ⚠️  Корректировка #{adjustment_count}: {frame_height} > {upright_type.max_rack_height}, уменьшаем полки")
+        logger.warning(f"   Корректировка #{adjustment_count}: {frame_height} > {upright_type.max_rack_height}, уменьшаем полки")
         max_shelfs -= 1
         max_shelfs_bridge = max(0, min(max_shelfs_bridge, max_shelfs))
         frame_height = (shelf_height * max_shelfs
                         + reference_book.frame_height_eps)
         logger.warning(f"      Новые: max_shelfs={max_shelfs}, frame_height={frame_height}")
 
-    logger.warning(f"   ✅ Финальная высота рамы: {frame_height} мм")
+    logger.warning(f"   Финальная высота рамы: {frame_height} мм")
     
-    # Final checks
     if upright_type.max_shelf_height < shelf_height:
-        logger.warning(f"   ❌ ОШИБКА: max_shelf_height ({upright_type.max_shelf_height}) < shelf_height ({shelf_height})")
+        logger.warning(f"   ОШИБКА: max_shelf_height ({upright_type.max_shelf_height}) < shelf_height ({shelf_height})")
         raise ActionFailure(
             "No suitable upright type found for the given pallet, "
             "since the pallet+cargo height exceeds maximum shelf height"
         )
     if upright_type.max_frame_load_capacity_kg < shelf_load_kg:
-        logger.warning(f"   ❌ ОШИБКА: max_frame_load ({upright_type.max_frame_load_capacity_kg}) < shelf_load ({shelf_load_kg})")
+        logger.warning(f"   ОШИБКА: max_frame_load ({upright_type.max_frame_load_capacity_kg}) < shelf_load ({shelf_load_kg})")
         raise ActionFailure(
             "No suitable upright type found for the given pallet, "
             "since the pallet weight exceeds maximum frame load capacity"
         )
 
-    logger.warning(f"\n   🎯 Финальные параметры:")
+    logger.warning(f"\n   Финальные параметры:")
     logger.warning(f"      Количество полок: {max_shelfs}")
     logger.warning(f"      Полок на мосту: {max_shelfs_bridge}")
     logger.warning(f"      Extra space: {pallet_extra_space} мм")

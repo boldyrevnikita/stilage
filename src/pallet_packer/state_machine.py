@@ -47,9 +47,8 @@ def get_main_loop_states() -> dict[str, State]:
         
         f'{Block.MAIN}-SNZ': State(
             actions.set_next_zone,
-            [f'{Block.MAIN}-RESET_ZONE_DATA'], [f'{Block.MAIN}-SZZ']),  # ← Изменено!
+            [f'{Block.MAIN}-RESET_ZONE_DATA'], [f'{Block.MAIN}-SZZ']), 
 
-        # ✅ НОВОЕ: Очистка данных предыдущей зоны
         f'{Block.MAIN}-RESET_ZONE_DATA': State(
             actions.reset_zone_specific_data,
             [f'{Block.MAIN}-GCOZARZ'], ['GFS']),
@@ -62,7 +61,6 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-TRY_VERTICAL', f'{Block.MAIN}-TRY_HORIZONTAL'],
             [f'{Block.MAIN}-SNZ']),
 
-        # === Проверка ориентации ===
         f'{Block.MAIN}-TRY_VERTICAL': State(
             actions.check_if_vertical_allowed,
             [f'{Block.MAIN}-RZC-90'],
@@ -73,12 +71,10 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-PROTECT_COLUMNS'],
             ['GFS']),
         
-        # === Вращение для vertical ===
         f'{Block.MAIN}-RZC-90': State(
             actions.rotate_everything_90_clockwise,
             [f'{Block.MAIN}-PROTECT_COLUMNS'], ['GFS']),
         
-        # === Защита колонн (Фаза 1) ===
         f'{Block.MAIN}-PROTECT_COLUMNS': State(
             actions.identify_and_protect_all_columns,
             [f'{Block.MAIN}-ANALYZE_STRIPS'], ['GFS']),
@@ -90,56 +86,45 @@ def get_main_loop_states() -> dict[str, State]:
             [f'{Block.MAIN}-PHG'],         
             [f'{Block.MAIN}-PHG']),       
         
-        # === Размещение группы стеллажей ===
-        # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Изменён порядок!
         f'{Block.MAIN}-PHG': State(
-            actions.place_horizontal_rack_group,  # Создаёт RackGroup БЕЗ первого rack
-            [f'{Block.CF}-SNRTS'], ['TS-DEL']),  # ← Сразу к определению типа!
+            actions.place_horizontal_rack_group,  
+            [f'{Block.CF}-SNRTS'], ['TS-DEL']),  
         
-        # === Первый rack в группе (новый flow) ===
-        # ✅ ШАГ 1: Определяем тип первого rack
         f'{Block.CF}-SNRTS': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
-            [f'{Block.CF}-CREATE_FIRST_RACK'], ['GFS']),  # ← К созданию!
+            [f'{Block.CF}-CREATE_FIRST_RACK'], ['GFS']),  
         
-        # ✅ ШАГ 2: Создаём первый rack нужного типа
         f'{Block.CF}-CREATE_FIRST_RACK': State(
-            actions.create_first_rack_in_group,  # ← НОВАЯ ФУНКЦИЯ!
-            [f'{Block.MAIN}-CES-HG'], ['TS-DEL']),  # ← К проверке размещения!
+            actions.create_first_rack_in_group,  
+            [f'{Block.MAIN}-CES-HG'], ['TS-DEL']), 
         
-        # ✅ ШАГ 3: Проверяем что rack помещается
         f'{Block.MAIN}-CES-HG': State(
             actions.assert_current_rack_fits_available_zone,
-            [f'{Block.CF}-FwF'], [f'{Block.MAIN}-DFS']),  # ← К заполнению frames!
+            [f'{Block.CF}-FwF'], [f'{Block.MAIN}-DFS']),  
         
         f'{Block.MAIN}-DFS': State(
             actions.decrease_current_frame_length,
             [f'{Block.MAIN}-CES-HG'], [f'{Block.MAIN}-RZCC-90-2']),
-        
-        # === Откат rotation после DFS ===
+
         f'{Block.MAIN}-RZCC-90-2': State(
             actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-SNZ'], ['GFS']),
         
-        # === После завершения работы с полосой ===
         f'{Block.MAIN}-CHECK_STRIPS': State(
             actions.check_if_more_strips_available,
             [f'{Block.MAIN}-NEXT_STRIP'], [f'{Block.MAIN}-RZCC-90']),
         f'{Block.MAIN}-NEXT_STRIP': State(
             actions.set_next_free_strip,
-            [f'{Block.MAIN}-PHG'], ['GFS']),  # ← Создаём новую RackGroup для нового strip
+            [f'{Block.MAIN}-PHG'], ['GFS']), 
         
-        # === Откат rotation после всех strips ===
         f'{Block.MAIN}-RZCC-90': State(
             actions.rotate_everything_90_counterclockwise,
             [f'{Block.MAIN}-SpZ'], [f'{Block.MAIN}-SpZ']),
         
-        # === Разделение зоны ===
         f'{Block.MAIN}-SpZ': State(
             actions.split_available_zone,
             [f'{Block.MAIN}-SoZ'], [f'{Block.MAIN}-SNZ']),
         
-        # === Переход к следующей зоне или поддону ===
         f'{Block.MAIN}-SZZ': State(
             actions.set_zero_zone,
             [f'{Block.MAIN}-GNC'], ['GFS']),
@@ -171,7 +156,6 @@ def get_rack_placement_states() -> dict[str, State]:
     """Returns a dictionary of states related to rack placement in the
     state machine."""
     return {
-        # === Проверка пересечений с зонами ===
         f'{Block.RACK_PLACEMENT}-CTNOZ': State(
             actions.assert_current_rack_intersecting_occupied_zones,
             [f'{Block.JOOZ}-DLF', f'{Block.EOZ}-IDR', f'{Block.MSR}-IDR'],
@@ -181,7 +165,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-CIRH'],
             [f'{Block.RACK_PLACEMENT}-IPC']),
         
-        # === Увеличение счетчика поддонов ===
         f'{Block.RACK_PLACEMENT}-IPC': State(
             actions.increase_pallet_counter,
             [f'{Block.RACK_PLACEMENT}-CIEP'],
@@ -191,7 +174,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-SNF'],
             [f'{Block.RACK_PLACEMENT}-SR-CC']),
         
-        # === Завершение работы с текущим грузом ===
         f'{Block.RACK_PLACEMENT}-GNC': State(
             actions.set_next_pallet,
             [f'{Block.MAIN}-RZCC-90'],
@@ -209,7 +191,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-GNC'],
             [f'{Block.MAIN}-SNZ']),
         
-        # === Добавление новой секции ===
         f'{Block.RACK_PLACEMENT}-SNF': State(
             actions.place_new_frame,
             [f'{Block.RACK_PLACEMENT}-CESFFR'],
@@ -219,7 +200,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-CTNOZ'],
             [f'{Block.RACK_PLACEMENT}-DLF']),
         
-        # === Удаление последней секции и сохранение ===
         f'{Block.RACK_PLACEMENT}-DLF': State(
             actions.delete_last_frame,
             [f'{Block.RACK_PLACEMENT}-SR'],
@@ -237,7 +217,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.MAIN}-CHECK_STRIPS'],
             [f'{Block.MAIN}-CHECK_STRIPS']), 
         
-        # === Создание двойного стеллажа ===
         f'{Block.RACK_PLACEMENT}-CDR': State(
             actions.place_new_double_rack,
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
@@ -251,7 +230,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
             [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']),
         
-        # === Сохранение группы стеллажей ===
         f'{Block.RACK_PLACEMENT}-SRG': State(
             actions.save_rack_group,
             [f'{Block.RACK_PLACEMENT}-RURP'],
@@ -261,7 +239,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.MAIN}-RZCC-90'],
             [f'{Block.MAIN}-SNZ']),
         
-        # === Обработка горизонтального проезда ===
         f'{Block.RACK_PLACEMENT}-CIRH': State(
             actions.assert_intersected_road_horizontal,
             [f'{Block.RACK_PLACEMENT}-MRV'],
@@ -271,7 +248,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-CESFFH'],
             ['GFS']),
         
-        # === Обработка вертикального проезда (мост) ===
         f'{Block.RACK_PLACEMENT}-IFLEFR': State(
             actions.assert_current_shelf_length_enough_for_road,
             [f'{Block.RACK_PLACEMENT}-ICZHEFRB'],
@@ -289,7 +265,6 @@ def get_rack_placement_states() -> dict[str, State]:
             [f'{Block.RACK_PLACEMENT}-IPC'],
             ['GFS']),
         
-        # === Откат rotation ===
         f'{Block.RACK_PLACEMENT}-RZCC-90-3': State(
             actions.rotate_everything_90_counterclockwise,
             ['TS'], ['GFS']),
@@ -318,9 +293,7 @@ def get_gooz_states() -> dict[str, State]:
 def get_jooz_states() -> dict[str, State]:
     """Returns a dictionary of states related to the JOOZ block in the
     state machine.
-    
-    ✅ FIXED: Changed JOOZ-SNLR to use CF-SNRTD instead of CF-CNR
-    to ensure rack type is determined intelligently before creation.
+
     """
     return {
         f'{Block.JOOZ}-DLF': State(
@@ -333,7 +306,7 @@ def get_jooz_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.JOOZ}-SNLR': State(
             actions.set_next_rack_position_righter,
-            [f'{Block.CF}-SNRTD'],  # ✅ FIXED: Use smart rack type determination
+            [f'{Block.CF}-SNRTD'],  
             ['GFS']),
     }
 
@@ -388,16 +361,11 @@ def get_coarse_fill_states() -> dict[str, State]:
     subsequent racks follow CF-SNRTD -> CF-CNR pattern.
     """
     return {
-        # ✅ CF-SNRTS теперь только для ПЕРВОГО rack (вызывается из MAIN-PHG)
-        # См. get_main_loop_states() выше
-        
-        # ✅ CF-CREATE_FIRST_RACK - создаёт первый rack (НОВОЕ!)
         f'{Block.CF}-CREATE_FIRST_RACK': State(
-            actions.create_first_rack_in_group,  # ← НОВАЯ ФУНКЦИЯ в actions!
-            [f'{Block.CF}-FwF'],  # ← К заполнению frames
+            actions.create_first_rack_in_group, 
+            [f'{Block.CF}-FwF'],  
             ['GFS']),
         
-        # Заполнение frames (для любого rack - первого или последующих)
         f'{Block.CF}-FwF': State(
             actions.fill_with_frames,
             [f'{Block.CF}-CTNOZpCNTRZ'],
@@ -420,13 +388,12 @@ def get_coarse_fill_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.CF}-SNLH-DEF': State(
             actions.set_next_rack_position_higher_default,
-            [f'{Block.CF}-SNRTD'],  # ← К созданию следующего rack
+            [f'{Block.CF}-SNRTD'],  
             [f'{Block.MAIN}-SAVE_RG_BEFORE_NEXT_STRIP']), 
         
-        # ✅ Создание ПОСЛЕДУЮЩИХ racks (не первого!)
         f'{Block.CF}-SNRTD': State(
             actions.set_next_rack_type_double_or_single_based_on_strip,
-            [f'{Block.CF}-CNR'],  # ← Сразу создаём rack
+            [f'{Block.CF}-CNR'],  
             ['GFS']),
         f'{Block.CF}-CNR': State(
             actions.create_new_rack,
@@ -434,10 +401,9 @@ def get_coarse_fill_states() -> dict[str, State]:
             ['GFS']),
         f'{Block.CF}-CESFF': State(
             actions.assert_current_rack_fits_available_zone,
-            [f'{Block.CF}-FwF'],  # ← К заполнению frames
+            [f'{Block.CF}-FwF'],  
             [f'{Block.RACK_PLACEMENT}-CESFFH']),
         
-        # Excess frames handling
         f'{Block.CF}-DEF-1': State(
             actions.delete_excess_frames_oz,
             [f'{Block.CF}-CIEP-2'],

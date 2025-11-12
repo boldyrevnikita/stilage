@@ -120,16 +120,12 @@ class PalletPackerProcessor:
         while solutions_queue:
             current_solution = solutions_queue.popleft()
             
-            # Apply current state's action
             self.state_machine.apply_action(current_solution)
             
-            # Generate next solution variants
             new_solutions = self.state_machine.choose_next_action(current_solution)
             
-            # Filter out invalid solutions
             new_solutions = self.state_machine.remove_invalid_solutions(new_solutions)
             
-            # Separate transitional and completed solutions
             transitional_solutions, end_solutions = (
                 self.state_machine.extract_end_solutions(new_solutions))
             
@@ -140,13 +136,11 @@ class PalletPackerProcessor:
                 logger.info(f"[PROCESSOR-{self.process_idx}] Found {len(end_solutions)} completed solutions. "
                            f"Total: {len(self.ready_solutions)}")
 
-            # Periodic pruning
             if step % self.prune_steps == 0:
                 solutions_queue, pruned_solutions = self.__prune_solutions(
                     solutions_queue,
                     self.prune_beams_keep)
 
-                # Return pruned solutions to cache for other processes
                 for solution in pruned_solutions:
                     if self.cache.qsize() >= self.cache_size:
                         self.cache.get()
@@ -251,7 +245,6 @@ class PalletPacker:
             ready_solutions = manager.list()
             processes_idle = manager.list([True] * cpu_count())
 
-            # Deep copy input data to avoid modification
             pallets = deepcopy(pallets)
             available_zones = deepcopy(available_zones)
             occupied_zones = deepcopy(occupied_zones)
@@ -259,7 +252,6 @@ class PalletPacker:
 
             state_machine = StateMachine(reference_book)
 
-            # Create initial solution
             initial_solution = Solution(
                 available_zones=available_zones,
                 occupied_zones=occupied_zones,
@@ -271,7 +263,6 @@ class PalletPacker:
             cache.put(initial_solution)
             logger.info("Initial solution created and added to cache")
 
-            # Start worker processes
             for i in range(cpu_count()):
                 logger.info(f'Starting process {i + 1}/{cpu_count()} for pallet packing')
                 process = Process(
@@ -287,7 +278,6 @@ class PalletPacker:
                 process.start()
                 processes.append(process)
 
-            # Wait for all processes to complete
             for i, process in enumerate(processes):
                 process.join()
                 logger.info(f'Process {i + 1}/{cpu_count()} has finished')
@@ -295,7 +285,6 @@ class PalletPacker:
             ready_solutions = list(ready_solutions)
             logger.info(f"All processes finished. Total solutions found: {len(ready_solutions)}")
 
-        # Select and return best solution
         best_solution = cls.__get_best_solution(ready_solutions)
         
         if best_solution:
@@ -386,36 +375,30 @@ class PalletPacker:
         max_cargo_quantity = 0
         current_cargo_quantity = 0
 
-        # Calculate area efficiency
         for available_zone in solution.initial_available_zones:
             start_area += available_zone.area
         for available_zone in solution.available_zones:
             current_area += available_zone.area
 
-        # Subtract current rack group area (not yet saved)
         if solution.current_rack_group is not None:
             current_area -= solution.current_rack_group.area
 
-        # Calculate pallet placement progress
         for pallet in solution.pallets:
             max_cargo_quantity += pallet.cargo.quantity
             current_cargo_quantity += solution.pallet_count[
                 pallet.cargo.cargo_type_id]
 
-        # Base score: area usage + pallet placement progress
         if start_area > 0 and max_cargo_quantity > 0:
             area_score = (start_area - current_area) / start_area
             pallet_score = current_cargo_quantity / max_cargo_quantity
             score = area_score + pallet_score
         
-        # NEW: Bonus for protecting columns
         if hasattr(solution, 'protective_racks') and hasattr(solution, 'columns_in_zone'):
             protected_columns_count = len(solution.protective_racks)
             total_columns_count = len(solution.columns_in_zone)
             
             if total_columns_count > 0:
                 protection_ratio = protected_columns_count / total_columns_count
-                # Add up to 10% bonus for fully protecting all columns
                 protection_bonus = protection_ratio * 0.1
                 score += protection_bonus
         

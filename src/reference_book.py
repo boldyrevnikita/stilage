@@ -1,10 +1,3 @@
-"""
-Reference book module containing business logic constants and configurations.
-
-This module provides the ReferenceBook class which stores all business-related
-constants, configuration parameters, and lookup tables for the pallet packing system.
-"""
-
 from src.pallet import PalletType
 from src.rack import BeamType, UprightType
 
@@ -24,17 +17,7 @@ class ReferenceBook:
 
     def __init__(self):
         """Initializes the reference book with all configuration parameters."""
-        
-        # =====================================================================
-        # UPRIGHT CONFIGURATION
-        # =====================================================================
-        
-        # Extra width added to upright sections for structural reasons
         self.upright_width_eps = 8.0
-
-        # =====================================================================
-        # PALLET TYPES
-        # =====================================================================
         
         self.pallet_types = {
             1: PalletType(
@@ -53,24 +36,12 @@ class ReferenceBook:
             )
         }
         
-        # =====================================================================
-        # BEAM AND UPRIGHT TYPES
-        # =====================================================================
-        
         self.beam_types: dict[int, list[BeamType]] = self.__init_beam_types()
         self.upright_types: list[UprightType] = self.__init_upright_types()
-
-        # =====================================================================
-        # SHELF HEIGHT CONFIGURATION
-        # =====================================================================
-        
-        # Maps frame height thresholds to required pallet extra space
-        # Format: (max_frame_height, pallet_extra_space)
-        # Extra space is needed above pallets for forklift operation
         self.frame_height2pallet_extra_space = [
-            (3000.0, 75.0),   # For frames up to 3m: 75mm extra space
-            (9000.0, 125.0),  # For frames up to 9m: 125mm extra space
-            (12000.0, 150.0), # For frames up to 12m: 150mm extra space
+            (3000.0, 75.0),   
+            (9000.0, 125.0),  
+            (12000.0, 150.0), 
         ]
 
         # =====================================================================

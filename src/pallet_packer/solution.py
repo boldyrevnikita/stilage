@@ -110,124 +110,66 @@ class Solution:
             action_status (ActionStatus): Status of the last action executed.
             pallet_count (dict[int, int]): Counter for pallets placed by cargo type ID.
         """
-        # =====================================================================
-        # ZONE AND OBSTACLE DATA
-        # =====================================================================
         
-        # Original zones (never modified, for reference)
         self.initial_available_zones = deepcopy(available_zones)
         
-        # Current working zones (can be split/modified during processing)
         self.available_zones = deepcopy(available_zones)
         self.available_zone_idx = available_zone_idx
         
-        # Rotation data
         self.rot_point: tuple[float, float] = (0.0, 0.0)
         self.is_rotated = False
         
-        # All obstacles and roads in the warehouse
         self.occupied_zones = deepcopy(occupied_zones)
         self.road_zones = deepcopy(road_zones)
         
-        # Obstacles/roads relevant to current zone (filtered subset)
         self.current_occupied_zones: list[OccupiedZone] = []
         self.current_road_zones: list[SpecialRoadZone] = []
         
-        # Currently intersected obstacle/road (during placement)
         self.intersected_special_zone: OccupiedZone | SpecialRoadZone = None
 
         self.zone_came_from_split = False  
         
         
-        # =====================================================================
-        # NEW: COLUMN PROTECTION (Phase 1)
-        # =====================================================================
-        
-        # Columns identified in current zone (subset of current_occupied_zones)
-        # These are compact, small obstacles that will be protected by double racks
         self.columns_in_zone: list[OccupiedZone] = []
         
-        # Protective double racks created for columns
-        # These racks span the full width of the zone and contain columns between halves
         self.protective_racks: list[DoubleRack] = []
         
-        # Free strips between protective racks (for regular rack placement)
-        # Format: [{'y_min': float, 'y_max': float, 'width': float, 'index': int}, ...]
         self.free_strips: list[dict] = []
         
-        # Index of the free strip currently being filled
         self.current_strip_idx: int = 0
         
-        # =====================================================================
-        # PALLET DATA
-        # =====================================================================
-        
-        # All pallets to be placed
         self.pallets = deepcopy(pallets)
         
-        # Counter: how many pallets of each cargo type have been placed
-        # Key: cargo_type_id, Value: count of pallets placed
         self.pallet_count = pallet_count
         
-        # Index of current pallet type being processed
         self.pallet_idx = pallet_idx
         
-        # =====================================================================
-        # RACK DATA
-        # =====================================================================
-        
-        # Completed rack groups (saved and finalized)
         self.saved_rack_groups = saved_rack_groups or []
         
-        # Rack group currently being built
         self.current_rack_group = current_rack_group
         
-        # Type of next rack to create (Rack or DoubleRack)
         self.next_rack_type: type[Rack] | type[DoubleRack] = None
         
-        # =====================================================================
-        # RACK CONFIGURATION (from reference book)
-        # =====================================================================
-        
-        # Available beam types for current pallet
         self.beam_types = []
         
-        # Selected upright type for current pallet
         self.upright_type = None
         
-        # Index of current beam type being used
         self.beam_type_idx = 0
         
-        # Extra space above pallet on each shelf
         self.pallet_extra_space = 0.0
         
-        # Maximum number of shelves per frame
         self.max_shelfs = 0
         
-        # Maximum number of shelves per bridge frame
         self.max_shelfs_bridge = 0
         
-        # =====================================================================
-        # STATE MACHINE DATA
-        # =====================================================================
-        
-        # Current state in the state machine
         self.state = state
         
-        # Status of the last action executed
         self.action_status = action_status
         
-        # History of states (for debugging, optional)
         self.state_history = []
         
-        # =====================================================================
-        # TRACKING DATA (for special cases)
-        # =====================================================================
-        
-        # Last vertical road zone intersected (to avoid re-processing)
         self.last_intersected_vertical_road = None
         
-        # Maximum Y coordinate of intersected occupied zones (for positioning next rack)
         self.max_intersected_oz_y = None
 
         self.rack_groups_before_zone = 0
@@ -269,7 +211,7 @@ class Solution:
         for rack_group in self.saved_rack_groups:
             for rack in rack_group.racks:
                 if isinstance(rack, DoubleRack):
-                    total += 2  # Count both halves
+                    total += 2 
                 else:
                     total += 1
         return total

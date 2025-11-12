@@ -9,11 +9,6 @@ import math
 
 logger = logging.getLogger(__name__)
 
-
-# =============================================================================
-# MAIN FUNCTIONS (called from state machine)
-# =============================================================================
-
 def identify_and_protect_all_columns(
     reference_book: ReferenceBook,
     solution: Solution
@@ -23,16 +18,12 @@ def identify_and_protect_all_columns(
     logger.warning("[COLUMN_PROTECTION] Starting Phase 1: Protect all columns")
     logger.warning("[COLUMN_PROTECTION] ========================================")
     
-    # Step 1: Identify columns
     identify_columns_in_zone(reference_book, solution)
     
-    # Step 2: Create protective racks for all columns
     create_protective_double_racks_for_all_columns(reference_book, solution)
     
-    # Step 3: Optimize if needed
     optimize_protective_racks(reference_book, solution)
     
-    # Step 4: Save protective racks as regular rack_groups
     _save_protective_racks_as_rack_groups(reference_book, solution)
     
     logger.warning(f"[COLUMN_PROTECTION] Phase 1 complete. Protected {len(solution.protective_racks)} columns")
@@ -56,7 +47,6 @@ def _save_protective_racks_as_rack_groups(
     saved_count = 0
     for idx, protective_rack in enumerate(solution.protective_racks):
         try:
-            # Create a RackGroup for this protective rack
             rack_group = RackGroup(
                 beam_types=solution.beam_types,
                 upright_type=solution.upright_type,
@@ -69,18 +59,13 @@ def _save_protective_racks_as_rack_groups(
                 frame_height_eps=reference_book.frame_height_eps
             )
             
-            # Add the protective rack to the group
             rack_group.racks.append(protective_rack)
             
-            # ✅ CRITICAL: Mark this RackGroup as protective
-            # This prevents double rotation and helps with identification
             rack_group.is_protective = True
             
-            # IMPORTANT: Update RackGroup bounds if method exists
             if hasattr(rack_group, '_update_bounds'):
                 rack_group._update_bounds()
             
-            # Save to solution
             solution.saved_rack_groups.append(rack_group)
             saved_count += 1
             
@@ -105,7 +90,6 @@ def identify_columns_in_zone(
         else:
             remaining_occupied_zones.append(occupied_zone)
     
-    # Update current_occupied_zones to exclude columns
     solution.current_occupied_zones = remaining_occupied_zones
     
     logger.warning(f"[COLUMN_PROTECTION] Found {len(solution.columns_in_zone)} columns, "
@@ -154,13 +138,10 @@ def optimize_protective_racks(
     if not solution.protective_racks:
         return
     
-    # Sort protective racks by Y coordinate
     solution.protective_racks.sort(key=lambda r: r.bounds[1])
     
-    # Strategy 1: Try to merge close protective racks
     _merge_close_protective_racks(solution, reference_book)
     
-    # Strategy 2: Shorten racks near edges (if needed)
     _shorten_edge_protective_racks(solution, reference_book)
 
 
@@ -188,7 +169,6 @@ def analyze_free_strips(
         logger.warning(f"[COLUMN_PROTECTION] No racks - entire zone is free: {strip_width:.1f}mm")
         return
     
-    # Deduplicate by Y coordinates
     unique_racks = []
     seen_bounds = set()
     for rack in solution.protective_racks:
@@ -199,13 +179,10 @@ def analyze_free_strips(
     
     logger.warning(f"[COLUMN_PROTECTION] Deduplication: {len(solution.protective_racks)} total → {len(unique_racks)} unique")
     
-    # Sort unique protective racks by Y coordinate
     sorted_racks = sorted(unique_racks, key=lambda r: r.bounds[1])
     
-    # Strip below first rack
     first_rack = sorted_racks[0]
     strip_y_min = zone_bounds[1]
-    #strip_y_max = first_rack.bounds[1]
     strip_y_max = first_rack.bounds[1] - reference_book.roads_width
     strip_width = strip_y_max - strip_y_min
     
@@ -217,7 +194,6 @@ def analyze_free_strips(
             'index': len(solution.free_strips)
         })
     
-    # Strips between consecutive racks
     for i in range(len(sorted_racks) - 1):
         rack_1 = sorted_racks[i]
         rack_2 = sorted_racks[i + 1]
@@ -234,7 +210,6 @@ def analyze_free_strips(
                 'index': len(solution.free_strips)
             })
     
-    # Strip above last rack
     last_rack = sorted_racks[-1]
     strip_y_min = last_rack.bounds[3] + reference_book.roads_width
     strip_y_max = zone_bounds[3]
@@ -265,7 +240,6 @@ def set_first_free_strip(
     
     solution.current_strip_idx = 0
     
-    # ✅ CRITICAL FIX: Reset last_intersected_vertical_road at the start!
     solution.last_intersected_vertical_road = None
     
     strip = solution.free_strips[0]
@@ -279,13 +253,12 @@ def check_if_more_strips_available(
 ) -> None:
     """Checks if there are more free strips to process.
     
-    ✅ CRITICAL: This function MUST return FAILURE (raise ActionFailure) 
+    This function MUST return FAILURE (raise ActionFailure) 
     when all strips are processed, so the state machine proceeds to 
     rotate_everything_90_counterclockwise and then split_available_zone.
     """
     if solution.current_strip_idx >= len(solution.free_strips) - 1:
         logger.warning("[COLUMN_PROTECTION] All strips processed")
-        # ✅ This MUST be ActionFailure to trigger rotation back!
         raise ActionFailure("No more free strips to process")
     
     logger.warning(f"[COLUMN_PROTECTION] More strips available: "
@@ -303,18 +276,12 @@ def set_next_free_strip(
     
     solution.current_strip_idx += 1
     
-    # ✅ CRITICAL FIX: Reset last_intersected_vertical_road when switching strips!
-    # Each strip should handle road zones independently
     solution.last_intersected_vertical_road = None
     
     strip = solution.free_strips[solution.current_strip_idx]
     logger.warning(f"[COLUMN_PROTECTION] Set next strip {solution.current_strip_idx}: "
                 f"Y=[{strip['y_min']:.1f}, {strip['y_max']:.1f}], width={strip['width']:.1f}mm")
 
-
-# =============================================================================
-# HELPER FUNCTIONS (internal)
-# =============================================================================
 
 def _is_column(occupied_zone: OccupiedZone, reference_book: ReferenceBook) -> bool:
     """Determines if an occupied zone is a column."""
@@ -359,12 +326,10 @@ def _calculate_dynamic_rack_distance_for_column(
     """
     import math
     
-    # Step 1: Get column dimensions
     column_bounds = column.contour.bounds
     column_width = column_bounds[2] - column_bounds[0]
     column_height = column_bounds[3] - column_bounds[1]
     
-    # Step 2: Choose dimension based on orientation
     if solution.is_rotated:
         column_size = column_width
         orientation_desc = "vertical (rotated)"
@@ -377,36 +342,29 @@ def _calculate_dynamic_rack_distance_for_column(
     logger.warning(f"[COLUMN_PROTECTION]   Orientation: {orientation_desc}")
     logger.warning(f"[COLUMN_PROTECTION]   Selected dimension: {column_size:.1f} mm")
     
-    # Step 3: Calculate actual_gap (physical clearance)
-    CLEARANCE = 50  # mm per side (from column to pallet)
+    CLEARANCE = 50  
     actual_gap = column_size + 2 * CLEARANCE
     logger.warning(f"[COLUMN_PROTECTION]   Desired actual_gap: {actual_gap:.1f} mm")
     
-    # Step 4: Convert to rack_distance (before rounding)
     eps = reference_book.double_rack_distance_eps
     rack_distance_raw = actual_gap + eps
     logger.warning(f"[COLUMN_PROTECTION]   Raw rack_distance: {actual_gap:.1f} + {eps:.1f} = {rack_distance_raw:.1f} mm")
     
-    # Step 5: Round rack_distance UP to multiple of 50
-    # ⚠️ CRITICAL: We round rack_distance, not actual_gap!
-    # Because jumpers come in 50mm increments (200, 250, 300, ..., 1100)
-    JUMPER_STEP = 50  # mm
+    JUMPER_STEP = 50  
     rack_distance_rounded = math.ceil(rack_distance_raw / JUMPER_STEP) * JUMPER_STEP
     logger.warning(f"[COLUMN_PROTECTION]   Rounded to jumper size: {rack_distance_rounded:.1f} mm")
     
-    # Step 6: Apply maximum limit
-    MAX_RACK_DISTANCE = 1100  # mm (max available jumper)
+    MAX_RACK_DISTANCE = 1100  
     rack_distance_final = min(rack_distance_rounded, MAX_RACK_DISTANCE)
     
     if rack_distance_rounded > MAX_RACK_DISTANCE:
-        logger.warning(f"[COLUMN_PROTECTION]   ⚠️  Exceeds max jumper {MAX_RACK_DISTANCE} mm, capping...")
+        logger.warning(f"[COLUMN_PROTECTION]   Exceeds max jumper {MAX_RACK_DISTANCE} mm, capping...")
     
-    # Calculate final actual_gap and clearance
     actual_gap_final = rack_distance_final - eps
     clearance_final = (actual_gap_final - column_size) / 2
     
     logger.warning(f"[COLUMN_PROTECTION]   ════════════════════════════════")
-    logger.warning(f"[COLUMN_PROTECTION]   ✅ Final rack_distance: {rack_distance_final:.1f} mm")
+    logger.warning(f"[COLUMN_PROTECTION]    Final rack_distance: {rack_distance_final:.1f} mm")
     logger.warning(f"[COLUMN_PROTECTION]      → actual_gap: {actual_gap_final:.1f} mm")
     logger.warning(f"[COLUMN_PROTECTION]      → clearance: {clearance_final:.1f} mm per side")
     logger.warning(f"[COLUMN_PROTECTION]   ════════════════════════════════")
@@ -430,15 +388,13 @@ def _create_protective_rack_for_column(
     logger.warning(f"[COLUMN_PROTECTION]   Column bounds: {column_bounds}")
     logger.warning(f"[COLUMN_PROTECTION]   Zone bounds: {zone_bounds}")
     
-    # Calculate rack distance
     rack_distance = _calculate_dynamic_rack_distance_for_column(
         column, 
         reference_book,
-        solution  # ← ДОБАВИЛИ параметр!
+        solution  
     )
     logger.warning(f"[COLUMN_PROTECTION]   Calculated rack_distance: {rack_distance:.1f}mm")
     
-    # Calculate actual rack height
     actual_gap = rack_distance - reference_book.double_rack_distance_eps
     total_rack_height = 2 * pallet.length + actual_gap
     
@@ -446,7 +402,6 @@ def _create_protective_rack_for_column(
     logger.warning(f"[COLUMN_PROTECTION]   Actual gap: {actual_gap:.1f}mm")
     logger.warning(f"[COLUMN_PROTECTION]   Total rack height: {total_rack_height:.1f}mm")
     
-    # Calculate available space
     zone_height = zone_bounds[3] - zone_bounds[1]
     available_height = zone_height - 2 * reference_book.roads_width
     
@@ -457,11 +412,9 @@ def _create_protective_rack_for_column(
         logger.error(f"[COLUMN_PROTECTION] Rack too tall: {total_rack_height:.1f} > {available_height:.1f}")
         raise ValueError(f"Rack too tall: {total_rack_height:.1f} > {available_height:.1f}")
     
-    # Center rack relative to column
     column_center_y = (column_bounds[1] + column_bounds[3]) / 2
     first_rack_y = column_center_y - (total_rack_height / 2)
     
-    # Apply zone constraints
     min_first_rack_y = zone_bounds[1] + reference_book.roads_width
     max_first_rack_y = zone_bounds[3] - reference_book.roads_width - total_rack_height
     first_rack_y = max(min_first_rack_y, min(first_rack_y, max_first_rack_y))
@@ -487,7 +440,6 @@ def _create_protective_rack_for_column(
             protected_column=column
         )
         
-        # ✅ CRITICAL DEBUG: Check if attributes were properly set
         logger.warning(f"[COLUMN_PROTECTION] ========================================")
         logger.warning(f"[COLUMN_PROTECTION] DoubleRack created successfully!")
         logger.warning(f"[COLUMN_PROTECTION] Checking attributes:")
@@ -495,13 +447,11 @@ def _create_protective_rack_for_column(
         logger.warning(f"[COLUMN_PROTECTION]   protective_rack.protected_column = {protective_rack.protected_column}")
         logger.warning(f"[COLUMN_PROTECTION]   protective_rack.protected_column is not None: {protective_rack.protected_column is not None}")
         
-        # Check rack_1 attributes
         logger.warning(f"[COLUMN_PROTECTION] Checking rack_1 attributes:")
         logger.warning(f"[COLUMN_PROTECTION]   rack_1.is_protective = {protective_rack.rack_1.is_protective}")
         logger.warning(f"[COLUMN_PROTECTION]   rack_1.protected_column = {protective_rack.rack_1.protected_column}")
         logger.warning(f"[COLUMN_PROTECTION]   rack_1.protected_column is not None: {protective_rack.rack_1.protected_column is not None}")
         
-        # Check rack_2 attributes
         logger.warning(f"[COLUMN_PROTECTION] Checking rack_2 attributes:")
         logger.warning(f"[COLUMN_PROTECTION]   rack_2.is_protective = {protective_rack.rack_2.is_protective}")
         logger.warning(f"[COLUMN_PROTECTION]   rack_2.protected_column = {protective_rack.rack_2.protected_column}")
@@ -512,7 +462,6 @@ def _create_protective_rack_for_column(
         logger.warning(f"[COLUMN_PROTECTION]   rack_1 bounds: {protective_rack.rack_1.bounds}")
         logger.warning(f"[COLUMN_PROTECTION]   rack_2 bounds: {protective_rack.rack_2.bounds}")
         
-        # Verify boundaries
         min_allowed_y = zone_bounds[1] + reference_book.roads_width
         max_allowed_y = zone_bounds[3] - reference_book.roads_width
         
@@ -540,20 +489,17 @@ def _create_protective_rack_for_column(
         else:
             logger.warning(f"[COLUMN_PROTECTION] ✅ Column correctly positioned in gap")
         
-        # ✅ Fill with frames (now handles road zones!)
         logger.warning(f"[COLUMN_PROTECTION] Filling protective rack with frames...")
         _fill_protective_rack_with_frames(
             protective_rack, 
             available_zone,
-            solution.current_road_zones  # ✅ Pass road zones!
+            solution.current_road_zones  
         )
         
-        # ✅ DEBUG: Check how many decks were created
         logger.warning(f"[COLUMN_PROTECTION] After filling:")
         logger.warning(f"[COLUMN_PROTECTION]   rack_1 has {len(protective_rack.rack_1.decks)} decks")
         logger.warning(f"[COLUMN_PROTECTION]   rack_2 has {len(protective_rack.rack_2.decks)} decks")
         
-        # ✅ DEBUG: Check which decks intersect with column
         logger.warning(f"[COLUMN_PROTECTION] Checking deck-column intersections:")
         for idx, deck in enumerate(protective_rack.rack_1.decks):
             deck_bounds = deck.bounds
@@ -588,7 +534,7 @@ def _fill_protective_rack_with_frames(
 ) -> None:
     """Fills a protective rack with frames, handling road zone intersections.
     
-    ✅ FIXED: Now tracks last intersected road zone to prevent consecutive bridge frames
+    Now tracks last intersected road zone to prevent consecutive bridge frames
     """
     section_length = (protective_rack.rack_1.beam_type.length + 
                      protective_rack.rack_1.upright_type.width)
@@ -600,39 +546,30 @@ def _fill_protective_rack_with_frames(
     
     logger.warning(f"[COLUMN_PROTECTION] Filling protective rack with up to {frames_count} frames")
     
-    # ✅ CRITICAL FIX: Track last road zone that got a bridge to prevent consecutive bridges
     last_bridged_road_zone = None
     
-    # Add frames one by one, checking for road zone intersections
     for i in range(frames_count):
         protective_rack.add_frame()
         
-        # ✅ Check if last frame intersects with any road zone
         intersects_road = False
         for road_zone in road_zones:
             if protective_rack.last_frame_intersects(road_zone.contour):
                 intersects_road = True
-                # Check if it's a vertical road (needs bridge)
                 if not road_zone.is_horizontal():
-                    # ✅ CRITICAL FIX: Only create bridge if this is a NEW road zone
-                    # (not the same one as the previous frame)
                     if road_zone is not last_bridged_road_zone:
                         frame_idx = len(protective_rack.rack_1) - 1
                         protective_rack.make_frame_bridge(frame_idx)
                         last_bridged_road_zone = road_zone
-                        logger.warning(f"[COLUMN_PROTECTION] ✅ Set frame {frame_idx} as BRIDGE in protective rack (vertical road intersection)")
+                        logger.warning(f"[COLUMN_PROTECTION] Set frame {frame_idx} as BRIDGE in protective rack (vertical road intersection)")
                     else:
-                        logger.warning(f"[COLUMN_PROTECTION] ⏭️  Frame {i} intersects same road zone as previous frame - skipping bridge (already bridged)")
+                        logger.warning(f"[COLUMN_PROTECTION]  Frame {i} intersects same road zone as previous frame - skipping bridge (already bridged)")
                 else:
                     logger.warning(f"[COLUMN_PROTECTION] Frame {i} intersects horizontal road - no bridge needed")
                 break
         
-        # ✅ CRITICAL: Reset tracking when we exit a road zone
-        # This allows creating bridges for subsequent road zones
         if not intersects_road:
             last_bridged_road_zone = None
         
-        # Verify fit
         if not shapely.contains(available_zone.contour, protective_rack.contour):
             protective_rack.delete_last_frame()
             logger.warning(f"[COLUMN_PROTECTION] Removed frame {i} - doesn't fit in zone")

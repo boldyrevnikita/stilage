@@ -1,10 +1,3 @@
-"""
-Actions for handling zones and obstacles in the pallet packing system.
-
-This module contains functions for zone management, rotation, splitting,
-and checking intersections with occupied zones and road zones.
-"""
-
 from src.reference_book import ReferenceBook
 from src.pallet_packer.solution import Solution, ActionFailure
 from src.rack import Rack, DoubleRack
@@ -15,20 +8,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-# =============================================================================
-# ROTATION FUNCTIONS
-# =============================================================================
-
 def rotate_everything_90_clockwise(
     _: ReferenceBook,
     solution: Solution
 ) -> None:
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    # ✅ CRITICAL FIX: Use BOTTOM-LEFT corner as rotation point!
-    # This ensures that after rotation back, everything returns to exact positions
-    solution.rot_point = available_zone.bounds[:2]  # (min_x, min_y)
+    solution.rot_point = available_zone.bounds[:2] 
     
     angle = -90
 
@@ -59,21 +45,16 @@ def rotate_everything_90_counterclockwise(
         available_zone = solution.available_zones[solution.available_zone_idx]
         angle = 90
 
-        # Rotate zone
         available_zone.rotate(solution.rot_point, angle)
         
-        # Rotate obstacles
         for occupied_zone in solution.current_occupied_zones:
             occupied_zone.rotate(solution.rot_point, angle)
         for road_zone in solution.current_road_zones:
             road_zone.rotate(solution.rot_point, angle)
         
-        # Rotate columns
         for column in solution.columns_in_zone:
             column.rotate(solution.rot_point, angle)
         
-        # ✅ CRITICAL FIX: Rotate ONLY rack groups added in CURRENT zone!
-        # Use the saved index to determine which rack groups were added after rotation
         start_idx = getattr(solution, 'rack_groups_before_zone', 0)
         
         logger.warning(f"[ZONES] Rotating back racks from index {start_idx} to {len(solution.saved_rack_groups)}")
@@ -94,10 +75,6 @@ def rotate_everything_90_counterclockwise(
         logger.warning(f"[ZONES] Rotated {len(solution.saved_rack_groups) - start_idx} rack groups "
                       f"90° counterclockwise and normalized racks")
 
-# =============================================================================
-# ZONE NAVIGATION FUNCTIONS
-# =============================================================================
-
 def set_next_zone(
     _: ReferenceBook,
     solution: Solution
@@ -108,7 +85,6 @@ def set_next_zone(
 
     solution.available_zone_idx += 1
     
-    # ✅ NEW: Remember rack count BEFORE working with this zone
     solution.rack_groups_before_zone = len(solution.saved_rack_groups)
     
     new_zone = solution.available_zones[solution.available_zone_idx]
@@ -137,25 +113,22 @@ def reset_zone_specific_data(
         _ (ReferenceBook): The reference book (not used).
         solution (Solution): The current solution.
     """
-    # Clear column protection data
     solution.columns_in_zone = []
     solution.protective_racks = []
     solution.free_strips = []
     solution.current_strip_idx = 0
     
-    # Clear tracking data
     solution.last_intersected_vertical_road = None
     solution.max_intersected_oz_y = None
     solution.intersected_special_zone = None
 
     solution.rack_groups_before_zone = len(solution.saved_rack_groups)
     
-    # Ensure rotation state is reset
     if solution.is_rotated:
-        logger.warning("[ZONES] ⚠️ WARNING: Zone transition while rotated! Resetting rotation flag.")
+        logger.warning("[ZONES] WARNING: Zone transition while rotated! Resetting rotation flag.")
         solution.is_rotated = False
     
-    logger.warning("[ZONES] ✅ Reset zone-specific data for new zone")
+    logger.warning("[ZONES] Reset zone-specific data for new zone")
 
 
 def set_zero_zone(
@@ -171,10 +144,6 @@ def set_zero_zone(
     solution.available_zone_idx = 0
     logger.warning("[ZONES] Reset to zone 0")
 
-
-# =============================================================================
-# ZONE FITTING AND SPLITTING
-# =============================================================================
 
 def assert_current_rack_fits_available_zone(
     _: ReferenceBook,
@@ -194,18 +163,15 @@ def assert_current_rack_fits_available_zone(
     available_zone = solution.available_zones[solution.available_zone_idx]
     current_rack = solution.current_rack_group.get_current_rack()
 
-    # Check zone boundaries
     if not shapely.contains(available_zone.contour, current_rack.contour):
         logger.warning(f"[ZONES] Rack doesn't fit in zone. Rack bounds: {current_rack.bounds}, "
                       f"Zone bounds: {available_zone.bounds}")
         raise ActionFailure("Current rack does not fit into the available zone.")
     
-    # NEW: Check strip boundaries (Y-axis only)
     if solution.free_strips and solution.current_strip_idx < len(solution.free_strips):
         current_strip = solution.free_strips[solution.current_strip_idx]
         rack_bounds = current_rack.contour.bounds
         
-        # Check Y boundaries with small tolerance
         if rack_bounds[1] < current_strip['y_min'] - 0.1 or rack_bounds[3] > current_strip['y_max'] + 0.1:
             logger.warning(f"[ZONES] Rack Y=[{rack_bounds[1]:.1f}, {rack_bounds[3]:.1f}] "
                           f"exceeds strip Y=[{current_strip['y_min']:.1f}, {current_strip['y_max']:.1f}]")
@@ -220,8 +186,8 @@ def split_available_zone(
 ) -> None:
     """Splits the available zone into two parts.
     
-    ✅ FIXED: Only uses rack groups from CURRENT zone for split calculation.
-    ✅ FIXED: Sets zone_came_from_split flag for next zone.
+    Only uses rack groups from CURRENT zone for split calculation.
+    Sets zone_came_from_split flag for next zone.
     
     Args:
         reference_book (ReferenceBook): The reference book.
@@ -236,31 +202,26 @@ def split_available_zone(
         solution.available_zone_idx -= 1
         return
     
-    # Find maximum X and Y from regular (non-protective) racks IN CURRENT ZONE
     max_x = available_zone.bounds[0]
     max_y = available_zone.bounds[1]
     
     has_regular_racks = False
     
     for rack_group in solution.saved_rack_groups:
-        # ✅ CRITICAL FIX: Check if rack_group is in current zone using bounds
         rg_bounds = rack_group.bounds
         zone_bounds = available_zone.bounds
         
-        # Check if rack_group bounds intersect with zone bounds
-        # No intersection if: rg is completely left, right, below, or above zone
         rg_outside_zone = (
-            rg_bounds[2] <= zone_bounds[0] or  # rack_group right edge <= zone left edge
-            rg_bounds[0] >= zone_bounds[2] or  # rack_group left edge >= zone right edge
-            rg_bounds[3] <= zone_bounds[1] or  # rack_group top edge <= zone bottom edge
-            rg_bounds[1] >= zone_bounds[3]     # rack_group bottom edge >= zone top edge
+            rg_bounds[2] <= zone_bounds[0] or  
+            rg_bounds[0] >= zone_bounds[2] or  
+            rg_bounds[3] <= zone_bounds[1] or  
+            rg_bounds[1] >= zone_bounds[3]     
         )
         
         if rg_outside_zone:
             logger.warning(f"[ZONES] Skipping rack from other zone: bounds={rack_group.bounds}")
             continue
         
-        # Check if this rack group contains protective racks
         is_protective_group = False
         
         if rack_group.racks:
@@ -270,7 +231,6 @@ def split_available_zone(
                     is_protective_group = True
         
         if not is_protective_group:
-            # This is a REGULAR rack group - use it for split calculation
             has_regular_racks = True
             max_x = max(max_x, rack_group.bounds[2])
             max_y = max(max_y, rack_group.bounds[3])
@@ -278,22 +238,19 @@ def split_available_zone(
         else:
             logger.warning(f"[ZONES] Excluding protective rack from split calculation")
     
-    # If no regular racks were placed, skip split
     if not has_regular_racks:
-        logger.warning("[ZONES] ⚠️ No regular racks placed in current zone")
+        logger.warning("[ZONES] No regular racks placed in current zone")
         logger.warning("[ZONES] Skipping split - zone is fully processed")
         solution.available_zones.pop(solution.available_zone_idx)
         solution.available_zone_idx -= 1
         return
     
-    # Calculate split point based on regular racks IN CURRENT ZONE
     split_point = [max_x, max_y]
     split_point[0] += reference_book.roads_width
     split_point[1] += reference_book.roads_width
     split_point[0] = min(available_zone.bounds[2], split_point[0]) - 1
     split_point[1] = min(available_zone.bounds[3], split_point[1]) - 1
 
-    # Check if split will produce any viable zones
     right_zone_width = available_zone.bounds[2] - split_point[0]
     top_zone_height = available_zone.bounds[3] - split_point[1]
     
@@ -308,7 +265,6 @@ def split_available_zone(
     logger.warning(f"[ZONES]   Min required: {MIN_ZONE_SIZE:.1f}mm")
     logger.warning(f"[ZONES] ========================================")
     
-    # Only split if at least one resulting zone will be large enough
     if right_zone_width >= MIN_ZONE_SIZE or top_zone_height >= MIN_ZONE_SIZE:
         if available_zone.contains_point(split_point):
             new_zones = available_zone.split_zone(split_point)
@@ -321,20 +277,19 @@ def split_available_zone(
                 if zone_w >= MIN_ZONE_SIZE and zone_h >= MIN_ZONE_SIZE:
                     solution.available_zones.append(zone)
                     added_count += 1
-                    logger.warning(f"[ZONES] ✅ Added new zone: {zone_w:.1f} x {zone_h:.1f} mm")
+                    logger.warning(f"[ZONES] Added new zone: {zone_w:.1f} x {zone_h:.1f} mm")
                 else:
-                    logger.warning(f"[ZONES] ❌ Rejected small zone: {zone_w:.1f} x {zone_h:.1f} mm")
+                    logger.warning(f"[ZONES] Rejected small zone: {zone_w:.1f} x {zone_h:.1f} mm")
             
             logger.warning(f"[ZONES] Split created {added_count} viable zones")
             
-            # ✅ NEW: Mark that next zone came from split (it's a continuation)
             if added_count > 0:
                 solution.zone_came_from_split = True
-                logger.warning("[ZONES] ✅ Set zone_came_from_split=True for continuation zone")
+                logger.warning("[ZONES] Set zone_came_from_split=True for continuation zone")
         else:
-            logger.warning(f"[ZONES] ⚠️ Split point outside zone bounds, skipping split")
+            logger.warning(f"[ZONES] Split point outside zone bounds, skipping split")
     else:
-        logger.warning(f"[ZONES] ⚠️ Split skipped - no resulting zones meet minimum size")
+        logger.warning(f"[ZONES] Split skipped - no resulting zones meet minimum size")
 
     solution.available_zones.pop(solution.available_zone_idx)
     solution.available_zone_idx -= 1
@@ -353,10 +308,6 @@ def sort_available_zones_by_area_and_height(
     logger.warning(f"[ZONES] Sorted {len(solution.available_zones)} zones by area and height")
 
 
-# =============================================================================
-# OCCUPIED ZONE INTERSECTION CHECKS
-# =============================================================================
-
 def set_current_occupied_zones_and_road_zones(
     reference_book: ReferenceBook,
     solution: Solution
@@ -374,25 +325,18 @@ def set_current_occupied_zones_and_road_zones(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    # Reset lists - columns_in_zone will be filled by column_protection
     solution.columns_in_zone = []
     solution.current_occupied_zones = []
     solution.current_road_zones = []
     
-    # NEW: Clear protective racks and strips when switching zones
     solution.protective_racks = []
     solution.free_strips = []
     solution.current_strip_idx = 0
     
-    # ✅ CRITICAL FIX: Clear current_rack_group to avoid duplication in split
-    # When we switch zones, current_rack_group should be either:
-    # - Already saved in saved_rack_groups (so we don't need it)
-    # - Or it should be discarded (incomplete work from previous zone)
     solution.current_rack_group = None
     
     logger.warning(f"[ZONES] Cleared protective racks, strips, and current_rack_group for new zone")
 
-    # Process occupied zones - add ALL obstacles to current_occupied_zones
     for occupied_zone in solution.occupied_zones:
         intersects_with_clearance = (
             shapely.intersects(
@@ -405,13 +349,11 @@ def set_current_occupied_zones_and_road_zones(
             solution.current_occupied_zones.append(deepcopy(occupied_zone))
             logger.warning(f"[ZONES] Found occupied zone in zone: bounds={occupied_zone.bounds}")
 
-    # Process road zones
     for road_zone in solution.road_zones:
         if shapely.intersects(road_zone.contour, available_zone.contour):
             solution.current_road_zones.append(deepcopy(road_zone))
             logger.warning(f"[ZONES] Found road zone in zone: bounds={road_zone.bounds}")
 
-    # Sort for consistent processing order
     solution.current_occupied_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
     solution.current_road_zones.sort(key=lambda x: (x.bounds[0], x.bounds[2]))
     
@@ -437,12 +379,10 @@ def assert_current_rack_intersecting_occupied_zones(
     """
     current_rack = solution.current_rack_group.get_current_rack()
 
-    # NEW: Get list of protected columns
     protected_columns = [pr.protected_column for pr in solution.protective_racks 
                         if pr.protected_column is not None]
 
     for occupied_zone in solution.current_occupied_zones:
-        # NEW: Skip if this zone is a protected column
         if occupied_zone in protected_columns:
             logger.warning(f"[ZONES] Skipping protected column at {occupied_zone.bounds}")
             continue
@@ -621,11 +561,6 @@ def assert_last_shelf_of_second_rack_covers_occupied_zone(
         raise ActionFailure(
             "Last shelf of the second rack does not cover the occupied zone.")
 
-
-# =============================================================================
-# ROAD ZONE INTERSECTION CHECKS
-# =============================================================================
-
 def assert_current_rack_intersecting_road_zones(
     _: ReferenceBook,
     solution: Solution
@@ -710,11 +645,6 @@ def assert_current_zone_height_enough_for_rack_bridge(
         raise ActionFailure(
             "Current available zone is too low for current rack bridge.")
 
-
-# =============================================================================
-# COMBINED INTERSECTION CHECKS
-# =============================================================================
-
 def assert_current_rack_not_intersecting_oz_or_rz(
     _: ReferenceBook,
     solution: Solution
@@ -735,7 +665,6 @@ def assert_current_rack_not_intersecting_oz_or_rz(
     intersected_special_zone = None
     min_left_bound = None
 
-    # Check occupied zones
     for occupied_zone in solution.current_occupied_zones:
         if shapely.intersects(
                 occupied_zone.contour_with_roads_width, current_rack.contour):
@@ -746,7 +675,6 @@ def assert_current_rack_not_intersecting_oz_or_rz(
                 intersected_special_zone = occupied_zone
                 min_left_bound = current_left_bound
 
-    # Check road zones
     for road_zone in solution.current_road_zones:
         if shapely.intersects(road_zone.contour, current_rack.contour):
             current_left_bound = road_zone.bounds[0]
@@ -755,7 +683,6 @@ def assert_current_rack_not_intersecting_oz_or_rz(
                 intersected_special_zone = road_zone
                 min_left_bound = current_left_bound
     
-    # NEW: Check protective racks
     for protective_rack in solution.protective_racks:
         if shapely.intersects(protective_rack.contour, current_rack.contour):
             logger.warning(f"[ZONES] Rack intersects with protective rack")
@@ -766,11 +693,6 @@ def assert_current_rack_not_intersecting_oz_or_rz(
         solution.intersected_special_zone = intersected_special_zone
         logger.warning(f"[ZONES] Rack intersects with zone at {intersected_special_zone.bounds}")
         raise ActionFailure("Current rack intersects with an occupied or road zone.")
-
-
-# =============================================================================
-# SPECIAL HANDLING FUNCTIONS
-# =============================================================================
 
 def place_road_zone_on_right_size(
     reference_book: ReferenceBook,
@@ -784,7 +706,6 @@ def place_road_zone_on_right_size(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
 
-    # Right road
     x_0, y_0, x_1, y_1 = available_zone.bounds
     x_0 = x_1 - reference_book.roads_width / 2
     x_1 = x_0
@@ -796,7 +717,6 @@ def place_road_zone_on_right_size(
 
     solution.current_road_zones.append(new_road_zone)
 
-    # Upper road
     x_0, y_0, x_1, y_1 = available_zone.bounds
     y_0 = (y_1 - solution.pallets[solution.pallet_idx].length
            - reference_book.roads_width / 2)
@@ -830,9 +750,8 @@ def move_second_rack_higher_over_oz(
     current_rack = solution.current_rack_group.get_current_rack()
     current_occupied_zone = solution.intersected_special_zone
 
-    # CRITICAL CHECK: Prevent moving protective racks!
     if isinstance(current_rack, DoubleRack) and current_rack.is_protective:
-        logger.error(f"[ZONES] ❌ FORBIDDEN: Attempted to move protective rack!")
+        logger.error(f"[ZONES] FORBIDDEN: Attempted to move protective rack!")
         logger.error(f"[ZONES]   Protective racks must maintain fixed rack_distance={current_rack.rack_distance:.1f}mm")
         logger.error(f"[ZONES]   Protected column: {current_rack.protected_column.bounds if current_rack.protected_column else 'None'}")
         raise ActionFailure(
@@ -848,7 +767,6 @@ def move_second_rack_higher_over_oz(
 
     final_double_rack_internal_distance = y_shift + current_rack.rack_distance
     
-    # Use correct max distance
     max_distance = reference_book.max_double_rack_internal_distance
     
     if final_double_rack_internal_distance > max_distance:
@@ -907,11 +825,10 @@ def check_if_vertical_allowed(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    if available_zone.orientation == 1:  # Only horizontal allowed
+    if available_zone.orientation == 1:  
         logger.warning(f"[ORIENTATION] ✗ Vertical placement NOT allowed (orientation=1 - horizontal only)")
         raise ActionFailure("Vertical rack placement is not allowed in this zone")
     
-    # orientation == 2 (vertical) or orientation == 0 (any) → SUCCESS
     logger.warning(f"[ORIENTATION] ✓ Vertical placement allowed (orientation={available_zone.orientation})")
 
 
@@ -934,9 +851,8 @@ def check_if_horizontal_allowed(
     """
     available_zone = solution.available_zones[solution.available_zone_idx]
     
-    if available_zone.orientation == 2:  # Only vertical allowed
+    if available_zone.orientation == 2:  
         logger.warning(f"[ORIENTATION] ✗ Horizontal placement NOT allowed (orientation=2 - vertical only)")
         raise ActionFailure("Horizontal rack placement is not allowed in this zone")
     
-    # orientation == 1 (horizontal) or orientation == 0 (any) → SUCCESS
     logger.warning(f"[ORIENTATION] ✓ Horizontal placement allowed (orientation={available_zone.orientation})")

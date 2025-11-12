@@ -74,6 +74,18 @@ class RackOutput(BaseModel):
         default=None,
         description="""Distance between racks, if applicable"""
     )
+    jumper_presence: Optional[list[list[list[int]]]] = Field(
+        default=None,
+        description="""Presence of jumpers between rack sections.
+        Format: [[[left, right], [left, right], ...], [...]] where:
+        - Outer list: one sublist per rack (rack_1, rack_2 for DoubleRack)
+        - Middle list: one pair per section/frame
+        - Inner pair: [left_jumper, right_jumper] where 1=present, 0=absent
+        Example for 3 sections: [[[1,1], [1,0], [0,1]]] means:
+        - Section 0: both jumpers present
+        - Section 1: only left jumper (right blocked by column)
+        - Section 2: only right jumper (left blocked by column)"""
+    )
 
 
 class ModelOutput(BaseModel):

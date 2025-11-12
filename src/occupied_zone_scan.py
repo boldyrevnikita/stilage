@@ -65,16 +65,13 @@ def dxf_entity_to_shapely(entity, approx_point_quantity: int = 10
         elif type(entity) is ezdxf.entities.LWPolyline:
             vertices = [(p[0], p[1]) for p in entity.vertices_in_wcs()]
             
-            # ✅ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверяем, замкнут ли контур ФАКТИЧЕСКИ
             is_actually_closed = entity.is_closed
             
             if not is_actually_closed and len(vertices) >= 3:
-                # Проверяем, совпадают ли первая и последняя точки
                 first = vertices[0]
                 last = vertices[-1]
                 distance = ((first[0] - last[0])**2 + (first[1] - last[1])**2)**0.5
                 
-                # Если расстояние меньше 0.1мм, считаем замкнутым
                 if distance < 0.1:
                     is_actually_closed = True
             
@@ -214,12 +211,8 @@ def get_polygons_from_primitives(
         else:
             result = polygon.buffer(-eps, join_style=2, cap_style=2)
         return result
-
-    # ========================================================================
-    # ✅ ДЕТАЛЬНАЯ ДИАГНОСТИКА: Логируем ВСЕ примитивы в зоне
-    # ========================================================================
     
-    logger.warning(f"[ZONE_SCAN] 📋 ПОЛНАЯ ДИАГНОСТИКА ПРИМИТИВОВ В ЗОНЕ")
+    logger.warning(f"[ZONE_SCAN] ПОЛНАЯ ДИАГНОСТИКА ПРИМИТИВОВ В ЗОНЕ")
     logger.warning(f"[ZONE_SCAN] ════════════════════════════════════════════════════════")
     
     linestring_list = []
@@ -258,30 +251,28 @@ def get_polygons_from_primitives(
         else:
             other_list.append({'idx': idx, 'type': type(prim).__name__})
     
-    logger.warning(f"[ZONE_SCAN] 📊 Всего примитивов: {len(primitives)}")
+    logger.warning(f"[ZONE_SCAN]  Всего примитивов: {len(primitives)}")
     logger.warning(f"[ZONE_SCAN]    LineString: {len(linestring_list)}")
     logger.warning(f"[ZONE_SCAN]    Polygon: {len(polygon_list)}")
     logger.warning(f"[ZONE_SCAN]    Другие: {len(other_list)}")
     logger.warning(f"[ZONE_SCAN] ────────────────────────────────────────────────────────")
     
-    # Показываем ВСЕ LineString с сортировкой по размеру
     if linestring_list:
         linestring_list.sort(key=lambda x: x['max_dim'])
         
-        logger.warning(f"[ZONE_SCAN] 📏 ВСЕ {len(linestring_list)} LineString (от меньшего к большему):")
+        logger.warning(f"[ZONE_SCAN] ВСЕ {len(linestring_list)} LineString (от меньшего к большему):")
         for item in linestring_list:
-            # Определяем, что это могло бы быть
             category = ""
             if 700 <= item['max_dim'] <= 950 and item['min_dim'] < 10:
-                category = "🎯 КОЛОННА (700-950мм)"
+                category = "КОЛОННА (700-950мм)"
             elif item['max_dim'] > 1500:
-                category = "🗑️ ДЛИННАЯ (>1500мм)"
+                category = "ДЛИННАЯ (>1500мм)"
             elif item['aspect'] > 10:
-                category = "🗑️ ВЫТЯНУТАЯ (aspect>10)"
+                category = "ВЫТЯНУТАЯ (aspect>10)"
             elif item['max_dim'] < 700 and item['min_dim'] < 10:
-                category = "❓ МАЛЕНЬКАЯ (<700мм)"
+                category = " МАЛЕНЬКАЯ (<700мм)"
             else:
-                category = "✅ СОХРАНИТСЯ"
+                category = " СОХРАНИТСЯ"
             
             logger.warning(
                 f"[ZONE_SCAN]    #{item['idx']:3d}: "
@@ -290,11 +281,10 @@ def get_polygons_from_primitives(
                 f"aspect={item['aspect']:6.1f} | {category}"
             )
     
-    # Показываем ВСЕ Polygon
     if polygon_list:
         polygon_list.sort(key=lambda x: x['area'], reverse=True)
         
-        logger.warning(f"[ZONE_SCAN] 📐 ВСЕ {len(polygon_list)} Polygon (от большего к меньшему):")
+        logger.warning(f"[ZONE_SCAN] ВСЕ {len(polygon_list)} Polygon (от большего к меньшему):")
         for item in polygon_list:
             logger.warning(
                 f"[ZONE_SCAN]    #{item['idx']:3d}: "
@@ -303,11 +293,6 @@ def get_polygons_from_primitives(
             )
     
     logger.warning(f"[ZONE_SCAN] ════════════════════════════════════════════════════════")
-
-    # ========================================================================
-    # ✅ УМНАЯ ФИЛЬТРАЦИЯ: Убираем длинные/вытянутые LineString (сетка),
-    # но сохраняем стороны колонн (линии ~840мм)
-    # ========================================================================
     
     filtered_primitives = []
     filtered_count = 0
@@ -326,8 +311,6 @@ def get_polygons_from_primitives(
             min_dim = min(width, height)
             aspect = max_dim / min_dim if min_dim > 0 else 999
             
-            # ✅ КРИТИЧЕСКОЕ ИСКЛЮЧЕНИЕ: Линии ~840мм (стороны колонн) НЕ фильтруем!
-            # Проверяем, является ли это стороной колонны (700-950мм, одна сторона близка к 0)
             is_column_side = (150 <= max_dim <= 1000) and (min_dim < 10)
             
             if is_column_side:
@@ -338,7 +321,6 @@ def get_polygons_from_primitives(
                 filtered_primitives.append(prim)
                 continue
             
-            # Фильтруем длинные ИЛИ вытянутые (НЕ колонны)
             if max_dim > 1500:
                 filtered_by_length += 1
                 filtered_count += 1
@@ -352,23 +334,18 @@ def get_polygons_from_primitives(
                            f"{width:.1f}×{height:.1f}мм, aspect={aspect:.1f}")
                 continue
             
-            # Остальные короткие/компактные линии оставляем
             kept_linestrings += 1
             logger.debug(f"[ZONE_FILTER] LineString СОХРАНЕН: "
                         f"{width:.1f}×{height:.1f}мм, max={max_dim:.1f}мм, aspect={aspect:.1f}")
             
         filtered_primitives.append(prim)
     
-    logger.warning(f"[ZONE_SCAN] 🗑️  Фильтрация LineString:")
+    logger.warning(f"[ZONE_SCAN] Фильтрация LineString:")
     logger.warning(f"[ZONE_SCAN]    Отфильтровано по длине (> 1500мм): {filtered_by_length}")
     logger.warning(f"[ZONE_SCAN]    Отфильтровано по aspect (> 10): {filtered_by_aspect}")
     logger.warning(f"[ZONE_SCAN]    ИТОГО отфильтровано: {filtered_count}")
-    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено сторон колонн (700-950мм): {kept_column_sides}")
-    logger.warning(f"[ZONE_SCAN]    ✅ Сохранено других LineString: {kept_linestrings - kept_column_sides}")
-
-    # ========================================================================
-    # Дальше всё как раньше
-    # ========================================================================
+    logger.warning(f"[ZONE_SCAN]    Сохранено сторон колонн (700-950мм): {kept_column_sides}")
+    logger.warning(f"[ZONE_SCAN]    Сохранено других LineString: {kept_linestrings - kept_column_sides}")
 
     polygons = []
     primitives_processed = []
@@ -456,7 +433,6 @@ def filter_thin_polygons(
         width = bounds[2] - bounds[0]
         height = bounds[3] - bounds[1]
         
-        # Пропускаем очень тонкие полигоны (скорее всего артефакты DXF)
         if width < min_dimension_threshold or height < min_dimension_threshold:
             logger.debug(f"[ZONE_FILTER] Отфильтрован тонкий полигон: "
                         f"bounds={bounds}, width={width:.1f}мм, height={height:.1f}мм")
@@ -466,7 +442,7 @@ def filter_thin_polygons(
         filtered_polygons.append(polygon)
     
     if filtered_count > 0:
-        logger.warning(f"[ZONE_FILTER] ✅ Отфильтровано {filtered_count} тонких полигонов "
+        logger.warning(f"[ZONE_FILTER] Отфильтровано {filtered_count} тонких полигонов "
                       f"(порог: {min_dimension_threshold:.1f}мм)")
     
     return filtered_polygons
@@ -564,7 +540,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     occupied_zones = []
     geometries = []
 
-    # Извлекаем все геометрии из DXF
     msp = doc.modelspace()
     entity_count = 0
     for entity in msp:
@@ -573,7 +548,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     
     logger.info(f"[ZONE_SCAN] Обработано {entity_count} DXF объектов → {len(geometries)} геометрий")
 
-    # Применяем все фильтры последовательно
     geometries = filter_primitives(geometries, available_zones)
     logger.info(f"[ZONE_SCAN] После фильтрации по зонам: {len(geometries)} геометрий")
     
@@ -586,7 +560,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     polygons = filter_small_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации малых по площади: {len(polygons)} полигонов")
     
-    # ✅ Фильтруем тонкие И вытянутые полигоны
     polygons = filter_thin_polygons(polygons, min_zone_dimension)
     polygons = filter_elongated_polygons(polygons, max_aspect_ratio=5.0)
     logger.info(f"[ZONE_SCAN] После фильтрации тонких/вытянутых полигонов: {len(polygons)} полигонов")
@@ -594,7 +567,6 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
     polygons = filter_intersecting_polygons(polygons)
     logger.info(f"[ZONE_SCAN] После фильтрации пересекающихся: {len(polygons)} полигонов")
 
-    # Конвертируем в объекты OccupiedZone
     for i, polygon in enumerate(polygons):
         try:
             bounds = polygon.bounds
@@ -612,14 +584,13 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
                         f"bounds={bounds}, размер={width:.1f}x{height:.1f}мм")
                         
         except Exception as e:
-            logger.warning(f"[ZONE_SCAN] ❌ Ошибка создания OccupiedZone из полигона {i}: {e}")
+            logger.warning(f"[ZONE_SCAN] Ошибка создания OccupiedZone из полигона {i}: {e}")
             continue
 
-    logger.warning(f"[ZONE_SCAN] ✅ Успешно создано {len(occupied_zones)} occupied zones")
+    logger.warning(f"[ZONE_SCAN] Успешно создано {len(occupied_zones)} occupied zones")
     
-    # Дополнительная диагностика
     if len(occupied_zones) == 0:
-        logger.warning("[ZONE_SCAN] ⚠️  ВНИМАНИЕ: Не найдено ни одной occupied zone!")
+        logger.warning("[ZONE_SCAN]  ВНИМАНИЕ: Не найдено ни одной occupied zone!")
     else:
         widths = []
         heights = []
@@ -631,7 +602,7 @@ def scan_for_occupied_zones(doc: ezdxf.document.Drawing,
         min_width, max_width = min(widths), max(widths)
         min_height, max_height = min(heights), max(heights)
         
-        logger.info(f"[ZONE_SCAN] 📊 Статистика зон: "
+        logger.info(f"[ZONE_SCAN] Статистика зон: "
                    f"ширина {min_width:.1f}-{max_width:.1f}мм, "
                    f"высота {min_height:.1f}-{max_height:.1f}мм")
     
