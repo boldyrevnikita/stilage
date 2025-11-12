@@ -171,6 +171,9 @@ def generate_output(solution: Solution,
             rack_distance = (rack.rack_distance if isinstance(rack, DoubleRack)
                              else None)
 
+            is_rotated = getattr(solution, 'is_rotated', False)
+            jumper_presence = calculate_jumper_presence(rack, is_rotated)
+
             racks[cargo_id].append(
                 RackOutput(
                     boundary=boundary,
@@ -194,7 +197,8 @@ def generate_output(solution: Solution,
                     units=units,
                     special_units=special_units,
                     beam_lengths=beam_lengths,
-                    rack_distance=rack_distance
+                    rack_distance=rack_distance,
+                    jumper_presence=jumper_presence
                 )
             )
 
