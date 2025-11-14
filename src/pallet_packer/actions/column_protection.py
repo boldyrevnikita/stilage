@@ -23,11 +23,38 @@ def identify_and_protect_all_columns(
     create_protective_double_racks_for_all_columns(reference_book, solution)
     
     optimize_protective_racks(reference_book, solution)
+
+    deduplicate_protective_racks(solution)
     
     _save_protective_racks_as_rack_groups(reference_book, solution)
     
     logger.warning(f"[COLUMN_PROTECTION] Phase 1 complete. Protected {len(solution.protective_racks)} columns")
     logger.warning("[COLUMN_PROTECTION] ========================================")
+
+def deduplicate_protective_racks(solution: Solution) -> None:
+    """Сохраняет в solution.protective_racks только уникальные защитные стеллажи."""
+    if not solution.protective_racks:
+        return
+    
+    initial_count = len(solution.protective_racks)
+    
+    seen = set()
+    unique_racks = []
+    for rack in solution.protective_racks:
+        # Используем округлённые границы в качестве ключа: (x_min, y_min, x_max, y_max)
+        b = rack.bounds
+        key = (round(b[0], 1), round(b[1], 1), round(b[2], 1), round(b[3], 1))
+        if key not in seen:
+            unique_racks.append(rack)
+            seen.add(key)
+    
+    solution.protective_racks = unique_racks
+    
+    removed = initial_count - len(unique_racks)
+    if removed > 0:
+        logger.warning(f"[COLUMN_PROTECTION] Removed {removed} duplicate protective racks")
+        logger.warning(f"[COLUMN_PROTECTION] Final count: {len(unique_racks)} unique racks")
+
 
 
 def _save_protective_racks_as_rack_groups(
